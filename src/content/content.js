@@ -87,25 +87,44 @@
 
   const LAUNCHER_POS_KEY = "krytykai_launcher_pos";
 
+  // Trzy przyciski trybów tworzące jeden przeciągany blok.
+  const LAUNCHER_MODES = [
+    { mode: "factcheck", cls: "fact", emoji: "🔍", label: "Fact Checker AI" },
+    { mode: "story", cls: "story", emoji: "📖", label: "My Career AI" },
+    { mode: "lingo", cls: "lingo", emoji: "🗣️", label: "Linglerno AI" },
+  ];
+
   function ensureLauncher() {
     if (launcherEl) return;
-    launcherEl = document.createElement("button");
-    launcherEl.className = "krytykai-launcher";
-    launcherEl.textContent = `🔍 ${T.title}`;
-    launcherEl.title = T.title;
+    launcherEl = document.createElement("div");
+    launcherEl.className = "krytykai-launcher-group";
+    for (const m of LAUNCHER_MODES) {
+      const btn = document.createElement("button");
+      btn.className = `krytykai-lbtn krytykai-lbtn-${m.cls}`;
+      btn.title = m.label;
+      btn.innerHTML = `<span class="krytykai-lbtn-emoji">${m.emoji}</span><span class="krytykai-lbtn-label">${escapeHtml(
+        m.label
+      )}</span>`;
+      btn.addEventListener("click", () => {
+        // Po przeciągnięciu bloku ignorujemy „kliknięcie".
+        if (launcherEl._dragged) {
+          launcherEl._dragged = false;
+          return;
+        }
+        activateMode(m.mode);
+      });
+      launcherEl.appendChild(btn);
+    }
     makeLauncherDraggable(launcherEl);
-    launcherEl.addEventListener("click", () => {
-      // Po przeciągnięciu ignorujemy „kliknięcie", by nie odpalać analizy.
-      if (launcherEl._dragged) {
-        launcherEl._dragged = false;
-        return;
-      }
-      currentMode = "factcheck";
-      updateTabs();
-      runAnalysis({ mode: sourceMode() });
-    });
     document.documentElement.appendChild(launcherEl);
     restoreLauncherPos(launcherEl);
+  }
+
+  function activateMode(mode) {
+    currentMode = mode;
+    updateTabs();
+    if (mode === "factcheck") runAnalysis({ mode: sourceMode() });
+    else runLearn(mode);
   }
 
   function makeLauncherDraggable(el) {
