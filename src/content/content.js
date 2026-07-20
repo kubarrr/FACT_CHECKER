@@ -102,17 +102,10 @@
       const btn = document.createElement("button");
       btn.className = `krytykai-lbtn krytykai-lbtn-${m.cls}`;
       btn.title = m.label;
+      btn.dataset.mode = m.mode;
       btn.innerHTML = `<span class="krytykai-lbtn-emoji">${m.emoji}</span><span class="krytykai-lbtn-label">${escapeHtml(
         m.label
       )}</span>`;
-      btn.addEventListener("click", () => {
-        // Po przeciągnięciu bloku ignorujemy „kliknięcie".
-        if (launcherEl._dragged) {
-          launcherEl._dragged = false;
-          return;
-        }
-        activateMode(m.mode);
-      });
       launcherEl.appendChild(btn);
     }
     makeLauncherDraggable(launcherEl);
@@ -135,8 +128,9 @@
       const startY = e.clientY;
       const origLeft = rect.left;
       const origTop = rect.top;
+      // Przycisk, na którym rozpoczęto interakcję – użyty przy zwykłym kliknięciu.
+      const downBtn = e.target.closest?.(".krytykai-lbtn") || null;
       let dragging = false;
-      el._dragged = false;
       try { el.setPointerCapture(e.pointerId); } catch {}
 
       const onMove = (ev) => {
@@ -144,7 +138,6 @@
         const dy = ev.clientY - startY;
         if (!dragging && Math.hypot(dx, dy) < 5) return; // próg, by nie mylić z klikiem
         dragging = true;
-        el._dragged = true;
         const maxLeft = window.innerWidth - el.offsetWidth;
         const maxTop = window.innerHeight - el.offsetHeight;
         const left = Math.min(Math.max(0, origLeft + dx), Math.max(0, maxLeft));
@@ -165,6 +158,9 @@
               JSON.stringify({ left: el.style.left, top: el.style.top })
             );
           } catch {}
+        } else if (downBtn && downBtn.dataset.mode) {
+          // Zwykłe kliknięcie (bez przeciągania) – uruchom tryb przycisku.
+          activateMode(downBtn.dataset.mode);
         }
       };
       el.addEventListener("pointermove", onMove);

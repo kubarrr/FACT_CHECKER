@@ -5,19 +5,16 @@
   z-index: 2147483646;
   display: flex;
   flex-direction: column;
+  gap: 8px;
   width: 190px;
-  border-radius: 16px;
-  overflow: hidden;
   cursor: grab;
-  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.28);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.15s ease;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
 }
 .krytykai-launcher-group:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(17, 24, 39, 0.35);
 }
 .krytykai-launcher-group:active {
   cursor: grabbing;
@@ -29,17 +26,17 @@
   gap: 9px;
   padding: 11px 14px;
   border: none;
+  border-radius: 14px;
   color: #fff;
   font: 700 14px/1.15 -apple-system, "Segoe UI", Roboto, sans-serif;
   cursor: inherit;
   text-align: left;
-  transition: filter 0.15s ease;
-}
-.krytykai-lbtn + .krytykai-lbtn {
-  border-top: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 6px 18px rgba(17, 24, 39, 0.28);
+  transition: filter 0.15s ease, box-shadow 0.15s ease;
 }
 .krytykai-lbtn:hover {
   filter: brightness(1.08);
+  box-shadow: 0 8px 22px rgba(17, 24, 39, 0.35);
 }
 .krytykai-lbtn-emoji {
   font-size: 18px;
