@@ -1,0 +1,17 @@
+# Build artifacts
+dist/
+*.zip
+
+# Dependencies
+node_modules/
+
+# Local secrets (Cloudflare Worker)
+backend/.dev.vars
+.dev.vars
+.env
+.env.*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log

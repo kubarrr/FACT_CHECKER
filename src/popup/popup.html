@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fact Checker AI</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="hdr">🔍 Fact Checker AI</header>
+
+    <div class="row">
+      <label class="switch">
+        <input type="checkbox" id="enabled" />
+        <span>Extension enabled</span>
+      </label>
+    </div>
+
+    <div class="row">
+      <label class="switch">
+        <input type="checkbox" id="autoAnalyzeChat" />
+        <span>Auto-analyze after chat replies</span>
+      </label>
+    </div>
+
+    <div class="row status" id="status"></div>
+
+    <button id="analyzeNow" class="primary">Check current page</button>
+    <button id="openOptions" class="link">Settings (API key, provider)…</button>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

@@ -1,0 +1,238 @@
+.krytykai-launcher {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 2147483646;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #fff;
+  font: 700 16px/1.2 -apple-system, "Segoe UI", Roboto, sans-serif;
+  cursor: grab;
+  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.krytykai-launcher:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(79, 70, 229, 0.5);
+}
+.krytykai-launcher:active {
+  cursor: grabbing;
+  transform: none;
+}
+
+.krytykai-panel {
+  position: fixed;
+  right: 18px;
+  bottom: 70px;
+  z-index: 2147483647;
+  width: 360px;
+  max-width: calc(100vw - 36px);
+  max-height: 70vh;
+  display: none;
+  flex-direction: column;
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  font: 14px/1.45 -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+.krytykai-panel.krytykai-open {
+  display: flex;
+}
+
+.krytykai-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #fff;
+}
+.krytykai-title {
+  font-weight: 700;
+}
+.krytykai-close {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.krytykai-body {
+  padding: 12px 14px;
+  overflow-y: auto;
+}
+
+.krytykai-meta {
+  margin-bottom: 8px;
+}
+.krytykai-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #4338ca;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.krytykai-badge-warn {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.krytykai-assess {
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  border: 1px solid transparent;
+}
+.krytykai-assess-head {
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: capitalize;
+}
+.krytykai-assess-note {
+  font-size: 12.5px;
+  margin-top: 3px;
+  opacity: 0.9;
+}
+.krytykai-assess-high {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+.krytykai-assess-med {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
+}
+.krytykai-assess-low {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #065f46;
+}
+
+.krytykai-kind {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 1px 6px;
+  border-radius: 999px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.krytykai-kind-verify {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.krytykai-kind-info {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.krytykai-summary {
+  background: #f9fafb;
+  border-left: 3px solid #7c3aed;
+  padding: 8px 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  color: #374151;
+}
+.krytykai-warn {
+  background: #fef2f2;
+  color: #991b1b;
+  padding: 8px 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  font-size: 12.5px;
+}
+
+.krytykai-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.krytykai-item {
+  padding: 10px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+.krytykai-item:last-child {
+  border-bottom: none;
+}
+.krytykai-q {
+  font-weight: 600;
+  color: #111827;
+}
+.krytykai-why {
+  color: #6b7280;
+  font-size: 12.5px;
+  margin-top: 3px;
+}
+.krytykai-actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+}
+.krytykai-btn {
+  padding: 5px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #374151;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.krytykai-btn:hover {
+  background: #f9fafb;
+}
+.krytykai-btn-primary {
+  background: #4f46e5;
+  border-color: #4f46e5;
+  color: #fff;
+}
+.krytykai-btn-primary:hover {
+  background: #4338ca;
+}
+
+.krytykai-mediatools {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #f3f4f6;
+}
+.krytykai-mediatools-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 6px;
+}
+.krytykai-actions-wrap {
+  flex-wrap: wrap;
+}
+.krytykai-mediatools a.krytykai-btn {
+  text-decoration: none;
+}
+
+.krytykai-loading {
+  color: #6b7280;
+  padding: 8px 0;
+}
+.krytykai-error {
+  color: #991b1b;
+  padding: 8px 0;
+}

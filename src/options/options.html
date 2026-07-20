@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fact Checker AI – settings</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <main>
+      <h1>🔍 Fact Checker AI – settings</h1>
+      <p class="muted">
+        This extension assesses the credibility of AI chat answers (ChatGPT, Gemini, Claude) and
+        of web pages / news, auto-detects the content language, and suggests critical verification
+        questions in that language. For content-tailored questions you need your own API key.
+      </p>
+
+      <section>
+        <h2>Model provider</h2>
+        <label for="provider">Engine generating the questions</label>
+        <select id="provider">
+          <option value="ondevice">On-device – Gemini Nano (free, private)</option>
+          <option value="gemini">Google Gemini (your API key)</option>
+          <option value="openai">OpenAI (your API key)</option>
+          <option value="heuristic">No model – general questions (offline)</option>
+        </select>
+
+        <div id="odBox" class="odbox">
+          <div id="odStatus" class="od-status">Checking on-device model availability…</div>
+          <p class="hint">
+            The model runs in your browser – no data leaves the device. On first use Chrome
+            downloads the model once (several GB, needs an unmetered connection). Requires Chrome
+            138+ and capable hardware; if unsupported, the extension falls back to general
+            questions. Note: the on-device model works best in English; other languages may be
+            lower quality.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <div id="apiWrap">
+          <h2>API access</h2>
+          <label for="apiKey">API key</label>
+          <input id="apiKey" type="password" placeholder="Paste your API key…" autocomplete="off" />
+          <p class="hint" id="keyHint"></p>
+
+          <div class="grid">
+            <div>
+              <label for="geminiModel">Gemini model</label>
+              <input id="geminiModel" type="text" placeholder="gemini-3.1-flash-lite" />
+            </div>
+            <div>
+              <label for="openaiModel">OpenAI model</label>
+              <input id="openaiModel" type="text" placeholder="gpt-4o-mini" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Behavior</h2>
+        <label class="switch">
+          <input type="checkbox" id="enabled" />
+          <span>Extension enabled</span>
+        </label>
+        <label class="switch">
+          <input type="checkbox" id="autoAnalyzeChat" />
+          <span>Automatically analyze after every chat reply</span>
+        </label>
+
+        <label for="numQuestions">Number of questions (1–7)</label>
+        <input id="numQuestions" type="number" min="1" max="7" />
+      </section>
+
+      <div class="actions">
+        <button id="save" class="primary">Save</button>
+        <button id="test">Test connection</button>
+        <span id="status" class="status"></span>
+      </div>
+
+      <p class="muted small">
+        Your API key is stored locally in the browser (chrome.storage.sync) and sent only to the
+        selected provider.
+      </p>
+    </main>
+
+    <script src="options.js"></script>
+  </body>
+</html>

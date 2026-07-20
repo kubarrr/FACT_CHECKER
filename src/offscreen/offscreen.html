@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Krytyk AI – offscreen</title>
+  </head>
+  <body>
+    <!--
+      Dokument offscreen istnieje wyłącznie po to, by uruchamiać wbudowany model
+      Chrome (Prompt API / Gemini Nano). Prompt API nie działa w service workerze
+      (Web Worker), dlatego inferencja odbywa się tutaj, w kontekście z DOM.
+    -->
+    <script src="offscreen.js" type="module"></script>
+  </body>
+</html>
