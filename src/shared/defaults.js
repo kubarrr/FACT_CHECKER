@@ -20,6 +20,18 @@ export const DEFAULT_SETTINGS = {
   autoAnalyzeChat: false, // czy analizować automatycznie po każdej odpowiedzi
   language: "pl",
   numQuestions: 4,
+  // Profil użytkownika – personalizuje tryby My Story i Linglerno.
+  profile: {
+    role: "",
+    industry: "",
+    goals: "",
+    skills: "",
+    interests: "",
+    nativeLang: "",
+    targetLang: "",
+    level: "A2",
+    country: "",
+  },
 };
 
 export async function loadSettings() {

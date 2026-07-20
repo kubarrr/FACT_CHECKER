@@ -1,4 +1,13 @@
-import { buildSystemPrompt, buildUserPrompt, parseModelJson } from "../shared/prompt.js";
+import {
+  buildSystemPrompt,
+  buildUserPrompt,
+  parseModelJson,
+  parseLooseJson,
+  buildStorySystemPrompt,
+  buildStoryUserPrompt,
+  buildLingoSystemPrompt,
+  buildLingoUserPrompt,
+} from "../shared/prompt.js";
 
 // Wyciszenie nieszkodliwych ostrzeżeń wbudowanego modelu (np. o nieobsługiwanym
 // języku polskim), które inaczej zaśmiecają panel błędów rozszerzenia.
@@ -54,6 +63,62 @@ const RESPONSE_SCHEMA = {
     },
   },
   required: ["assessment", "summary", "questions"],
+};
+
+// Schematy dla trybów uczących (My Story / Linglerno).
+const STORY_SCHEMA = {
+  type: "object",
+  properties: {
+    takeaways: { type: "array", items: { type: "string" } },
+    learn_next: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: { topic: { type: "string" }, why: { type: "string" } },
+        required: ["topic"],
+      },
+    },
+    read_next: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: { title: { type: "string" }, why: { type: "string" } },
+        required: ["title"],
+      },
+    },
+    lesson: { type: "string" },
+  },
+  required: ["takeaways", "lesson"],
+};
+
+const LINGO_SCHEMA = {
+  type: "object",
+  properties: {
+    summary_target: { type: "string" },
+    summary_native: { type: "string" },
+    vocab: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          term: { type: "string" },
+          translation: { type: "string" },
+          example: { type: "string" },
+        },
+        required: ["term", "translation"],
+      },
+    },
+    phrases: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: { phrase: { type: "string" }, translation: { type: "string" } },
+        required: ["phrase", "translation"],
+      },
+    },
+    culture: { type: "string" },
+  },
+  required: ["summary_target", "vocab"],
 };
 
 function hasPromptApi() {
@@ -138,6 +203,45 @@ async function analyzeOnDevice({ userQuestion, answerText, numQuestions }) {
   }
 }
 
+// Tryby uczące na modelu wbudowanym. Osobna sesja per zapytanie (prompt zależy
+// od profilu i trybu), więc nie podtrzymujemy sesji bazowej jak przy fact-checku.
+async function analyzeLearnOnDevice({ mode, profile, answerText }) {
+  if (!hasPromptApi()) {
+    throw new Error("Prompt API niedostępne w tej wersji Chrome.");
+  }
+  const availability = await self.LanguageModel.availability();
+  if (availability === "unavailable") {
+    throw new Error("Model lokalny niedostępny na tym urządzeniu.");
+  }
+
+  const isLingo = mode === "lingo";
+  const system = isLingo ? buildLingoSystemPrompt(profile) : buildStorySystemPrompt();
+  const user = isLingo
+    ? buildLingoUserPrompt(profile, answerText)
+    : buildStoryUserPrompt(profile, answerText);
+  const schema = isLingo ? LINGO_SCHEMA : STORY_SCHEMA;
+
+  const session = await self.LanguageModel.create({
+    expectedInputs: [{ type: "text", languages: ["en"] }],
+    expectedOutputs: [{ type: "text", languages: ["en"] }],
+    initialPrompts: [{ role: "system", content: system }],
+  });
+  try {
+    let raw;
+    try {
+      raw = await session.prompt(user, {
+        responseConstraint: schema,
+        omitResponseConstraintInput: true,
+      });
+    } catch {
+      raw = await session.prompt(user);
+    }
+    return parseLooseJson(raw);
+  } finally {
+    session.destroy();
+  }
+}
+
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg?.target !== "offscreen") return; // ignoruj wiadomości nie dla nas
 
@@ -150,6 +254,13 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 
   if (msg.type === "OD_ANALYZE") {
     analyzeOnDevice(msg.payload)
+      .then((result) => sendResponse({ ok: true, result }))
+      .catch((err) => sendResponse({ ok: false, error: String(err?.message || err) }));
+    return true;
+  }
+
+  if (msg.type === "OD_ANALYZE_LEARN") {
+    analyzeLearnOnDevice(msg.payload)
       .then((result) => sendResponse({ ok: true, result }))
       .catch((err) => sendResponse({ ok: false, error: String(err?.message || err) }));
     return true;

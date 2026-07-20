@@ -41,46 +41,6 @@ export function buildUserPrompt({ userQuestion, answerText }) {
   return parts.join("\n");
 }
 
-// Prompt do oceny autentyczności obrazu/klatki wideo (multimodalny).
-export function buildMediaSystemPrompt(numQuestions) {
-  return [
-    "You are a media authenticity assistant. You receive an IMAGE (a photo or a single frame",
-    "extracted from a video) and optional surrounding text/context from a web page.",
-    "",
-    "Assess how likely the media is AI-generated, deepfaked, edited or misleadingly presented.",
-    "CRITICAL: You are NOT a certified detector. Never claim certainty. Be cautious and explain",
-    "the VISIBLE signals you reason from: faces, eyes/blinking, teeth, hands and fingers, skin texture,",
-    "lighting/shadows consistency, warped backgrounds, garbled text/logos, and physically impossible",
-    "scenarios (e.g. a person talking to a younger version of themselves is inherently synthetic).",
-    "",
-    "IMPORTANT: Detect the language of the context; write the note, summary and questions in that",
-    "language. If the context is empty, use Polish.",
-    "",
-    "Return an 'assessment' object with:",
-    '   - "type": one of "authentic", "ai_generated", "deepfake", "edited", "misleading_context", "uncertain".',
-    '   - "risk": risk that the media is fake/manipulated/misleading: "low" | "medium" | "high".',
-    '   - "note": one sentence justifying the assessment, in the context language.',
-    "",
-    `Also give up to ${numQuestions} concrete questions/steps (kind: "verify") that help the user`,
-    "check it (reverse image search, look for the original/official source, check date and place,",
-    "look for other angles, ask who first posted it).",
-    "",
-    "Return ONLY valid JSON in this exact shape:",
-    '{"assessment": {"type": "...", "risk": "...", "note": "..."}, "summary": "one sentence", "questions": [{"q": "...", "why": "...", "kind": "verify"}]}',
-    "No text outside the JSON, no markdown fences.",
-  ].join("\n");
-}
-
-export function buildMediaUserPrompt({ context, mediaType }) {
-  const kind = mediaType === "video" ? "a frame extracted from a video" : "an image";
-  const ctx = (context || "").trim();
-  return [
-    `The attached media is ${kind}.`,
-    ctx ? `Surrounding context from the web page:\n"""\n${ctx}\n"""` : "There is no useful surrounding text.",
-    "Analyze the attached image and return the JSON described in the instructions.",
-  ].join("\n");
-}
-
 // Deterministyczny PRNG (mulberry32) – ta sama treść daje stabilną kolejność,
 // różne treści różnią się rotacją puli.
 function mulberry32(seed) {
@@ -273,7 +233,7 @@ export function parseLooseJson(text) {
   return JSON.parse(t);
 }
 
-// ---------- Prompty trybów uczących ----------
+// ---------- Prompty trybów uczących (kopia z pwa/learn.js) ----------
 function profileBlock(p) {
   const lines = [];
   if (p.role) lines.push(`Role/position: ${String(p.role).slice(0, 200)}`);

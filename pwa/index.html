@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#4f46e5" />
+    <title>Fact Checker AI</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="icons/icon-192.png" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <span class="brand" id="brand">🔍 Fact Checker AI</span>
+      <span class="top-actions">
+        <button id="profileBtn" class="icon-btn" title="Profile" aria-label="Profile">👤</button>
+        <button id="settingsBtn" class="icon-btn" title="Settings" aria-label="Settings">⚙️</button>
+      </span>
+    </header>
+
+    <main class="wrap">
+      <!-- EKRAN GŁÓWNY -->
+      <section id="home">
+        <button class="mode-card mode-fact" data-mode="factcheck">
+          <span class="mode-emoji">🔍</span>
+          <span class="mode-text">
+            <span class="mode-name">Fact Checker AI</span>
+            <span class="mode-desc" data-i18n="factDesc">Check credibility & get critical questions</span>
+          </span>
+        </button>
+        <button class="mode-card mode-story" data-mode="story">
+          <span class="mode-emoji">📖</span>
+          <span class="mode-text">
+            <span class="mode-name">My Story AI</span>
+            <span class="mode-desc" data-i18n="storyDesc">Grow from what you read — for your career</span>
+          </span>
+        </button>
+        <button class="mode-card mode-lingo" data-mode="lingo">
+          <span class="mode-emoji">🗣️</span>
+          <span class="mode-text">
+            <span class="mode-name">Linglerno AI</span>
+            <span class="mode-desc" data-i18n="lingoDesc">Learn a language & culture from the topic</span>
+          </span>
+        </button>
+      </section>
+
+      <!-- WIDOK ROBOCZY (wspólny dla 3 trybów) -->
+      <section id="work" class="hidden">
+        <button id="backBtn" class="back-btn">← <span data-i18n="back">Back</span></button>
+
+        <section class="card">
+          <label for="content" id="inputLabel">Paste or share content:</label>
+          <textarea id="content" rows="7" placeholder="Paste content here…"></textarea>
+          <div class="row">
+            <button id="runBtn" class="primary">Run</button>
+            <button id="clearBtn" class="ghost" data-i18n="clear">Clear</button>
+          </div>
+          <p id="engineNote" class="muted small"></p>
+        </section>
+
+        <section id="result" class="card result hidden"></section>
+      </section>
+    </main>
+
+    <!-- Ustawienia -->
+    <dialog id="settingsDlg" class="dlg">
+      <form method="dialog" class="dlg-body">
+        <h2 data-i18n="settings">Settings</h2>
+
+        <label for="provider" data-i18n="engine">Engine</label>
+        <select id="provider">
+          <option value="server">Server (recommended – no key needed)</option>
+          <option value="gemini">Google Gemini (your API key)</option>
+          <option value="heuristic">Offline (fact-check only)</option>
+        </select>
+
+        <div id="serverWrap">
+          <label for="backendUrl" data-i18n="serverUrl">Server URL</label>
+          <input id="backendUrl" type="text" placeholder="https://…workers.dev" autocomplete="off" />
+          <p class="muted small">Usually pre-configured. Leave as is unless you self-host.</p>
+        </div>
+
+        <div id="keyWrap">
+          <label for="apiKey" data-i18n="apiKey">Gemini API key</label>
+          <input id="apiKey" type="password" placeholder="Paste your key…" autocomplete="off" />
+          <p class="muted small">Get a free key at aistudio.google.com/app/apikey. Stored only on this device.</p>
+          <label for="model" data-i18n="model">Model</label>
+          <input id="model" type="text" placeholder="gemini-3.1-flash-lite" />
+        </div>
+
+        <label for="numQuestions" data-i18n="numQuestions">Number of questions (1–7)</label>
+        <input id="numQuestions" type="number" min="1" max="7" value="4" />
+
+        <div class="row end">
+          <button id="saveSettings" value="save" class="primary" data-i18n="save">Save</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Profil -->
+    <dialog id="profileDlg" class="dlg">
+      <form method="dialog" class="dlg-body">
+        <h2 data-i18n="profileTitle">Your profile</h2>
+        <p class="muted small" data-i18n="profileIntro">Used to personalize My Story AI and Linglerno AI. Stored only on this device.</p>
+
+        <label for="pf_role" data-i18n="pfRole">Role / position</label>
+        <input id="pf_role" type="text" placeholder="e.g. junior marketer" />
+
+        <label for="pf_industry" data-i18n="pfIndustry">Industry / field</label>
+        <input id="pf_industry" type="text" placeholder="e.g. e-commerce" />
+
+        <label for="pf_goals" data-i18n="pfGoals">Learning goals</label>
+        <textarea id="pf_goals" rows="2" placeholder="e.g. become a data analyst"></textarea>
+
+        <label for="pf_skills" data-i18n="pfSkills">Skills to develop</label>
+        <input id="pf_skills" type="text" placeholder="e.g. SQL, storytelling" />
+
+        <label for="pf_interests" data-i18n="pfInterests">Interests</label>
+        <input id="pf_interests" type="text" placeholder="e.g. football, history" />
+
+        <h3 class="dlg-sub" data-i18n="pfLangHead">Language learning (Linglerno)</h3>
+
+        <label for="pf_native" data-i18n="pfNative">Your language</label>
+        <input id="pf_native" type="text" placeholder="e.g. Polish" />
+
+        <label for="pf_target" data-i18n="pfTarget">Language you learn</label>
+        <input id="pf_target" type="text" placeholder="e.g. Spanish" />
+
+        <label for="pf_level" data-i18n="pfLevel">Level</label>
+        <select id="pf_level">
+          <option value="A1">A1</option>
+          <option value="A2">A2</option>
+          <option value="B1">B1</option>
+          <option value="B2">B2</option>
+          <option value="C1">C1</option>
+          <option value="C2">C2</option>
+        </select>
+
+        <label for="pf_country" data-i18n="pfCountry">Country / culture of interest</label>
+        <input id="pf_country" type="text" placeholder="e.g. Spain" />
+
+        <div class="row end">
+          <button id="saveProfile" value="save" class="primary" data-i18n="save">Save</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

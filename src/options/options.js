@@ -7,6 +7,17 @@ const DEFAULTS = {
   openaiModel: "gpt-4o-mini",
   autoAnalyzeChat: false,
   numQuestions: 4,
+  profile: {
+    role: "",
+    industry: "",
+    goals: "",
+    skills: "",
+    interests: "",
+    nativeLang: "",
+    targetLang: "",
+    level: "A2",
+    country: "",
+  },
 };
 
 const $ = (id) => document.getElementById(id);
@@ -76,6 +87,16 @@ async function load() {
   $("enabled").checked = !!s.enabled;
   $("autoAnalyzeChat").checked = !!s.autoAnalyzeChat;
   $("numQuestions").value = s.numQuestions;
+  const p = s.profile || {};
+  $("pfRole").value = p.role || "";
+  $("pfIndustry").value = p.industry || "";
+  $("pfGoals").value = p.goals || "";
+  $("pfSkills").value = p.skills || "";
+  $("pfInterests").value = p.interests || "";
+  $("pfNativeLang").value = p.nativeLang || "";
+  $("pfTargetLang").value = p.targetLang || "";
+  $("pfLevel").value = p.level || "A2";
+  $("pfCountry").value = p.country || "";
   applyProviderUI();
 }
 
@@ -91,6 +112,17 @@ function readForm() {
     enabled: $("enabled").checked,
     autoAnalyzeChat: $("autoAnalyzeChat").checked,
     numQuestions: n,
+    profile: {
+      role: $("pfRole").value.trim(),
+      industry: $("pfIndustry").value.trim(),
+      goals: $("pfGoals").value.trim(),
+      skills: $("pfSkills").value.trim(),
+      interests: $("pfInterests").value.trim(),
+      nativeLang: $("pfNativeLang").value.trim(),
+      targetLang: $("pfTargetLang").value.trim(),
+      level: $("pfLevel").value,
+      country: $("pfCountry").value.trim(),
+    },
   };
 }
 

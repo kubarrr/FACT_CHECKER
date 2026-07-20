@@ -4,8 +4,13 @@ import {
   buildUserPrompt,
   buildMediaSystemPrompt,
   buildMediaUserPrompt,
+  buildStorySystemPrompt,
+  buildStoryUserPrompt,
+  buildLingoSystemPrompt,
+  buildLingoUserPrompt,
   heuristicQuestions,
   parseModelJson,
+  parseLooseJson,
 } from "./shared/prompt.js";
 
 const MAX_INPUT_CHARS = 8000;
@@ -73,6 +78,16 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   }
   if (msg?.type === "KRYTYKAI_ANALYZE_MEDIA") {
     analyzeMedia(msg.payload)
+      .then((result) => sendResponse({ ok: true, result }))
+      .catch((err) => sendResponse({ ok: false, error: String(err?.message || err) }));
+    return true; // async
+  }
+  if (msg?.type === "KRYTYKAI_OPEN_OPTIONS") {
+    chrome.runtime.openOptionsPage();
+    return false;
+  }
+  if (msg?.type === "KRYTYKAI_ANALYZE_LEARN") {
+    analyzeLearn(msg.mode, msg.payload)
       .then((result) => sendResponse({ ok: true, result }))
       .catch((err) => sendResponse({ ok: false, error: String(err?.message || err) }));
     return true; // async
@@ -299,6 +314,120 @@ async function callOpenAIVision(settings, system, user, inline) {
             },
           ],
         },
+      ],
+    }),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${await safeText(res)}`);
+  const data = await res.json();
+  return data?.choices?.[0]?.message?.content || "";
+}
+
+// --- Tryby uczące: My Story AI / Linglerno AI ------------------------------
+const LEARN_OUTPUT_TOKENS = 1100;
+
+async function analyzeLearn(mode, payload) {
+  const settings = await loadSettings();
+  const answerText = (payload?.answerText || "").slice(0, MAX_INPUT_CHARS);
+  if (!answerText.trim()) {
+    throw new Error("Brak treści do analizy.");
+  }
+
+  const profile = settings.profile || {};
+
+  // Model wbudowany (Gemini Nano) – bez klucza, prywatnie. Działa najlepiej po
+  // angielsku; przy innych językach (zwłaszcza Linglerno) jakość bywa niższa.
+  if (settings.provider === "ondevice") {
+    try {
+      const result = await runOnDeviceLearn({
+        mode,
+        profile,
+        answerText: answerText.slice(0, MAX_ONDEVICE_CHARS),
+      });
+      return { ...result, mode, source: "ondevice" };
+    } catch (err) {
+      return {
+        needCloud: true,
+        warning: `Model lokalny nie poradził sobie z tym trybem (${String(
+          err?.message || err
+        )}). Wybierz Gemini lub OpenAI z kluczem API w ustawieniach.`,
+      };
+    }
+  }
+
+  // Heurystyka nie ma modelu językowego – tryby uczące wymagają chmury z kluczem.
+  const canCloud =
+    (settings.provider === "gemini" || settings.provider === "openai") && settings.apiKey;
+  if (!canCloud) {
+    return {
+      needCloud: true,
+      warning:
+        "Ten tryb wymaga modelu z kluczem API (Gemini lub OpenAI) albo modelu wbudowanego. Ustaw go w opcjach rozszerzenia.",
+    };
+  }
+
+  let system, user;
+  if (mode === "lingo") {
+    system = buildLingoSystemPrompt(profile);
+    user = buildLingoUserPrompt(profile, answerText);
+  } else {
+    system = buildStorySystemPrompt();
+    user = buildStoryUserPrompt(profile, answerText);
+  }
+
+  const raw =
+    settings.provider === "gemini"
+      ? await callGeminiJSON(settings, system, user, LEARN_OUTPUT_TOKENS)
+      : await callOpenAIJSON(settings, system, user, LEARN_OUTPUT_TOKENS);
+  const parsed = parseLooseJson(raw);
+  return { ...parsed, mode, source: settings.provider };
+}
+
+async function runOnDeviceLearn(payload) {
+  await ensureOffscreen();
+  const resp = await chrome.runtime.sendMessage({
+    target: "offscreen",
+    type: "OD_ANALYZE_LEARN",
+    payload,
+  });
+  if (!resp?.ok) throw new Error(resp?.error || "Nieznany błąd modelu lokalnego");
+  return resp.result;
+}
+
+async function callGeminiJSON(settings, system, user, maxTokens) {
+  const model = settings.geminiModel || "gemini-3.1-flash-lite";
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(
+    settings.apiKey
+  )}`;
+  const body = {
+    system_instruction: { parts: [{ text: system }] },
+    contents: [{ role: "user", parts: [{ text: user }] }],
+    generationConfig: {
+      temperature: 0.6,
+      responseMimeType: "application/json",
+      maxOutputTokens: maxTokens,
+    },
+  };
+  const res = await geminiFetch(url, body);
+  const data = await res.json();
+  return data?.candidates?.[0]?.content?.parts?.map((p) => p.text).join("") || "";
+}
+
+async function callOpenAIJSON(settings, system, user, maxTokens) {
+  const model = settings.openaiModel || "gpt-4o-mini";
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${settings.apiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      temperature: 0.6,
+      max_tokens: maxTokens,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user },
       ],
     }),
   });
