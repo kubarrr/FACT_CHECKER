@@ -15,6 +15,8 @@ const DEFAULTS = {
     goals: "",
     skills: "",
     interests: "",
+    nativeLangCode: "",
+    targetLangCode: "",
     nativeLang: "",
     targetLang: "",
     level: "A2",
@@ -91,16 +93,6 @@ async function load() {
   $("numQuestions").value = s.numQuestions;
   $("language").value = s.language || "pl";
   $("backendUrl").value = s.backendUrl || "";
-  const p = s.profile || {};
-  $("pfRole").value = p.role || "";
-  $("pfIndustry").value = p.industry || "";
-  $("pfGoals").value = p.goals || "";
-  $("pfSkills").value = p.skills || "";
-  $("pfInterests").value = p.interests || "";
-  $("pfNativeLang").value = p.nativeLang || "";
-  $("pfTargetLang").value = p.targetLang || "";
-  $("pfLevel").value = p.level || "A2";
-  $("pfCountry").value = p.country || "";
   applyProviderUI();
 }
 
@@ -118,17 +110,8 @@ function readForm() {
     numQuestions: n,
     language: $("language").value,
     backendUrl: $("backendUrl").value.trim().replace(/\/+$/, ""),
-    profile: {
-      role: $("pfRole").value.trim(),
-      industry: $("pfIndustry").value.trim(),
-      goals: $("pfGoals").value.trim(),
-      skills: $("pfSkills").value.trim(),
-      interests: $("pfInterests").value.trim(),
-      nativeLang: $("pfNativeLang").value.trim(),
-      targetLang: $("pfTargetLang").value.trim(),
-      level: $("pfLevel").value,
-      country: $("pfCountry").value.trim(),
-    },
+    // `profile` celowo pominięty – edytuje się go w Bibliotece, a zapis tutaj
+    // scala się ze starym stanem, więc profil zostaje nietknięty.
   };
 }
 
@@ -183,6 +166,9 @@ chrome.runtime.onMessage.addListener((msg) => {
   }
 });
 
+$("openLibrary").addEventListener("click", () =>
+  chrome.tabs.create({ url: chrome.runtime.getURL("src/library/library.html") })
+);
 $("provider").addEventListener("change", applyProviderUI);
 $("save").addEventListener("click", save);
 $("test").addEventListener("click", test);

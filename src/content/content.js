@@ -8,8 +8,8 @@
   // Analiza (podsumowanie, ocena, pytania) jest w języku treści; poniżej tylko
   // stałe etykiety panelu, tłumaczone wg języka przeglądarki (domyślnie EN).
   const I18N = {
-    en: { launcher: "Fact Check", title: "Fact Checker AI", close: "Close", copy: "Copy", copied: "Copied", ask: "Ask Gemini", loading: "Analyzing…", noAnswer: "No AI answer found on this page. Wait until the chat finishes responding.", selectFirst: "Select some text to verify first.", ctx: "The extension was reloaded or updated, and this tab still uses the old version.", reload: "Reload page", riskHigh: "High risk – be careful", riskMed: "Medium risk", riskLow: "Low risk – looks credible", kindVerify: "verify", kindExplore: "explore", kindPerspective: "other side", noQuestions: "No questions.", reverseSearch: "Reverse search:", sources: "Sources (from the web)", tabFact: "Fact Check", tabStory: "My Story", tabLingo: "Linglerno", takeaways: "How to use this", learnNext: "Learn next", readNext: "Read next", lesson: "Micro-lesson", summaryTarget: "Summary", summaryNative: "In your language", vocab: "Vocabulary", phrases: "Useful phrases", culture: "Culture note", openOptions: "Open settings", searchGoogle: "Search Google", verifyWith: "Verify:", course: "Course / video", posNoun: "noun", posVerb: "verb", posOther: "adjective / other" },
-    pl: { launcher: "Sprawdź", title: "Fact Checker AI", close: "Zamknij", copy: "Kopiuj", copied: "Skopiowano", ask: "Zapytaj w Gemini", loading: "Analizuję…", noAnswer: "Nie znalazłem odpowiedzi AI na tej stronie. Poczekaj, aż czat zakończy odpowiedź.", selectFirst: "Zaznacz najpierw fragment tekstu do weryfikacji.", ctx: "Rozszerzenie zostało przeładowane lub zaktualizowane, a ta karta wciąż korzysta ze starej wersji.", reload: "Odśwież stronę", riskHigh: "Wysokie ryzyko – zachowaj ostrożność", riskMed: "Średnie ryzyko", riskLow: "Niskie ryzyko – wygląda wiarygodnie", kindVerify: "weryfikacja", kindExplore: "ciekawostka", kindPerspective: "druga strona", noQuestions: "Brak pytań.", reverseSearch: "Wyszukiwanie wsteczne:", sources: "Źródła (z internetu)", tabFact: "Fakty", tabStory: "Moja Historia", tabLingo: "Linglerno", takeaways: "Jak to wykorzystać", learnNext: "Czego się nauczyć", readNext: "Co przeczytać dalej", lesson: "Mini-lekcja", summaryTarget: "Streszczenie", summaryNative: "W Twoim języku", vocab: "Słownictwo", phrases: "Przydatne zwroty", culture: "Ciekawostka kulturowa", openOptions: "Otwórz ustawienia", searchGoogle: "Szukaj w Google", verifyWith: "Zweryfikuj:", course: "Kurs / wideo", posNoun: "rzeczownik", posVerb: "czasownik", posOther: "przymiotnik / inne" },
+    en: { launcher: "Fact Check", title: "Fact Checker AI", close: "Close", copy: "Copy", copied: "Copied", ask: "Ask Gemini", loading: "Analyzing…", noAnswer: "No AI answer found on this page. Wait until the chat finishes responding.", selectFirst: "Select some text to verify first.", ctx: "The extension was reloaded or updated, and this tab still uses the old version.", reload: "Reload page", riskHigh: "High risk – be careful", riskMed: "Medium risk", riskLow: "Low risk – looks credible", kindVerify: "verify", kindExplore: "explore", kindPerspective: "other side", noQuestions: "No questions.", reverseSearch: "Reverse search:", sources: "Sources (from the web)", tabFact: "Fact Check", tabStory: "My Story", tabLingo: "Linglerno", takeaways: "How to use this", learnNext: "Learn next", readNext: "Read next", lesson: "Micro-lesson", summaryTarget: "Summary", summaryNative: "In your language", vocab: "Vocabulary", phrases: "Useful phrases", culture: "Culture note", openOptions: "Open settings", searchGoogle: "Search Google", verifyWith: "Verify:", course: "Course / video", posNoun: "noun", posVerb: "verb", posOther: "adjective / other", library: "Library", wordsSaved: "words saved", dueNow: "Due for review", checkSources: "🌐 Verify against sources", checkSourcesHint: "Searches the web and shows the real sources it relied on." },
+    pl: { launcher: "Sprawdź", title: "Fact Checker AI", close: "Zamknij", copy: "Kopiuj", copied: "Skopiowano", ask: "Zapytaj w Gemini", loading: "Analizuję…", noAnswer: "Nie znalazłem odpowiedzi AI na tej stronie. Poczekaj, aż czat zakończy odpowiedź.", selectFirst: "Zaznacz najpierw fragment tekstu do weryfikacji.", ctx: "Rozszerzenie zostało przeładowane lub zaktualizowane, a ta karta wciąż korzysta ze starej wersji.", reload: "Odśwież stronę", riskHigh: "Wysokie ryzyko – zachowaj ostrożność", riskMed: "Średnie ryzyko", riskLow: "Niskie ryzyko – wygląda wiarygodnie", kindVerify: "weryfikacja", kindExplore: "ciekawostka", kindPerspective: "druga strona", noQuestions: "Brak pytań.", reverseSearch: "Wyszukiwanie wsteczne:", sources: "Źródła (z internetu)", tabFact: "Fakty", tabStory: "Moja Historia", tabLingo: "Linglerno", takeaways: "Jak to wykorzystać", learnNext: "Czego się nauczyć", readNext: "Co przeczytać dalej", lesson: "Mini-lekcja", summaryTarget: "Streszczenie", summaryNative: "W Twoim języku", vocab: "Słownictwo", phrases: "Przydatne zwroty", culture: "Ciekawostka kulturowa", openOptions: "Otwórz ustawienia", searchGoogle: "Szukaj w Google", verifyWith: "Zweryfikuj:", course: "Kurs / wideo", posNoun: "rzeczownik", posVerb: "czasownik", posOther: "przymiotnik / inne", library: "Biblioteka", wordsSaved: "słówek zapisanych", dueNow: "Do powtórki", checkSources: "🌐 Sprawdź w źródłach", checkSourcesHint: "Przeszuka internet i pokaże realne źródła, na których się oparł." },
     es: { launcher: "Verificar", title: "Fact Checker AI", close: "Cerrar", copy: "Copiar", copied: "Copiado", ask: "Preguntar a Gemini", loading: "Analizando…", noAnswer: "No se encontró respuesta de IA en esta página. Espera a que el chat termine.", selectFirst: "Selecciona primero un texto para verificar.", ctx: "La extensión se recargó o actualizó y esta pestaña usa la versión anterior.", reload: "Recargar página", riskHigh: "Riesgo alto – ten cuidado", riskMed: "Riesgo medio", riskLow: "Riesgo bajo – parece creíble", kindVerify: "verificación", kindExplore: "curiosidad", kindPerspective: "otra parte", noQuestions: "Sin preguntas." },
     de: { launcher: "Prüfen", title: "Fact Checker AI", close: "Schließen", copy: "Kopieren", copied: "Kopiert", ask: "Gemini fragen", loading: "Analysiere…", noAnswer: "Keine KI-Antwort auf dieser Seite gefunden. Warte, bis der Chat fertig ist.", selectFirst: "Markiere zuerst einen Text zur Überprüfung.", ctx: "Die Erweiterung wurde neu geladen oder aktualisiert; dieser Tab nutzt noch die alte Version.", reload: "Seite neu laden", riskHigh: "Hohes Risiko – Vorsicht", riskMed: "Mittleres Risiko", riskLow: "Geringes Risiko – wirkt glaubwürdig", kindVerify: "Prüfung", kindExplore: "Vertiefung", kindPerspective: "andere Seite", noQuestions: "Keine Fragen." },
     fr: { launcher: "Vérifier", title: "Fact Checker AI", close: "Fermer", copy: "Copier", copied: "Copié", ask: "Demander à Gemini", loading: "Analyse…", noAnswer: "Aucune réponse d'IA trouvée sur cette page. Attends la fin de la réponse.", selectFirst: "Sélectionne d'abord un texte à vérifier.", ctx: "L'extension a été rechargée ou mise à jour, et cet onglet utilise l'ancienne version.", reload: "Recharger la page", riskHigh: "Risque élevé – prudence", riskMed: "Risque moyen", riskLow: "Risque faible – semble crédible", kindVerify: "vérification", kindExplore: "découverte", kindPerspective: "autre point de vue", noQuestions: "Aucune question." },
@@ -387,8 +387,15 @@
       ${summary}
       <ul class="krytykai-list">${items || `<li>${escapeHtml(T.noQuestions)}</li>`}</ul>
       ${sourcesHtml(result.sources)}
+      ${groundingBtnHtml(result)}
       ${extraHtml || ""}
     `);
+
+    const gBtn = panelEl.querySelector("#krytykai-ground");
+    if (gBtn)
+      gBtn.addEventListener("click", () =>
+        runAnalysis({ mode: lastSourceModeUsed, grounding: true })
+      );
 
     panelEl.querySelectorAll("[data-copy]").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -402,6 +409,21 @@
         askInGemini(text, context);
       });
     });
+  }
+
+  // Weryfikacja w realnych źródłach jest osobnym, świadomym krokiem: wyszukiwanie
+  // Google ma u dostawcy dużo ciaśniejszy limit niż samo generowanie, więc nie
+  // odpalamy go przy każdej analizie. Przycisk pokazujemy tylko wtedy, gdy jest
+  // czym go obsłużyć (backend) i gdy tej weryfikacji jeszcze nie zrobiono.
+  function groundingBtnHtml(result) {
+    if (result.grounded || !backendConfigured) return "";
+    return `
+      <div class="krytykai-ground">
+        <button class="krytykai-btn krytykai-btn-primary" id="krytykai-ground">${escapeHtml(
+          tr("checkSources")
+        )}</button>
+        <div class="krytykai-ground-hint">${escapeHtml(tr("checkSourcesHint"))}</div>
+      </div>`;
   }
 
   // Realne źródła z groundingu (backend). Linki pochodzą z wyszukiwarki, nie od modelu.
@@ -442,9 +464,12 @@
   // --- Przepływ analizy ------------------------------------------------------
   let lastContext = null;
   let lastSourceEl = null;
+  // Zapamiętane, żeby „Sprawdź w źródłach" powtórzyło analizę tej samej treści.
+  let lastSourceModeUsed = "page";
 
-  async function runAnalysis({ mode }) {
+  async function runAnalysis({ mode, grounding = false }) {
     currentMode = "factcheck";
+    lastSourceModeUsed = mode;
     setPanelHeader("factcheck");
     clearFlags();
     lastSourceEl = sourceElForMode(mode);
@@ -470,7 +495,7 @@
     renderLoading();
 
     try {
-      const resp = await chrome.runtime.sendMessage({ type: "KRYTYKAI_ANALYZE", payload });
+      const resp = await chrome.runtime.sendMessage({ type: "KRYTYKAI_ANALYZE", payload, grounding });
       if (!resp?.ok) {
         renderError(resp?.error || "Nieznany błąd analizy.");
         return;
@@ -570,6 +595,9 @@
       }
       if (mode === "lingo") renderLingo(r);
       else renderStory(r);
+      // Lekcja zapisuje się sama – użytkownik nie musi nic klikać, a postęp
+      // (XP, seria, słówka do powtórek) rośnie w tle.
+      saveLessonLocally(mode, r);
     } catch (err) {
       const msg = String(err?.message || err);
       if (isContextInvalidated(msg)) renderContextInvalidated();
@@ -688,6 +716,63 @@
         )}</div><div class="krytykai-summary">${escapeHtml(r.culture)}</div></div>`
       : "";
     setBody(`<div class="krytykai-meta">${badge}</div>${summary}${vocab}${phrases}${culture}`);
+  }
+
+  // --- Zapis lekcji do lokalnej biblioteki ---------------------------------
+  // Profil z ustawień – potrzebny do oznaczenia lekcji językiem i poziomem.
+  let userProfile = {};
+  // Bez backendu nie ma czym zrobić weryfikacji w źródłach – chowamy przycisk.
+  let backendConfigured = false;
+
+  async function saveLessonLocally(mode, result) {
+    const store = globalThis.KRYTYKAI_STORE;
+    if (!store) return; // brak magazynu (np. stara wersja w karcie) – pomiń cicho
+    try {
+      const res = await store.saveLesson({
+        mode: mode === "lingo" ? "lingo" : "career",
+        sourceUrl: location.href,
+        sourceTitle: document.title,
+        result,
+        profile: userProfile,
+      });
+      renderSaveStrip(res);
+    } catch (err) {
+      console.warn("[KrytykAI] Nie udało się zapisać lekcji:", err);
+    }
+  }
+
+  // Pasek pod lekcją: co przybyło i skrót do biblioteki.
+  function renderSaveStrip(res) {
+    if (!panelEl) return;
+    const body = panelEl.querySelector(".krytykai-body");
+    if (!body) return;
+
+    const bits = [`+${res.xpEarned} XP`];
+    if (res.savedVocab) bits.push(`${res.savedVocab} ${tr("wordsSaved")}`);
+    if (res.streakBonus) bits.push(`🔥 ${res.streak}`);
+
+    const badges = res.newBadges
+      .map((b) => `<span class="krytykai-newbadge">${b.icon} ${escapeHtml(b.name)}</span>`)
+      .join("");
+
+    const due = res.dueCount
+      ? `<div class="krytykai-save-due">${escapeHtml(tr("dueNow"))}: ${res.dueCount}</div>`
+      : "";
+
+    const strip = document.createElement("div");
+    strip.className = "krytykai-save";
+    strip.innerHTML = `
+      <div class="krytykai-save-row">
+        <span class="krytykai-save-gain">${escapeHtml(bits.join(" · "))}</span>
+        <button class="krytykai-btn krytykai-btn-primary" id="krytykai-lib">${escapeHtml(tr("library"))}</button>
+      </div>
+      ${badges ? `<div class="krytykai-save-badges">${badges}</div>` : ""}
+      ${due}`;
+    body.appendChild(strip);
+
+    strip.querySelector("#krytykai-lib").addEventListener("click", () => {
+      chrome.runtime.sendMessage({ type: "KRYTYKAI_OPEN_LIBRARY" }).catch(() => {});
+    });
   }
 
   // --- Analiza mediów (obraz / wideo z menu kontekstowego) ------------------
@@ -818,6 +903,8 @@
     const s = { ...DEFAULTS, ...(data[STORAGE_KEY] || {}) };
     if (!s.enabled) return;
     if (s.language) setActiveLang(s.language);
+    userProfile = s.profile || {};
+    backendConfigured = !!(s.backendUrl || "").trim();
     ensureLauncher();
     if (s.autoAnalyzeChat) watchChatForAuto();
     // Rozgrzej model lokalny w tle, by pierwsza analiza była szybsza.

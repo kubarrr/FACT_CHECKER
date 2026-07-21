@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Biblioteka – Fact Checker AI</title>
+    <link rel="stylesheet" href="library.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="hero" id="hero">
+        <div class="hero-top">
+          <span class="hero-flag" id="heroFlag">📚</span>
+          <div class="hero-titles">
+            <div class="hero-level" id="heroLevel">Ziarno</div>
+            <div class="hero-sub" id="heroSub">Twoja biblioteka nauki</div>
+          </div>
+          <div class="hero-streak" id="heroStreak">🔥 0</div>
+        </div>
+        <div class="xpbar"><i id="xpFill" style="width: 0%"></i></div>
+        <div class="xpmeta">
+          <span id="xpNow">0 XP</span>
+          <span id="xpNext"></span>
+        </div>
+      </header>
+
+      <div class="stats" id="stats"></div>
+      <div class="badges" id="badges"></div>
+
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" data-tab="review" aria-selected="true">
+          Powtórki <span class="pill" id="duePill" hidden>0</span>
+        </button>
+        <button class="tab" role="tab" data-tab="vocab" aria-selected="false">Słownik</button>
+        <button class="tab" role="tab" data-tab="career" aria-selected="false">Kariera</button>
+        <button class="tab" role="tab" data-tab="history" aria-selected="false">Historia</button>
+        <button class="tab" role="tab" data-tab="profile" aria-selected="false">Profil</button>
+      </div>
+
+      <section class="panel" id="panel-review" role="tabpanel"></section>
+      <section class="panel" id="panel-vocab" role="tabpanel" hidden></section>
+      <section class="panel" id="panel-career" role="tabpanel" hidden></section>
+      <section class="panel" id="panel-history" role="tabpanel" hidden></section>
+      <section class="panel" id="panel-profile" role="tabpanel" hidden></section>
+    </div>
+
+    <footer class="footer">
+      <span>Wszystko zapisane lokalnie w tej przeglądarce — nic nie wychodzi na serwer.</span>
+      <span class="spacer" style="flex: 1"></span>
+      <button class="btn" id="exportBtn">Eksportuj JSON</button>
+      <button class="btn" id="settingsBtn">Ustawienia</button>
+    </footer>
+
+    <div class="toasts" id="toasts"></div>
+
+    <script src="../shared/catalog.js"></script>
+    <script src="../shared/store.js"></script>
+    <script src="library.js"></script>
+  </body>
+</html>

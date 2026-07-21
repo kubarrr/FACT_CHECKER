@@ -346,6 +346,55 @@ mark.krytykai-flag {
   font-style: italic;
 }
 
+/* --- Weryfikacja w źródłach (grounding na żądanie) --- */
+.krytykai-ground {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #f3f4f6;
+}
+.krytykai-ground-hint {
+  margin-top: 5px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* --- Pasek zapisu lekcji do biblioteki --- */
+.krytykai-save {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+.krytykai-save-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.krytykai-save-gain {
+  font-weight: 700;
+  font-size: 13px;
+  color: #047857;
+}
+.krytykai-save-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.krytykai-newbadge {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #f59e0b, #f97316);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.krytykai-save-due {
+  margin-top: 7px;
+  font-size: 12.5px;
+  color: #6b7280;
+}
+
 /* Podświetlenie kluczowych słów w streszczeniu (język nauki) */
 mark.krytykai-hl {
   background: #fde68a;

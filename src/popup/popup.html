@@ -25,9 +25,21 @@
 
     <div class="row status" id="status"></div>
 
+    <div class="progress" id="progress" hidden>
+      <div class="progress-row">
+        <span id="pStreak">🔥 0</span>
+        <span id="pXp">0 XP</span>
+      </div>
+      <div class="progress-bar"><i id="pFill"></i></div>
+      <div class="progress-due" id="pDue"></div>
+    </div>
+
     <button id="analyzeNow" class="primary">Check current page</button>
+    <button id="openLibrary">📚 Library (words &amp; skills)</button>
     <button id="openOptions" class="link">Settings (API key, provider)…</button>
 
+    <script src="../shared/catalog.js"></script>
+    <script src="../shared/store.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

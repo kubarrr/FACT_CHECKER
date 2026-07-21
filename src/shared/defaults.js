@@ -30,6 +30,10 @@ export const DEFAULT_SETTINGS = {
     goals: "",
     skills: "",
     interests: "",
+    // Kody (np. "pl", "es") sterują motywem biblioteki i grupowaniem słówek;
+    // pola *Lang trzymają angielską nazwę, która trafia do promptu.
+    nativeLangCode: "",
+    targetLangCode: "",
     nativeLang: "",
     targetLang: "",
     level: "A2",

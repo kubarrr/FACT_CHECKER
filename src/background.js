@@ -109,7 +109,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg?.type === "KRYTYKAI_ANALYZE") {
-    analyze(msg.payload)
+    analyze({ ...msg.payload, grounding: !!msg.grounding })
       .then((result) => sendResponse({ ok: true, result }))
       .catch((err) => sendResponse({ ok: false, error: String(err?.message || err) }));
     return true; // async
@@ -122,6 +122,10 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   }
   if (msg?.type === "KRYTYKAI_OPEN_OPTIONS") {
     chrome.runtime.openOptionsPage();
+    return false;
+  }
+  if (msg?.type === "KRYTYKAI_OPEN_LIBRARY") {
+    chrome.tabs.create({ url: chrome.runtime.getURL("src/library/library.html") });
     return false;
   }
   if (msg?.type === "KRYTYKAI_ANALYZE_LEARN") {
@@ -143,7 +147,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   // OD_DOWNLOAD_PROGRESS przekazujemy dalej (do popupu/opcji) – nie odpowiadamy.
 });
 
-async function analyze({ userQuestion, answerText }) {
+async function analyze({ userQuestion, answerText, grounding = false }) {
   const settings = await loadSettings();
   const trimmed = (answerText || "").slice(0, MAX_INPUT_CHARS);
   const n = settings.numQuestions;
@@ -157,7 +161,7 @@ async function analyze({ userQuestion, answerText }) {
   }
 
   // Cache – identyczna treść i ustawienia zwracane natychmiast.
-  const cacheKey = `${settings.backendUrl ? "srv" : settings.provider}|${n}|${settings.language || ""}|${trimmed.length}|${hashStr(userQuestion + "\u0000" + trimmed)}`;
+  const cacheKey = `${settings.backendUrl ? "srv" : settings.provider}|${n}|${settings.language || ""}|${grounding ? "g" : "-"}|${trimmed.length}|${hashStr(userQuestion + "\u0000" + trimmed)}`;
   const cached = cacheGet(cacheKey);
   if (cached) return { ...cached, cached: true };
 
@@ -171,6 +175,7 @@ async function analyze({ userQuestion, answerText }) {
         answerText: trimmed,
         numQuestions: n,
         language: settings.language,
+        grounding,
       });
       const out = { ...parsed, source: parsed.grounded ? "server+web" : "server" };
       cacheSet(cacheKey, out);

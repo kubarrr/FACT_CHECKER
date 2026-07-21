@@ -42,7 +42,31 @@ async function init() {
     }
   });
 
+  $("openLibrary").addEventListener("click", () => {
+    chrome.tabs.create({ url: chrome.runtime.getURL("src/library/library.html") });
+    window.close();
+  });
   $("openOptions").addEventListener("click", () => chrome.runtime.openOptionsPage());
+
+  await renderProgress();
+}
+
+// Podgląd postępów – pokazuje się dopiero, gdy jest co pokazywać.
+async function renderProgress() {
+  const store = globalThis.KRYTYKAI_STORE;
+  const catalog = globalThis.KRYTYKAI_CATALOG;
+  if (!store || !catalog) return;
+  const st = await store.getDashboardStats();
+  if (!st.lessons_count) return;
+
+  const lvl = catalog.getUserAppLevel(st.xp);
+  $("pStreak").textContent = `🔥 ${st.streak}`;
+  $("pXp").textContent = `${st.xp} XP · ${lvl.name}`;
+  $("pFill").style.width = `${lvl.progress}%`;
+  $("pDue").textContent = st.due_count
+    ? `${st.due_count} words waiting for review`
+    : `${st.vocab_count} words saved`;
+  $("progress").hidden = false;
 }
 
 init();

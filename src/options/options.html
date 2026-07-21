@@ -98,66 +98,14 @@
       </section>
 
       <section>
-        <h2>Profile – My Story & Linglerno</h2>
+        <h2>Profile &amp; progress</h2>
         <p class="hint">
-          Personalizes the “My Story” and “Linglerno” tabs in the on-page panel. These tabs turn
-          anything you read into tips for your field and into short language lessons. They require
-          a Gemini or OpenAI API key (on-device / offline modes are not supported for them).
+          Your profile — career details, languages and level — lives in the <b>Library</b>, together
+          with everything it feeds: vocabulary with spaced-repetition reviews, a competence map built
+          from what you read, XP and a streak. Kept <b>locally in this browser</b>: no account, no
+          server, nothing leaves the device.
         </p>
-
-        <div class="grid">
-          <div>
-            <label for="pfRole">Role / position</label>
-            <input id="pfRole" type="text" placeholder="e.g. junior product manager" />
-          </div>
-          <div>
-            <label for="pfIndustry">Industry / field</label>
-            <input id="pfIndustry" type="text" placeholder="e.g. fintech, medicine, gamedev" />
-          </div>
-        </div>
-
-        <label for="pfGoals">Learning goals</label>
-        <input id="pfGoals" type="text" placeholder="what you want to learn / achieve" />
-
-        <div class="grid">
-          <div>
-            <label for="pfSkills">Skills to develop</label>
-            <input id="pfSkills" type="text" placeholder="e.g. SQL, negotiation, SEO" />
-          </div>
-          <div>
-            <label for="pfInterests">Interests</label>
-            <input id="pfInterests" type="text" placeholder="e.g. football, AI, cooking" />
-          </div>
-        </div>
-
-        <h3 class="sub">Linglerno – language learning</h3>
-        <div class="grid">
-          <div>
-            <label for="pfNativeLang">Your language</label>
-            <input id="pfNativeLang" type="text" placeholder="e.g. Polish" />
-          </div>
-          <div>
-            <label for="pfTargetLang">Language to learn</label>
-            <input id="pfTargetLang" type="text" placeholder="e.g. Spanish" />
-          </div>
-        </div>
-        <div class="grid">
-          <div>
-            <label for="pfLevel">Level</label>
-            <select id="pfLevel">
-              <option value="A1">A1</option>
-              <option value="A2">A2</option>
-              <option value="B1">B1</option>
-              <option value="B2">B2</option>
-              <option value="C1">C1</option>
-              <option value="C2">C2</option>
-            </select>
-          </div>
-          <div>
-            <label for="pfCountry">Country / culture</label>
-            <input id="pfCountry" type="text" placeholder="e.g. Spain, Mexico" />
-          </div>
-        </div>
+        <button id="openLibrary" class="primary" style="width: auto">📚 Open Library</button>
       </section>
 
       <div class="actions">
