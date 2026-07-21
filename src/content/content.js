@@ -8,8 +8,8 @@
   // Analiza (podsumowanie, ocena, pytania) jest w języku treści; poniżej tylko
   // stałe etykiety panelu, tłumaczone wg języka przeglądarki (domyślnie EN).
   const I18N = {
-    en: { launcher: "Fact Check", title: "Fact Checker AI", close: "Close", copy: "Copy", copied: "Copied", ask: "Ask Gemini", loading: "Analyzing…", noAnswer: "No AI answer found on this page. Wait until the chat finishes responding.", selectFirst: "Select some text to verify first.", ctx: "The extension was reloaded or updated, and this tab still uses the old version.", reload: "Reload page", riskHigh: "High risk – be careful", riskMed: "Medium risk", riskLow: "Low risk – looks credible", kindVerify: "verify", kindExplore: "explore", noQuestions: "No questions.", reverseSearch: "Reverse search:", tabFact: "Fact Check", tabStory: "My Story", tabLingo: "Linglerno", takeaways: "How to use this", learnNext: "Learn next", readNext: "Read next", lesson: "Micro-lesson", summaryTarget: "Summary", summaryNative: "In your language", vocab: "Vocabulary", phrases: "Useful phrases", culture: "Culture note", openOptions: "Open settings" },
-    pl: { launcher: "Sprawdź", title: "Fact Checker AI", close: "Zamknij", copy: "Kopiuj", copied: "Skopiowano", ask: "Zapytaj w Gemini", loading: "Analizuję…", noAnswer: "Nie znalazłem odpowiedzi AI na tej stronie. Poczekaj, aż czat zakończy odpowiedź.", selectFirst: "Zaznacz najpierw fragment tekstu do weryfikacji.", ctx: "Rozszerzenie zostało przeładowane lub zaktualizowane, a ta karta wciąż korzysta ze starej wersji.", reload: "Odśwież stronę", riskHigh: "Wysokie ryzyko – zachowaj ostrożność", riskMed: "Średnie ryzyko", riskLow: "Niskie ryzyko – wygląda wiarygodnie", kindVerify: "weryfikacja", kindExplore: "ciekawostka", noQuestions: "Brak pytań.", reverseSearch: "Wyszukiwanie wsteczne:", tabFact: "Fakty", tabStory: "Moja Historia", tabLingo: "Linglerno", takeaways: "Jak to wykorzystać", learnNext: "Czego się nauczyć", readNext: "Co przeczytać dalej", lesson: "Mini-lekcja", summaryTarget: "Streszczenie", summaryNative: "W Twoim języku", vocab: "Słownictwo", phrases: "Przydatne zwroty", culture: "Ciekawostka kulturowa", openOptions: "Otwórz ustawienia" },
+    en: { launcher: "Fact Check", title: "Fact Checker AI", close: "Close", copy: "Copy", copied: "Copied", ask: "Ask Gemini", loading: "Analyzing…", noAnswer: "No AI answer found on this page. Wait until the chat finishes responding.", selectFirst: "Select some text to verify first.", ctx: "The extension was reloaded or updated, and this tab still uses the old version.", reload: "Reload page", riskHigh: "High risk – be careful", riskMed: "Medium risk", riskLow: "Low risk – looks credible", kindVerify: "verify", kindExplore: "explore", noQuestions: "No questions.", reverseSearch: "Reverse search:", tabFact: "Fact Check", tabStory: "My Story", tabLingo: "Linglerno", takeaways: "How to use this", learnNext: "Learn next", readNext: "Read next", lesson: "Micro-lesson", summaryTarget: "Summary", summaryNative: "In your language", vocab: "Vocabulary", phrases: "Useful phrases", culture: "Culture note", openOptions: "Open settings", searchGoogle: "Search Google", verifyWith: "Verify:" },
+    pl: { launcher: "Sprawdź", title: "Fact Checker AI", close: "Zamknij", copy: "Kopiuj", copied: "Skopiowano", ask: "Zapytaj w Gemini", loading: "Analizuję…", noAnswer: "Nie znalazłem odpowiedzi AI na tej stronie. Poczekaj, aż czat zakończy odpowiedź.", selectFirst: "Zaznacz najpierw fragment tekstu do weryfikacji.", ctx: "Rozszerzenie zostało przeładowane lub zaktualizowane, a ta karta wciąż korzysta ze starej wersji.", reload: "Odśwież stronę", riskHigh: "Wysokie ryzyko – zachowaj ostrożność", riskMed: "Średnie ryzyko", riskLow: "Niskie ryzyko – wygląda wiarygodnie", kindVerify: "weryfikacja", kindExplore: "ciekawostka", noQuestions: "Brak pytań.", reverseSearch: "Wyszukiwanie wsteczne:", tabFact: "Fakty", tabStory: "Moja Historia", tabLingo: "Linglerno", takeaways: "Jak to wykorzystać", learnNext: "Czego się nauczyć", readNext: "Co przeczytać dalej", lesson: "Mini-lekcja", summaryTarget: "Streszczenie", summaryNative: "W Twoim języku", vocab: "Słownictwo", phrases: "Przydatne zwroty", culture: "Ciekawostka kulturowa", openOptions: "Otwórz ustawienia", searchGoogle: "Szukaj w Google", verifyWith: "Zweryfikuj:" },
     es: { launcher: "Verificar", title: "Fact Checker AI", close: "Cerrar", copy: "Copiar", copied: "Copiado", ask: "Preguntar a Gemini", loading: "Analizando…", noAnswer: "No se encontró respuesta de IA en esta página. Espera a que el chat termine.", selectFirst: "Selecciona primero un texto para verificar.", ctx: "La extensión se recargó o actualizó y esta pestaña usa la versión anterior.", reload: "Recargar página", riskHigh: "Riesgo alto – ten cuidado", riskMed: "Riesgo medio", riskLow: "Riesgo bajo – parece creíble", kindVerify: "verificación", kindExplore: "curiosidad", noQuestions: "Sin preguntas." },
     de: { launcher: "Prüfen", title: "Fact Checker AI", close: "Schließen", copy: "Kopieren", copied: "Kopiert", ask: "Gemini fragen", loading: "Analysiere…", noAnswer: "Keine KI-Antwort auf dieser Seite gefunden. Warte, bis der Chat fertig ist.", selectFirst: "Markiere zuerst einen Text zur Überprüfung.", ctx: "Die Erweiterung wurde neu geladen oder aktualisiert; dieser Tab nutzt noch die alte Version.", reload: "Seite neu laden", riskHigh: "Hohes Risiko – Vorsicht", riskMed: "Mittleres Risiko", riskLow: "Geringes Risiko – wirkt glaubwürdig", kindVerify: "Prüfung", kindExplore: "Vertiefung", noQuestions: "Keine Fragen." },
     fr: { launcher: "Vérifier", title: "Fact Checker AI", close: "Fermer", copy: "Copier", copied: "Copié", ask: "Demander à Gemini", loading: "Analyse…", noAnswer: "Aucune réponse d'IA trouvée sur cette page. Attends la fin de la réponse.", selectFirst: "Sélectionne d'abord un texte à vérifier.", ctx: "L'extension a été rechargée ou mise à jour, et cet onglet utilise l'ancienne version.", reload: "Recharger la page", riskHigh: "Risque élevé – prudence", riskMed: "Risque moyen", riskLow: "Risque faible – semble crédible", kindVerify: "vérification", kindExplore: "découverte", noQuestions: "Aucune question." },
@@ -286,6 +286,30 @@
       </div>`;
   }
 
+  // Linki weryfikacyjne budowane z tekstu pytania (gotowe adresy wyszukiwarek –
+  // NIE generuje ich model, więc nie ma tu ryzyka halucynacji/zmyślonych źródeł).
+  function verifyLinksHtml(qtext, kind) {
+    const q = encodeURIComponent((qtext || "").slice(0, 300));
+    if (!q) return "";
+    const links = [[tr("searchGoogle"), `https://www.google.com/search?q=${q}`]];
+    if (kind === "verify") {
+      links.push([
+        "Google Fact Check",
+        `https://toolbox.google.com/factcheck/explorer/search/${q}`,
+      ]);
+      if (activeLang === "pl") links.push(["Demagog", `https://demagog.org.pl/?s=${q}`]);
+      else links.push(["Snopes", `https://www.snopes.com/?s=${q}`]);
+    }
+    return links
+      .map(
+        ([label, u]) =>
+          `<a class="krytykai-btn" href="${u}" target="_blank" rel="noopener">${escapeHtml(
+            label
+          )}</a>`
+      )
+      .join("");
+  }
+
   function renderResult(result, context, extraHtml) {
     showPanel();
     const badge =
@@ -303,7 +327,16 @@
       ? `<div class="krytykai-summary">${escapeHtml(result.summary)}</div>`
       : "";
 
-    const items = (result.questions || [])
+    // Kolejność wg ryzyka: niskie → najpierw ciekawostki (explore),
+    // średnie/wysokie → najpierw weryfikacja (verify). Sort stabilny.
+    const riskStr = String(result.assessment?.risk || "").toLowerCase();
+    const isLowRisk = riskStr.includes("low") || riskStr.includes("nis");
+    const rank = (k) => (isLowRisk ? (k === "explore" ? 0 : 1) : k === "verify" ? 0 : 1);
+    const ordered = (result.questions || [])
+      .slice()
+      .sort((a, b) => rank(a.kind) - rank(b.kind));
+
+    const items = ordered
       .map((item) => {
         const q = escapeHtml(item.q || "");
         const why = item.why ? `<div class="krytykai-why">${escapeHtml(item.why)}</div>` : "";
@@ -316,9 +349,10 @@
           <li class="krytykai-item">
             <div class="krytykai-q">${kind}${q}</div>
             ${why}
-            <div class="krytykai-actions">
+            <div class="krytykai-actions krytykai-actions-wrap">
               <button class="krytykai-btn" data-copy="${encodeURIComponent(item.q || "")}">${escapeHtml(T.copy)}</button>
               <button class="krytykai-btn krytykai-btn-primary" data-ask="${encodeURIComponent(item.q || "")}">${escapeHtml(T.ask)}</button>
+              ${verifyLinksHtml(item.q, item.kind)}
             </div>
           </li>`;
       })

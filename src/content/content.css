@@ -241,6 +241,11 @@
 .krytykai-btn:hover {
   background: #f9fafb;
 }
+a.krytykai-btn {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
 .krytykai-btn-primary {
   background: #4f46e5;
   border-color: #4f46e5;
