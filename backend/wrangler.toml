@@ -2,6 +2,12 @@ name = "fact-checker"
 main = "worker.js"
 compatibility_date = "2024-11-01"
 
+# Publiczny adres workers.dev – tak wtyczka i PWA wołają backend.
+workers_dev = true
+# Adresy podglądowe (jeden na wersję) też serwowałyby zapytania na Twoim kluczu
+# i omijały limity liczone dla głównego adresu. Zbędna furtka – wyłączone.
+preview_urls = false
+
 # Domyślny model (możesz nadpisać). Klucz API ustaw jako SECRET, nie tutaj:
 #   npx wrangler secret put GEMINI_API_KEY
 [vars]
@@ -10,9 +16,8 @@ GEMINI_MODEL = "gemini-3.1-flash-lite"
 # Ustaw "off", jeśli chcesz szybciej/taniej, bez wyszukiwania w sieci.
 GROUNDING = "on"
 
-# Limity zapytań (ochrona Twojego klucza) wymagają KV. Odkomentuj po utworzeniu:
-#   npx wrangler kv namespace create RATE_LIMIT
-# i wklej wygenerowane id poniżej:
-# [[kv_namespaces]]
-# binding = "RATE_LIMIT"
-# id = "WKLEJ_ID_TUTAJ"
+# Limity zapytań (ochrona Twojego klucza) – 12/min i 200/dobę na urządzenie.
+# Namespace utworzony przez: npx wrangler kv namespace create RATE_LIMIT
+[[kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "ce1bbad6dba54fa492ad4e4d7e3e8e57"

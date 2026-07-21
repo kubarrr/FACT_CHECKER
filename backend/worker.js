@@ -41,8 +41,8 @@ function json(data, status, origin) {
   });
 }
 
-async function rateLimit(env, id) {
-  if (!env.RATE_LIMIT || !id) return { ok: true };
+// Limit dla pojedynczego identyfikatora (jedno „wiadro").
+async function bucketCheck(env, id) {
   const now = new Date();
   const minKey = `m:${id}:${now.getUTCHours()}:${now.getUTCMinutes()}`;
   const dayKey = `d:${id}:${now.getUTCFullYear()}-${now.getUTCMonth()}-${now.getUTCDate()}`;
@@ -61,6 +61,24 @@ async function rateLimit(env, id) {
     env.RATE_LIMIT.put(minKey, String(minCount + 1), { expirationTtl: 120 }),
     env.RATE_LIMIT.put(dayKey, String(dayCount + 1), { expirationTtl: 90000 }),
   ]);
+  return { ok: true };
+}
+
+// Limity liczymy PRZEDE WSZYSTKIM po IP (z nagłówka Cloudflare, klient go nie
+// podrobi). X-Device-Id pochodzi od klienta, więc sam w sobie nie jest żadną
+// ochroną – wystarczyłoby losować go przy każdym żądaniu, by ominąć limit.
+// Służy tylko do dodatkowego rozdzielenia urządzeń za wspólnym NAT-em.
+async function rateLimit(env, { ip, deviceId }) {
+  if (!env.RATE_LIMIT) return { ok: true };
+  const ids = [];
+  if (ip) ids.push(`ip:${ip}`);
+  if (deviceId && ip) ids.push(`dev:${ip}:${deviceId}`);
+  if (!ids.length) return { ok: true };
+
+  for (const id of ids) {
+    const res = await bucketCheck(env, id);
+    if (!res.ok) return res;
+  }
   return { ok: true };
 }
 
@@ -88,7 +106,7 @@ export default {
     // Rate limiting – per urządzenie (stabilniejsze niż IP), z fallbackiem na IP.
     const deviceId = (request.headers.get("X-Device-Id") || "").slice(0, 64);
     const ip = request.headers.get("CF-Connecting-IP") || "";
-    const rl = await rateLimit(env, deviceId || ip);
+    const rl = await rateLimit(env, { ip, deviceId });
     if (!rl.ok) {
       return json(
         { error: "Rate limit exceeded. Try again later.", retryAfter: rl.retry },
@@ -138,7 +156,11 @@ export default {
     } else {
       system = buildSystemPrompt(numQuestions, language);
       user = buildUserPrompt({ userQuestion, answerText });
-      useGrounding = env.GROUNDING !== "off";
+      // Grounding tylko na wyraźne żądanie klienta („Sprawdź w źródłach").
+      // Wyszukiwanie Google ma osobny, dużo ciaśniejszy limit u Google niż samo
+      // generowanie, więc domyślne włączanie go wyczerpywało cały przydział.
+      // GROUNDING="off" pozwala wyłączyć tę możliwość globalnie.
+      useGrounding = payload.grounding === true && env.GROUNDING !== "off";
       if (useGrounding) loose = true; // model dokleja tekst wokół JSON – parsujemy luźno
     }
 
