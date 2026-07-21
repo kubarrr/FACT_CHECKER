@@ -577,14 +577,20 @@
     )}</div><ul class="krytykai-learn-list">${li}</ul></div>`;
   }
 
-  // Kolor wg części mowy: rzeczownik = pomarańczowy (tłumaczenie niebieskie),
-  // czasownik = zielony, przymiotnik/inne = pogrubione.
-  function posSpan(text, pos, side) {
-    const t = escapeHtml(text);
-    if (pos === "noun")
-      return `<span class="${side === "trans" ? "krytykai-pos-noun-tr" : "krytykai-pos-noun"}">${t}</span>`;
-    if (pos === "verb") return `<span class="krytykai-pos-verb">${t}</span>`;
-    return `<b>${t}</b>`; // adjective / other
+  // Zamienia markdownowe **pogrubienie** modelu na <strong> (po zabezpieczeniu HTML),
+  // żeby nie pokazywały się surowe gwiazdki.
+  function mdBold(text) {
+    return escapeHtml(String(text || "")).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  }
+
+  // Zamienia znaczniki [[słowo]] na podświetlenie (streszczenie w języku nauki)
+  // lub pogrubienie (odpowiedniki w tłumaczeniu użytkownika).
+  function markHighlights(text, mode) {
+    const wrap =
+      mode === "bold"
+        ? (s) => `<strong>${s}</strong>`
+        : (s) => `<mark class="krytykai-hl">${s}</mark>`;
+    return escapeHtml(String(text || "")).replace(/\[\[([^\]]+)\]\]/g, (_m, g) => wrap(g));
   }
 
   function renderStory(r) {
@@ -592,13 +598,13 @@
     const badge = `<span class="krytykai-badge">${escapeHtml(r.source || "gemini")}</span>`;
     const takeaways = listBlock(
       tr("takeaways"),
-      (r.takeaways || []).map((t) => escapeHtml(t))
+      (r.takeaways || []).map((t) => mdBold(t))
     );
     const read = readNextBlock(r.read_next || []);
     const lesson = r.lesson
       ? `<div class="krytykai-learn-sec"><div class="krytykai-learn-h">${escapeHtml(
           tr("lesson")
-        )}</div><div class="krytykai-summary">${escapeHtml(r.lesson)}</div></div>`
+        )}</div><div class="krytykai-summary">${mdBold(r.lesson)}</div></div>`
       : "";
     setBody(`<div class="krytykai-meta">${badge}</div>${takeaways}${read}${lesson}`);
   }
@@ -612,10 +618,10 @@
       .map((x) => {
         const query = x.query || x.title || "";
         const q = encodeURIComponent(String(query).slice(0, 200));
-        const why = x.why ? ` – ${escapeHtml(x.why)}` : "";
+        const why = x.why ? ` – ${mdBold(x.why)}` : "";
         const g = `https://www.google.com/search?q=${q}`;
         const yt = `https://www.youtube.com/results?search_query=${q}`;
-        return `<li><b>${escapeHtml(query)}</b>${why}
+        return `<li><b>${mdBold(query)}</b>${why}
           <div class="krytykai-actions krytykai-actions-wrap" style="margin-top:4px;">
             <a class="krytykai-btn" href="${g}" target="_blank" rel="noopener">${escapeHtml(tr("searchGoogle"))}</a>
             <a class="krytykai-btn" href="${yt}" target="_blank" rel="noopener">${escapeHtml(tr("course"))}</a>
@@ -634,31 +640,19 @@
       r.summary_target || r.summary_native
         ? `<div class="krytykai-learn-sec"><div class="krytykai-learn-h">${escapeHtml(
             tr("summaryTarget")
-          )}</div><div class="krytykai-summary">${escapeHtml(r.summary_target || "")}</div>${
+          )}</div><div class="krytykai-summary">${markHighlights(r.summary_target || "", "hl")}</div>${
             r.summary_native
-              ? `<div class="krytykai-learn-native">${escapeHtml(r.summary_native)}</div>`
+              ? `<div class="krytykai-learn-native">${markHighlights(r.summary_native, "bold")}</div>`
               : ""
           }</div>`
         : "";
-    const vocabItems = (r.vocab || [])
-      .map((v) => {
-        const pos = String(v.pos || "").toLowerCase();
-        const term = posSpan(v.term || "", pos, "term");
-        const trans = posSpan(v.translation || "", pos, "trans");
+    const vocab = listBlock(
+      tr("vocab"),
+      (r.vocab || []).map((v) => {
         const ex = v.example ? `<div class="krytykai-why">${escapeHtml(v.example)}</div>` : "";
-        return `<li>${term} — ${trans}${ex}</li>`;
+        return `<b>${escapeHtml(v.term || "")}</b> — ${escapeHtml(v.translation || "")}${ex}`;
       })
-      .join("");
-    const legend = `<div class="krytykai-poslegend">
-      <span class="krytykai-pos-noun">${escapeHtml(tr("posNoun"))}</span> ·
-      <span class="krytykai-pos-verb">${escapeHtml(tr("posVerb"))}</span> ·
-      <b>${escapeHtml(tr("posOther"))}</b>
-    </div>`;
-    const vocab = vocabItems
-      ? `<div class="krytykai-learn-sec"><div class="krytykai-learn-h">${escapeHtml(
-          tr("vocab")
-        )}</div>${legend}<ul class="krytykai-learn-list">${vocabItems}</ul></div>`
-      : "";
+    );
     const phrases = listBlock(
       tr("phrases"),
       (r.phrases || []).map(

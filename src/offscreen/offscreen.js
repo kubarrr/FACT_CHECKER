@@ -103,7 +103,6 @@ const LINGO_SCHEMA = {
         properties: {
           term: { type: "string" },
           translation: { type: "string" },
-          pos: { type: "string", enum: ["noun", "verb", "adjective", "other"] },
           example: { type: "string" },
         },
         required: ["term", "translation"],

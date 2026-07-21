@@ -321,12 +321,11 @@ mark.krytykai-flag {
   font-style: italic;
 }
 
-/* Kolorowanie części mowy w Linglerno */
-.krytykai-pos-noun { color: #d97706; font-weight: 700; }
-.krytykai-pos-noun-tr { color: #2563eb; font-weight: 700; }
-.krytykai-pos-verb { color: #059669; font-weight: 700; }
-.krytykai-poslegend {
-  font-size: 11px;
-  color: #6b7280;
-  margin-bottom: 6px;
+/* Podświetlenie kluczowych słów w streszczeniu (język nauki) */
+mark.krytykai-hl {
+  background: #fde68a;
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 3px;
+  font-weight: 600;
 }
