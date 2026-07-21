@@ -8,6 +8,7 @@ const DEFAULTS = {
   autoAnalyzeChat: false,
   numQuestions: 4,
   language: "pl",
+  backendUrl: "",
   profile: {
     role: "",
     industry: "",
@@ -89,6 +90,7 @@ async function load() {
   $("autoAnalyzeChat").checked = !!s.autoAnalyzeChat;
   $("numQuestions").value = s.numQuestions;
   $("language").value = s.language || "pl";
+  $("backendUrl").value = s.backendUrl || "";
   const p = s.profile || {};
   $("pfRole").value = p.role || "";
   $("pfIndustry").value = p.industry || "";
@@ -115,6 +117,7 @@ function readForm() {
     autoAnalyzeChat: $("autoAnalyzeChat").checked,
     numQuestions: n,
     language: $("language").value,
+    backendUrl: $("backendUrl").value.trim().replace(/\/+$/, ""),
     profile: {
       role: $("pfRole").value.trim(),
       industry: $("pfIndustry").value.trim(),

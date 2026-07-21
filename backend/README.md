@@ -5,11 +5,22 @@ własnego klucza. Darmowy plan Cloudflare Workers wystarcza na start.
 
 ## Co robi
 
-- `POST /` z `{ answerText, userQuestion?, numQuestions? }` → zwraca JSON z oceną i pytaniami.
+- `POST /` z `{ answerText, userQuestion?, numQuestions?, mode?, profile?, language? }` → JSON z oceną i pytaniami.
+  - `mode`: `factcheck` (domyślnie), `story` (My Career), `lingo` (Linglerno).
 - `GET /health` → `ok`.
-- CORS włączony (PWA może wołać z innej domeny).
+- **Grounding**: dla `factcheck` włącza wyszukiwanie Google (Gemini `google_search`),
+  weryfikuje treść w realnych źródłach i zwraca je w polu `sources: [{title, url}]`.
+  Sterowane zmienną `GROUNDING` (`on`/`off`).
+- CORS włączony (PWA i rozszerzenie mogą wołać z innej domeny).
 - Limit wielkości wejścia (8000 znaków).
-- Rate limiting per IP (12/min, 200/dobę) — **wymaga KV** (poniżej). Bez KV limity są wyłączone.
+- Rate limiting **per urządzenie** (nagłówek `X-Device-Id`, fallback na IP): 12/min, 200/dobę —
+  **wymaga KV** (poniżej). Bez KV limity są wyłączone.
+
+## Wykorzystanie w rozszerzeniu i PWA
+
+- **Rozszerzenie**: w Opcjach wklej adres serwera w polu „Server URL". Wtedy Fact Checker
+  (i My Career / Linglerno) działają na Twoim kluczu z groundingiem. Puste = tryb lokalny.
+- **PWA**: wpisz adres w `pwa/config.js` (patrz niżej).
 
 ## Wdrożenie (krok po kroku)
 

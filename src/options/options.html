@@ -38,8 +38,20 @@
       </section>
 
       <section>
+        <h2>Cloud server (recommended)</h2>
+        <label for="backendUrl">Server URL</label>
+        <input id="backendUrl" type="text" placeholder="https://your-worker.workers.dev" autocomplete="off" />
+        <p class="hint">
+          When set, Fact Checker runs on your cloud server (your API key stays on the server) and
+          uses <b>Google Search grounding</b> — it verifies claims against real web sources and shows
+          them under the result. My Career / Linglerno also use this server. Leave empty to run
+          locally (on-device / your own key), without web verification.
+        </p>
+      </section>
+
+      <section>
         <div id="apiWrap">
-          <h2>API access</h2>
+          <h2>API access (optional – only without a server)</h2>
           <label for="apiKey">API key</label>
           <input id="apiKey" type="password" placeholder="Paste your API key…" autocomplete="off" />
           <p class="hint" id="keyHint"></p>

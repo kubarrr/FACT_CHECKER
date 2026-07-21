@@ -41,11 +41,11 @@ function json(data, status, origin) {
   });
 }
 
-async function rateLimit(env, ip) {
-  if (!env.RATE_LIMIT || !ip) return { ok: true };
+async function rateLimit(env, id) {
+  if (!env.RATE_LIMIT || !id) return { ok: true };
   const now = new Date();
-  const minKey = `m:${ip}:${now.getUTCHours()}:${now.getUTCMinutes()}`;
-  const dayKey = `d:${ip}:${now.getUTCFullYear()}-${now.getUTCMonth()}-${now.getUTCDate()}`;
+  const minKey = `m:${id}:${now.getUTCHours()}:${now.getUTCMinutes()}`;
+  const dayKey = `d:${id}:${now.getUTCFullYear()}-${now.getUTCMonth()}-${now.getUTCDate()}`;
 
   const [minRaw, dayRaw] = await Promise.all([
     env.RATE_LIMIT.get(minKey),
@@ -85,9 +85,10 @@ export default {
       return json({ error: "Server not configured (missing GEMINI_API_KEY)" }, 500, origin);
     }
 
-    // Rate limiting
+    // Rate limiting – per urządzenie (stabilniejsze niż IP), z fallbackiem na IP.
+    const deviceId = (request.headers.get("X-Device-Id") || "").slice(0, 64);
     const ip = request.headers.get("CF-Connecting-IP") || "";
-    const rl = await rateLimit(env, ip);
+    const rl = await rateLimit(env, deviceId || ip);
     if (!rl.ok) {
       return json(
         { error: "Rate limit exceeded. Try again later.", retryAfter: rl.retry },
@@ -121,6 +122,9 @@ export default {
     let system, user;
     let maxTokens = MAX_OUTPUT_TOKENS;
     let loose = false;
+    // Grounding (weryfikacja w realnych źródłach) – tylko fact-check, domyślnie ON.
+    // Ustaw zmienną środowiskową GROUNDING="off", by wyłączyć (szybciej/taniej).
+    let useGrounding = false;
     if (mode === "story") {
       system = buildStorySystemPrompt(language);
       user = buildStoryUserPrompt(profile, answerText);
@@ -134,18 +138,22 @@ export default {
     } else {
       system = buildSystemPrompt(numQuestions, language);
       user = buildUserPrompt({ userQuestion, answerText });
+      useGrounding = env.GROUNDING !== "off";
+      if (useGrounding) loose = true; // model dokleja tekst wokół JSON – parsujemy luźno
     }
 
     const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${env.GEMINI_API_KEY}`;
+    // Niższa temperatura = stabilniejsza ocena, mniej „wymyślania".
+    const generationConfig = { temperature: 0.3, maxOutputTokens: maxTokens };
+    // Tryb JSON i narzędzie wyszukiwania bywają niekompatybilne – przy groundingu
+    // nie wymuszamy responseMimeType (o JSON prosimy w treści promptu).
+    if (!useGrounding) generationConfig.responseMimeType = "application/json";
     const body = {
       system_instruction: { parts: [{ text: system }] },
       contents: [{ role: "user", parts: [{ text: user }] }],
-      generationConfig: {
-        temperature: 0.6,
-        responseMimeType: "application/json",
-        maxOutputTokens: maxTokens,
-      },
+      generationConfig,
     };
+    if (useGrounding) body.tools = [{ google_search: {} }];
 
     let res;
     try {
@@ -174,6 +182,27 @@ export default {
       return json({ error: "Could not parse model output" }, 502, origin);
     }
 
+    // Realne źródła z groundingu (tytuł + link) – to one czynią weryfikację
+    // wiarygodną. Adresy pochodzą od Google, nie są zmyślane przez model.
+    const sources = extractSources(data);
+    if (sources.length) parsed.sources = sources;
+    if (useGrounding) parsed.grounded = true;
+
     return json(parsed, 200, origin);
   },
 };
+
+// Wyciąga źródła z metadanych groundingu Gemini (groundingChunks[].web).
+function extractSources(data) {
+  const chunks = data?.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+  const seen = new Set();
+  const out = [];
+  for (const c of chunks) {
+    const uri = c?.web?.uri;
+    if (!uri || seen.has(uri)) continue;
+    seen.add(uri);
+    out.push({ title: String(c.web.title || uri).slice(0, 160), url: uri });
+    if (out.length >= 6) break;
+  }
+  return out;
+}

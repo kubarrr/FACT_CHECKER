@@ -197,6 +197,10 @@ button.ghost { background: #fff; color: var(--muted); }
 .kind-verify { background: #fee2e2; color: #b91c1c; }
 .kind-explore { background: #dbeafe; color: #1d4ed8; }
 .kind-persp { background: #ede9fe; color: #6d28d9; }
+.sources { margin-top: 12px; padding-top: 10px; border-top: 1px solid #e5e7eb; }
+.sources-h { font-size: 12px; font-weight: 700; color: #374151; margin-bottom: 5px; }
+.sources ul { margin: 0; padding-left: 18px; }
+.sources a { color: #2563eb; font-size: 13px; word-break: break-word; }
 .q { font-weight: 600; }
 .why { color: var(--muted); font-size: 13.5px; margin-top: 3px; }
 .qactions { margin-top: 8px; display: flex; gap: 8px; }

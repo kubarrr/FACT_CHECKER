@@ -30,6 +30,44 @@ function hashStr(s) {
 function cacheGet(key) {
   return resultCache.get(key);
 }
+
+// Stabilny, anonimowy identyfikator urządzenia (do limitów po stronie backendu).
+let deviceIdPromise = null;
+function getDeviceId() {
+  if (deviceIdPromise) return deviceIdPromise;
+  deviceIdPromise = (async () => {
+    const { krytykai_device_id } = await chrome.storage.local.get("krytykai_device_id");
+    if (krytykai_device_id) return krytykai_device_id;
+    const id =
+      (crypto.randomUUID && crypto.randomUUID()) ||
+      `d${Date.now()}${Math.random().toString(36).slice(2)}`;
+    await chrome.storage.local.set({ krytykai_device_id: id });
+    return id;
+  })();
+  return deviceIdPromise;
+}
+
+// Wywołanie backendu w chmurze (trzyma klucz API + grounding). Zwraca sparsowany JSON.
+async function callBackend(backendUrl, bodyObj) {
+  const url = String(backendUrl).replace(/\/+$/, "");
+  const deviceId = await getDeviceId();
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Device-Id": deviceId },
+    body: JSON.stringify(bodyObj),
+  });
+  if (!res.ok) {
+    let detail = "";
+    try {
+      const j = await res.json();
+      detail = j.error || j.detail || "";
+    } catch {}
+    if (res.status === 429)
+      throw new Error(detail || "Wyczerpano limit darmowych zapytań. Spróbuj później.");
+    throw new Error(`HTTP ${res.status}: ${detail}`);
+  }
+  return res.json();
+}
 function cacheSet(key, value) {
   resultCache.set(key, value);
   if (resultCache.size > CACHE_MAX) {
@@ -119,9 +157,33 @@ async function analyze({ userQuestion, answerText }) {
   }
 
   // Cache – identyczna treść i ustawienia zwracane natychmiast.
-  const cacheKey = `${settings.provider}|${n}|${settings.language || ""}|${trimmed.length}|${hashStr(userQuestion + "\u0000" + trimmed)}`;
+  const cacheKey = `${settings.backendUrl ? "srv" : settings.provider}|${n}|${settings.language || ""}|${trimmed.length}|${hashStr(userQuestion + "\u0000" + trimmed)}`;
   const cached = cacheGet(cacheKey);
   if (cached) return { ...cached, cached: true };
+
+  // Backend w chmurze (Twój klucz + grounding = weryfikacja w realnych źródłach).
+  // To najbardziej wiarygodny tryb; lokalny model zostaje jako szybki fallback.
+  if (settings.backendUrl) {
+    try {
+      const parsed = await callBackend(settings.backendUrl, {
+        mode: "factcheck",
+        userQuestion,
+        answerText: trimmed,
+        numQuestions: n,
+        language: settings.language,
+      });
+      const out = { ...parsed, source: parsed.grounded ? "server+web" : "server" };
+      cacheSet(cacheKey, out);
+      return out;
+    } catch (err) {
+      const msg = String(err?.message || err);
+      // Przy wyczerpanym limicie nie „udajemy" – informujemy wprost.
+      if (/limit|429/i.test(msg)) {
+        return { ...heuristicQuestions(trimmed, n), source: "heuristic", warning: msg };
+      }
+      // Inne błędy: spróbuj lokalnie poniżej (nie przerywamy działania).
+    }
+  }
 
   const system = buildSystemPrompt(n, settings.language);
   const user = buildUserPrompt({ userQuestion, answerText: trimmed });
@@ -338,11 +400,29 @@ async function analyzeLearn(mode, payload) {
   const profile = settings.profile || {};
 
   // Cache – identyczny tryb + treść + profil + język zwracamy natychmiast.
-  const cacheKey = `learn|${mode}|${settings.provider}|${settings.language || ""}|${hashStr(
+  const cacheKey = `learn|${mode}|${settings.backendUrl ? "srv" : settings.provider}|${settings.language || ""}|${hashStr(
     JSON.stringify(profile)
   )}|${answerText.length}|${hashStr(answerText)}`;
   const cachedLearn = cacheGet(cacheKey);
   if (cachedLearn) return { ...cachedLearn, cached: true };
+
+  // Backend w chmurze (Twój klucz). My Career / Linglerno działają znacznie lepiej
+  // na modelu chmurowym niż na Nano (zwłaszcza nauka języka).
+  if (settings.backendUrl) {
+    try {
+      const parsed = await callBackend(settings.backendUrl, {
+        mode,
+        profile,
+        answerText,
+        language: settings.language,
+      });
+      const out = { ...parsed, mode, source: "server" };
+      cacheSet(cacheKey, out);
+      return out;
+    } catch (err) {
+      return { needCloud: true, warning: String(err?.message || err) };
+    }
+  }
 
   // Model wbudowany (Gemini Nano) – bez klucza, prywatnie. Działa najlepiej po
   // angielsku; przy innych językach (zwłaszcza Linglerno) jakość bywa niższa.

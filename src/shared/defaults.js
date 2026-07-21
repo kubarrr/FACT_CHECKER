@@ -20,6 +20,9 @@ export const DEFAULT_SETTINGS = {
   autoAnalyzeChat: false, // czy analizować automatycznie po każdej odpowiedzi
   language: "pl",
   numQuestions: 4,
+  // Backend w chmurze z Twoim kluczem (grounding + limity). Pusty = fact-check
+  // działa lokalnie (Nano / własny klucz), bez weryfikacji w realnych źródłach.
+  backendUrl: "",
   // Profil użytkownika – personalizuje tryby My Story i Linglerno.
   profile: {
     role: "",

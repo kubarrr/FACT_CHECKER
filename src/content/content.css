@@ -190,6 +190,27 @@
   color: #6d28d9;
 }
 
+.krytykai-sources {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #e5e7eb;
+}
+.krytykai-sources-h {
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 5px;
+}
+.krytykai-sources ul {
+  margin: 0;
+  padding-left: 18px;
+}
+.krytykai-sources a {
+  color: #2563eb;
+  font-size: 12.5px;
+  word-break: break-word;
+}
+
 .krytykai-summary {
   background: #f9fafb;
   border-left: 3px solid #7c3aed;
