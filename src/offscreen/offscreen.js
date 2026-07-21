@@ -54,9 +54,9 @@ const RESPONSE_SCHEMA = {
       items: {
         type: "object",
         properties: {
-          q: { type: "string" },
-          why: { type: "string" },
-          kind: { type: "string", enum: ["verify", "explore"] },
+              q: { type: "string" },
+              why: { type: "string" },
+              kind: { type: "string", enum: ["verify", "explore", "perspective"] },
         },
         required: ["q", "why"],
       },

@@ -196,6 +196,7 @@ button.ghost { background: #fff; color: var(--muted); }
 }
 .kind-verify { background: #fee2e2; color: #b91c1c; }
 .kind-explore { background: #dbeafe; color: #1d4ed8; }
+.kind-persp { background: #ede9fe; color: #6d28d9; }
 .q { font-weight: 600; }
 .why { color: var(--muted); font-size: 13.5px; margin-top: 3px; }
 .qactions { margin-top: 8px; display: flex; gap: 8px; }

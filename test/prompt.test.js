@@ -29,6 +29,15 @@ test("buildSystemPrompt forces chosen language and always asks for N questions",
   assert.match(p, /TODAY'S DATE is \d{4}-\d{2}-\d{2}/);
 });
 
+test("buildSystemPrompt adds balance for political/contested topics", () => {
+  const p = buildSystemPrompt(4, "pl");
+  assert.match(p, /perspective/);
+  assert.match(p, /OTHER SIDE/i);
+  assert.match(p, /METHODOLOGY/i);
+  assert.match(p, /NEUTRAL/i);
+  assert.match(p, /"verify"\|"explore"\|"perspective"/);
+});
+
 test("buildUserPrompt includes question and content", () => {
   const u = buildUserPrompt({ userQuestion: "Czy to prawda?", answerText: "Treść." });
   assert.match(u, /USER'S QUESTION:/);
