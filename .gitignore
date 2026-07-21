@@ -11,6 +11,13 @@ backend/.dev.vars
 .env
 .env.*
 
+# Stan lokalny wranglera (cache, sesja) – nie należy do repo
+backend/.wrangler/
+
+# Lingvido to osobny projekt z własnym repozytorium git.
+# Trzymany obok wyłącznie jako materiał źródłowy – nie wciągamy go tutaj.
+lingvido/
+
 # OS / editor
 .DS_Store
 Thumbs.db
