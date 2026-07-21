@@ -1,14 +1,31 @@
 // Budowanie promptu dla LLM oraz heurystyczny tryb awaryjny (bez klucza API).
 
-export function buildSystemPrompt(numQuestions) {
+// Nazwy języków dla wymuszenia języka odpowiedzi (język aplikacji wybrany przez użytkownika).
+const LANG_NAMES = { pl: "Polish", en: "English", es: "Spanish", de: "German", fr: "French" };
+export function langName(code) {
+  return LANG_NAMES[String(code || "").toLowerCase().slice(0, 2)] || null;
+}
+
+export function buildSystemPrompt(numQuestions, language) {
+  const today = new Date().toISOString().slice(0, 10);
+  const ln = langName(language);
+  const langLine = ln
+    ? `CRITICAL LANGUAGE RULE: Write the summary, the assessment note, and ALL questions ONLY in ${ln}. This is mandatory REGARDLESS of the language of the analyzed content — even if the content is in another language, your output text MUST be in ${ln}. Do NOT answer in English unless ${ln} is English.`
+    : "IMPORTANT: First DETECT the language of the analyzed content. Write the summary, the assessment note, and ALL questions in that SAME language (whatever language the content is in).";
+  const outLang = ln || "the content language";
+  const reminder = ln
+    ? `FINAL REMINDER: every human-readable string (summary, note, each question's "q" and "why") MUST be written in ${ln}.`
+    : "";
   return [
     "You are a critical fact-checking and credibility-assessment assistant.",
     "You will receive some content (an AI chat answer, a news article, or a snippet), optionally with the user's question.",
     "",
-    "IMPORTANT: First DETECT the language of the analyzed content. Write the summary, the assessment note,",
-    "and ALL questions in that SAME language (whatever language the content is in).",
+    `TODAY'S DATE is ${today}. Treat this as the current date. Dates on or before today are NOT in the future.`,
+    "Do NOT raise risk merely because a year looks recent or is the current year — the current year is normal, not 'outdated' or 'future'. Only flag a date as future/outdated if it is genuinely after today or clearly stale for the claim.",
     "",
-    "Do TWO things:",
+    langLine,
+    "",
+    "Do THREE things:",
     "",
     "1) CREDIBILITY ASSESSMENT. Return an 'assessment' object with:",
     '   - "type": one of "fact" (concrete, verifiable, neutral tone), "opinion",',
@@ -17,21 +34,30 @@ export function buildSystemPrompt(numQuestions) {
     "     Raise risk for: emotional/sensational language, missing sources, exaggeration, vague",
     "     generalities, politically charged claims, clickbait phrasing. Lower it for concrete,",
     "     verifiable facts (e.g. sports results, data, dates, events, neutral tone).",
-    '   - "note": one sentence justifying the assessment, written IN THE CONTENT LANGUAGE.',
+    `   - "note": one sentence justifying the assessment, written in ${outLang}.`,
     "",
-    "2) QUESTIONS — MATCH THEIR CHARACTER TO THE ASSESSMENT:",
-    '   - If risk = "high" or type = "clickbait"/"opinion": give EXACTLY 2 sharp VERIFICATION',
+    `2) QUESTIONS — ALWAYS give ${numQuestions} questions total. Match their CHARACTER to the assessment:`,
+    '   - If risk = "high" or type = "clickbait"/"opinion": make them mostly sharp VERIFICATION',
     '     questions (kind: "verify") that help check truthfulness and expose manipulation.',
-    `   - If risk = "low" and type = "fact": give ${numQuestions} deeper CURIOSITY/EXPLORATION`,
-    '     questions (kind: "explore") to learn more about the topic (e.g. for a sports result –',
+    '   - If risk = "low" and type = "fact": make them deeper CURIOSITY/EXPLORATION questions',
+    '     (kind: "explore") to learn more about the topic (e.g. for a sports result –',
     "     more about the athlete's achievements, records, historical context).",
-    `   - Otherwise ("medium"): mix verification and exploration questions, up to ${numQuestions} total.`,
+    '   - Otherwise ("medium"): mix verification and exploration questions.',
+    `   Always return exactly ${numQuestions} questions.`,
     "",
-    'Each question (in the content language): {"q": "...", "why": "one sentence why", "kind": "verify"|"explore"}.',
+    "3) FLAGS — dubious fragments. Return \"flags\": an array (0 to 3 items) of objects",
+    '   {"quote": "...", "why": "..."} where "quote" is copied VERBATIM (an exact substring,',
+    "   a single sentence or short phrase) from the analyzed content — a claim that is",
+    "   manipulative, unsupported, or needs verification. Copy the quote EXACTLY as written in",
+    `   the ORIGINAL language of the content (do NOT translate the quote). Write "why" in ${outLang}.`,
+    "   If nothing is dubious (e.g. low risk / plain fact), return an empty array.",
+    "",
+    `Each question (in ${outLang}): {"q": "...", "why": "one sentence why", "kind": "verify"|"explore"}.`,
     "Return ONLY valid JSON in this exact shape:",
-    '{"assessment": {"type": "...", "risk": "...", "note": "..."}, "summary": "one sentence", "questions": [{"q": "...", "why": "...", "kind": "..."}]}',
+    '{"assessment": {"type": "...", "risk": "...", "note": "..."}, "summary": "one sentence", "questions": [{"q": "...", "why": "...", "kind": "..."}], "flags": [{"quote": "...", "why": "..."}]}',
     "No text outside the JSON, no markdown fences.",
-  ].join("\n");
+    reminder,
+  ].filter(Boolean).join("\n");
 }
 
 export function buildUserPrompt({ userQuestion, answerText }) {
@@ -39,6 +65,52 @@ export function buildUserPrompt({ userQuestion, answerText }) {
   if (userQuestion) parts.push(`USER'S QUESTION:\n${userQuestion}\n`);
   parts.push(`CONTENT TO ANALYZE:\n${answerText}`);
   return parts.join("\n");
+}
+
+// Prompt do oceny autentyczności obrazu/klatki wideo (multimodalny).
+export function buildMediaSystemPrompt(numQuestions, language) {
+  const today = new Date().toISOString().slice(0, 10);
+  const ln = langName(language);
+  const langLine = ln
+    ? `IMPORTANT: Write the note, summary and questions in ${ln}, regardless of the context language.`
+    : "IMPORTANT: Detect the language of the context; write the note, summary and questions in that language. If the context is empty, use Polish.";
+  return [
+    "You are a media authenticity assistant. You receive an IMAGE (a photo or a single frame",
+    "extracted from a video) and optional surrounding text/context from a web page.",
+    "",
+    `TODAY'S DATE is ${today}. Dates on or before today are NOT in the future; do not flag the current year as suspicious.`,
+    "",
+    "Assess how likely the media is AI-generated, deepfaked, edited or misleadingly presented.",
+    "CRITICAL: You are NOT a certified detector. Never claim certainty. Be cautious and explain",
+    "the VISIBLE signals you reason from: faces, eyes/blinking, teeth, hands and fingers, skin texture,",
+    "lighting/shadows consistency, warped backgrounds, garbled text/logos, and physically impossible",
+    "scenarios (e.g. a person talking to a younger version of themselves is inherently synthetic).",
+    "",
+    langLine,
+    "",
+    "Return an 'assessment' object with:",
+    '   - "type": one of "authentic", "ai_generated", "deepfake", "edited", "misleading_context", "uncertain".',
+    '   - "risk": risk that the media is fake/manipulated/misleading: "low" | "medium" | "high".',
+    '   - "note": one sentence justifying the assessment, in the context language.',
+    "",
+    `Also give up to ${numQuestions} concrete questions/steps (kind: "verify") that help the user`,
+    "check it (reverse image search, look for the original/official source, check date and place,",
+    "look for other angles, ask who first posted it).",
+    "",
+    "Return ONLY valid JSON in this exact shape:",
+    '{"assessment": {"type": "...", "risk": "...", "note": "..."}, "summary": "one sentence", "questions": [{"q": "...", "why": "...", "kind": "verify"}]}',
+    "No text outside the JSON, no markdown fences.",
+  ].join("\n");
+}
+
+export function buildMediaUserPrompt({ context, mediaType }) {
+  const kind = mediaType === "video" ? "a frame extracted from a video" : "an image";
+  const ctx = (context || "").trim();
+  return [
+    `The attached media is ${kind}.`,
+    ctx ? `Surrounding context from the web page:\n"""\n${ctx}\n"""` : "There is no useful surrounding text.",
+    "Analyze the attached image and return the JSON described in the instructions.",
+  ].join("\n");
 }
 
 // Deterministyczny PRNG (mulberry32) – ta sama treść daje stabilną kolejność,
@@ -233,7 +305,7 @@ export function parseLooseJson(text) {
   return JSON.parse(t);
 }
 
-// ---------- Prompty trybów uczących (kopia z pwa/learn.js) ----------
+// ---------- Prompty trybów uczących ----------
 function profileBlock(p) {
   const lines = [];
   if (p.role) lines.push(`Role/position: ${String(p.role).slice(0, 200)}`);
@@ -244,23 +316,29 @@ function profileBlock(p) {
   return lines.length ? lines.join("\n") : "(no profile provided)";
 }
 
-export function buildStorySystemPrompt() {
+export function buildStorySystemPrompt(language) {
+  const ln = langName(language);
+  const langLine = ln
+    ? `Write EVERYTHING (takeaways, topics, reasons, lesson) in ${ln}, regardless of the language of the content.`
+    : "Detect the language of the content and write everything in that language (if unclear, use the profile/native language).";
   return [
     "You are a personal growth & learning coach. The user gives you something they just read",
     "(an article, a post, an AI answer) plus their PROFILE (career, goals, skills, interests).",
     "",
     "Turn what they read into concrete personal value. Be specific and actionable — NO vague fluff.",
-    "Connect ideas to THEIR field, role and goals. Detect the language of the content and write",
-    "everything in that language (if unclear, use the profile/native language).",
+    `Connect ideas to THEIR field, role and goals. ${langLine}`,
+    "Keep it SHORT and focused — quality over quantity, do not overwhelm the user.",
+    "",
+    "For read_next: give a search QUERY (a topic, skill or well-known course subject) the user can",
+    "look up — do NOT invent specific article titles, URLs, authors or book names (avoid hallucination).",
     "",
     "Return ONLY valid JSON in this exact shape:",
     "{",
-    '  "takeaways": ["2-4 concrete ways to use this in their work/field"],',
-    '  "learn_next": [{"topic": "...", "why": "one sentence"}],',
-    '  "read_next": [{"title": "a concrete thing to read/search next", "why": "one sentence"}],',
-    '  "lesson": "a short 2-4 sentence micro-lesson that teaches the key concept from the content"',
+    '  "takeaways": ["2-3 concrete ways to use this in their work/field"],',
+    '  "read_next": [{"query": "a short search query / topic to explore next", "why": "one sentence"}],',
+    '  "lesson": "a short 2-3 sentence micro-lesson that teaches the key concept from the content"',
     "}",
-    "2-4 items in learn_next, 2-3 in read_next. No text outside JSON, no markdown fences.",
+    "EXACTLY 2 items in read_next. Keep takeaways to 2-3. No text outside JSON, no markdown fences.",
   ].join("\n");
 }
 
@@ -276,9 +354,9 @@ export function buildStoryUserPrompt(profile, content) {
   ].join("\n");
 }
 
-export function buildLingoSystemPrompt(profile) {
+export function buildLingoSystemPrompt(profile, language) {
   const p = profile || {};
-  const native = p.nativeLang || "the user's language";
+  const native = p.nativeLang || langName(language) || "the user's language";
   const target = p.targetLang || "English";
   const level = p.level || "A2";
   const country = p.country || "a country where the language is spoken";
@@ -287,14 +365,19 @@ export function buildLingoSystemPrompt(profile) {
     `short personalized lesson to learn ${target} (their level: ${level}). Their native language is ${native}.`,
     "Base the vocabulary and phrases on the TOPIC of the content, so it feels relevant.",
     `Keep ${target} appropriate to level ${level} (simple for A1/A2, richer for B2+).`,
+    `IMPORTANT: vocab terms, examples and summary_target MUST be in ${target} ONLY (never mix in ${native} words).`,
+    "",
+    `In "summary_target", mark 4-6 key words/short phrases by wrapping them in [[double square brackets]].`,
+    `In "summary_native", wrap the ${native} EQUIVALENTS of those same words in [[double square brackets]]`,
+    "so they line up. Do NOT use asterisks or any other markdown anywhere.",
     "",
     "Return ONLY valid JSON in this exact shape:",
     "{",
-    `  "summary_target": "a 2-4 sentence retelling of the topic in ${target}, at level ${level}",`,
-    `  "summary_native": "the same summary in ${native}",`,
-    `  "vocab": [{"term": "word/expression in ${target}", "translation": "in ${native}", "example": "short example sentence in ${target}"}],`,
+    `  "summary_target": "a 2-4 sentence retelling of the topic in ${target} (level ${level}) with [[key words]] marked",`,
+    `  "summary_native": "the same summary in ${native} with the [[equivalents]] marked",`,
+    `  "vocab": [{"term": "word/expression in ${target}", "translation": "in ${native}", "example": "short example sentence fully in ${target}"}],`,
     `  "phrases": [{"phrase": "useful phrase in ${target}", "translation": "in ${native}"}],`,
-    `  "culture": "a short, interesting cultural note/story about this topic in ${country}, written in ${native}"`,
+    `  "culture": "an interesting LANGUAGE/CULTURE curiosity about ${country} related to this topic, written in ${native} (the user's language)"`,
     "}",
     "5-8 vocab items, 3-5 phrases. No text outside JSON, no markdown fences.",
   ].join("\n");

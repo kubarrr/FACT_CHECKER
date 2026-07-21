@@ -43,8 +43,8 @@ function saveProfile(p) {
 
 // --- i18n interfejsu -------------------------------------------------------
 const I18N = {
-  en: { inputLabel: "Paste or share content to check:", placeholder: "Paste content here…", analyze: "Check credibility", clear: "Clear", settings: "Settings", engine: "Engine", apiKey: "Gemini API key", model: "Model", serverUrl: "Server URL", numQuestions: "Number of questions (1–7)", save: "Save", riskHigh: "High risk – be careful", riskMed: "Medium risk", riskLow: "Low risk – looks credible", kindVerify: "verify", kindExplore: "explore", copy: "Copy", copied: "Copied", ask: "Ask Gemini", loading: "Working…", needKey: "Add your Gemini API key in Settings, or switch to Offline mode.", needServer: "No server configured. Set a Server URL in Settings or switch engine.", noContent: "Paste or share some text first.", offline: "offline", factDesc: "Check credibility & get critical questions", storyDesc: "Grow from what you read — for your career", lingoDesc: "Learn a language & culture from the topic", back: "Back", profileTitle: "Your profile", profileIntro: "Used to personalize My Story AI and Linglerno AI. Stored only on this device.", pfRole: "Role / position", pfIndustry: "Industry / field", pfGoals: "Learning goals", pfSkills: "Skills to develop", pfInterests: "Interests", pfLangHead: "Language learning (Linglerno)", pfNative: "Your language", pfTarget: "Language you learn", pfLevel: "Level", pfCountry: "Country / culture of interest", inputStory: "Paste or share what you read:", inputLingo: "Paste or share a text to learn from:", runStory: "Get my insights", runLingo: "Make my lesson", needLearnLLM: "This mode needs Gemini (key) or the Server engine. Change it in ⚙️.", takeaways: "How to use this", learnNext: "Learn next", readNext: "Read next", lesson: "Micro-lesson", summaryLabel: "In your target language", vocab: "Vocabulary", phrases: "Useful phrases", culture: "Culture" },
-  pl: { inputLabel: "Wklej lub udostępnij treść do sprawdzenia:", placeholder: "Wklej treść tutaj…", analyze: "Sprawdź wiarygodność", clear: "Wyczyść", settings: "Ustawienia", engine: "Silnik", apiKey: "Klucz API Gemini", model: "Model", serverUrl: "Adres serwera", numQuestions: "Liczba pytań (1–7)", save: "Zapisz", riskHigh: "Wysokie ryzyko – ostrożnie", riskMed: "Średnie ryzyko", riskLow: "Niskie ryzyko – wygląda wiarygodnie", kindVerify: "weryfikacja", kindExplore: "ciekawostka", copy: "Kopiuj", copied: "Skopiowano", ask: "Zapytaj w Gemini", loading: "Pracuję…", needKey: "Dodaj klucz API Gemini w Ustawieniach lub przełącz na tryb offline.", needServer: "Brak skonfigurowanego serwera. Ustaw adres serwera w Ustawieniach lub zmień silnik.", noContent: "Najpierw wklej lub udostępnij tekst.", offline: "offline", factDesc: "Sprawdź wiarygodność i dostań krytyczne pytania", storyDesc: "Rozwijaj się z tego, co czytasz — pod Twoją karierę", lingoDesc: "Ucz się języka i kultury z tematu", back: "Wstecz", profileTitle: "Twój profil", profileIntro: "Służy do personalizacji My Story AI i Linglerno AI. Zapisywany tylko na tym urządzeniu.", pfRole: "Rola / stanowisko", pfIndustry: "Branża / dziedzina", pfGoals: "Cele nauki", pfSkills: "Umiejętności do rozwoju", pfInterests: "Zainteresowania", pfLangHead: "Nauka języka (Linglerno)", pfNative: "Twój język", pfTarget: "Język, którego się uczysz", pfLevel: "Poziom", pfCountry: "Kraj / kultura, która Cię interesuje", inputStory: "Wklej lub udostępnij to, co przeczytałeś:", inputLingo: "Wklej lub udostępnij tekst do nauki:", runStory: "Pokaż wnioski dla mnie", runLingo: "Zrób moją lekcję", needLearnLLM: "Ten tryb wymaga Gemini (klucz) lub trybu Serwer. Zmień w ⚙️.", takeaways: "Jak to wykorzystać", learnNext: "Czego się dalej uczyć", readNext: "Co przeczytać dalej", lesson: "Mini-lekcja", summaryLabel: "W języku, którego się uczysz", vocab: "Słówka", phrases: "Przydatne zwroty", culture: "Kultura" },
+  en: { inputLabel: "Paste or share content to check:", placeholder: "Paste content here…", analyze: "Check credibility", clear: "Clear", settings: "Settings", engine: "Engine", apiKey: "Gemini API key", model: "Model", serverUrl: "Server URL", numQuestions: "Number of questions (1–7)", save: "Save", riskHigh: "High risk – be careful", riskMed: "Medium risk", riskLow: "Low risk – looks credible", kindVerify: "verify", kindExplore: "explore", copy: "Copy", copied: "Copied", ask: "Ask Gemini", loading: "Working…", needKey: "Add your Gemini API key in Settings, or switch to Offline mode.", needServer: "No server configured. Set a Server URL in Settings or switch engine.", noContent: "Paste or share some text first.", offline: "offline", factDesc: "Check credibility & get critical questions", storyDesc: "Grow from what you read — for your career", lingoDesc: "Learn a language & culture from the topic", back: "Back", profileTitle: "Your profile", profileIntro: "Used to personalize My Story AI and Linglerno AI. Stored only on this device.", pfRole: "Role / position", pfIndustry: "Industry / field", pfGoals: "Learning goals", pfSkills: "Skills to develop", pfInterests: "Interests", pfLangHead: "Language learning (Linglerno)", pfNative: "Your language", pfTarget: "Language you learn", pfLevel: "Level", pfCountry: "Country / culture of interest", inputStory: "Paste or share what you read:", inputLingo: "Paste or share a text to learn from:", runStory: "Get my insights", runLingo: "Make my lesson", needLearnLLM: "This mode needs Gemini (key) or the Server engine. Change it in ⚙️.", takeaways: "How to use this", learnNext: "Learn next", readNext: "Read next", lesson: "Micro-lesson", summaryLabel: "In your target language", vocab: "Vocabulary", phrases: "Useful phrases", culture: "Culture", searchGoogle: "Search Google", course: "Course / video" },
+  pl: { inputLabel: "Wklej lub udostępnij treść do sprawdzenia:", placeholder: "Wklej treść tutaj…", analyze: "Sprawdź wiarygodność", clear: "Wyczyść", settings: "Ustawienia", engine: "Silnik", apiKey: "Klucz API Gemini", model: "Model", serverUrl: "Adres serwera", numQuestions: "Liczba pytań (1–7)", save: "Zapisz", riskHigh: "Wysokie ryzyko – ostrożnie", riskMed: "Średnie ryzyko", riskLow: "Niskie ryzyko – wygląda wiarygodnie", kindVerify: "weryfikacja", kindExplore: "ciekawostka", copy: "Kopiuj", copied: "Skopiowano", ask: "Zapytaj w Gemini", loading: "Pracuję…", needKey: "Dodaj klucz API Gemini w Ustawieniach lub przełącz na tryb offline.", needServer: "Brak skonfigurowanego serwera. Ustaw adres serwera w Ustawieniach lub zmień silnik.", noContent: "Najpierw wklej lub udostępnij tekst.", offline: "offline", factDesc: "Sprawdź wiarygodność i dostań krytyczne pytania", storyDesc: "Rozwijaj się z tego, co czytasz — pod Twoją karierę", lingoDesc: "Ucz się języka i kultury z tematu", back: "Wstecz", profileTitle: "Twój profil", profileIntro: "Służy do personalizacji My Story AI i Linglerno AI. Zapisywany tylko na tym urządzeniu.", pfRole: "Rola / stanowisko", pfIndustry: "Branża / dziedzina", pfGoals: "Cele nauki", pfSkills: "Umiejętności do rozwoju", pfInterests: "Zainteresowania", pfLangHead: "Nauka języka (Linglerno)", pfNative: "Twój język", pfTarget: "Język, którego się uczysz", pfLevel: "Poziom", pfCountry: "Kraj / kultura, która Cię interesuje", inputStory: "Wklej lub udostępnij to, co przeczytałeś:", inputLingo: "Wklej lub udostępnij tekst do nauki:", runStory: "Pokaż wnioski dla mnie", runLingo: "Zrób moją lekcję", needLearnLLM: "Ten tryb wymaga Gemini (klucz) lub trybu Serwer. Zmień w ⚙️.", takeaways: "Jak to wykorzystać", learnNext: "Czego się dalej uczyć", readNext: "Co przeczytać dalej", lesson: "Mini-lekcja", summaryLabel: "W języku, którego się uczysz", vocab: "Słówka", phrases: "Przydatne zwroty", culture: "Kultura", searchGoogle: "Szukaj w Google", course: "Kurs / wideo" },
   es: { inputLabel: "Pega o comparte contenido para verificar:", placeholder: "Pega el contenido aquí…", analyze: "Verificar credibilidad", clear: "Borrar", settings: "Ajustes", engine: "Motor", apiKey: "Clave API de Gemini", model: "Modelo", serverUrl: "URL del servidor", numQuestions: "Número de preguntas (1–7)", save: "Guardar", riskHigh: "Riesgo alto – cuidado", riskMed: "Riesgo medio", riskLow: "Riesgo bajo – parece creíble", kindVerify: "verificación", kindExplore: "curiosidad", copy: "Copiar", copied: "Copiado", ask: "Preguntar a Gemini", loading: "Trabajando…", needKey: "Añade tu clave API de Gemini en Ajustes o usa el modo sin conexión.", needServer: "No hay servidor configurado. Define una URL en Ajustes o cambia de motor.", noContent: "Pega o comparte un texto primero.", offline: "sin conexión" },
   de: { inputLabel: "Inhalt zum Prüfen einfügen oder teilen:", placeholder: "Inhalt hier einfügen…", analyze: "Glaubwürdigkeit prüfen", clear: "Leeren", settings: "Einstellungen", engine: "Engine", apiKey: "Gemini-API-Schlüssel", model: "Modell", serverUrl: "Server-URL", numQuestions: "Anzahl der Fragen (1–7)", save: "Speichern", riskHigh: "Hohes Risiko – Vorsicht", riskMed: "Mittleres Risiko", riskLow: "Geringes Risiko – wirkt glaubwürdig", kindVerify: "Prüfung", kindExplore: "Vertiefung", copy: "Kopieren", copied: "Kopiert", ask: "Gemini fragen", loading: "Arbeite…", needKey: "Füge deinen Gemini-API-Schlüssel in den Einstellungen hinzu oder nutze den Offline-Modus.", needServer: "Kein Server konfiguriert. Server-URL in Einstellungen setzen oder Engine wechseln.", noContent: "Zuerst Text einfügen oder teilen.", offline: "offline" },
   fr: { inputLabel: "Colle ou partage un contenu à vérifier :", placeholder: "Colle le contenu ici…", analyze: "Vérifier la crédibilité", clear: "Effacer", settings: "Paramètres", engine: "Moteur", apiKey: "Clé API Gemini", model: "Modèle", serverUrl: "URL du serveur", numQuestions: "Nombre de questions (1–7)", save: "Enregistrer", riskHigh: "Risque élevé – prudence", riskMed: "Risque moyen", riskLow: "Risque faible – semble crédible", kindVerify: "vérification", kindExplore: "découverte", copy: "Copier", copied: "Copié", ask: "Demander à Gemini", loading: "Traitement…", needKey: "Ajoute ta clé API Gemini dans les Paramètres ou passe en mode hors ligne.", needServer: "Aucun serveur configuré. Définis une URL dans les Paramètres ou change de moteur.", noContent: "Colle ou partage d'abord un texte.", offline: "hors ligne" },
@@ -95,6 +95,18 @@ function buildAskPrompt(question) {
 
 function escapeHtml(s) {
   return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// Zamienia markdownowe **pogrubienie** na <strong> (po zabezpieczeniu HTML).
+function mdBold(text) {
+  return escapeHtml(String(text || "")).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+}
+
+// Znaczniki [[słowo]] → podświetlenie (streszczenie w języku nauki) lub pogrubienie
+// (odpowiedniki w tłumaczeniu użytkownika).
+function markHighlights(text, mode) {
+  const wrap = mode === "bold" ? (s) => `<strong>${s}</strong>` : (s) => `<mark class="hl">${s}</mark>`;
+  return escapeHtml(String(text || "")).replace(/\[\[([^\]]+)\]\]/g, (_m, g) => wrap(g));
 }
 
 // --- Nawigacja trybów ------------------------------------------------------
@@ -198,14 +210,24 @@ function learnSection(title, innerHtml) {
 function renderStory(r) {
   const el = $("result");
   el.classList.remove("hidden");
-  const takeaways = (r.takeaways || []).map((t) => `<li>${escapeHtml(t)}</li>`).join("");
-  const learn = (r.learn_next || []).map((x) => `<li><b>${escapeHtml(x.topic || "")}</b>${x.why ? ` — ${escapeHtml(x.why)}` : ""}</li>`).join("");
-  const read = (r.read_next || []).map((x) => `<li><b>${escapeHtml(x.title || "")}</b>${x.why ? ` — ${escapeHtml(x.why)}` : ""}</li>`).join("");
+  const takeaways = (r.takeaways || []).map((t) => `<li>${mdBold(t)}</li>`).join("");
+  const read = (r.read_next || [])
+    .slice(0, 2)
+    .map((x) => {
+      const query = x.query || x.title || "";
+      const q = encodeURIComponent(String(query).slice(0, 200));
+      const why = x.why ? ` — ${mdBold(x.why)}` : "";
+      const g = `https://www.google.com/search?q=${q}`;
+      const yt = `https://www.youtube.com/results?search_query=${q}`;
+      return `<li><b>${mdBold(query)}</b>${why}<div class="read-links"><a href="${g}" target="_blank" rel="noopener">${escapeHtml(
+        tr("searchGoogle")
+      )}</a> · <a href="${yt}" target="_blank" rel="noopener">${escapeHtml(tr("course"))}</a></div></li>`;
+    })
+    .join("");
   el.innerHTML =
     learnSection(tr("takeaways"), takeaways ? `<ul>${takeaways}</ul>` : "") +
-    learnSection(tr("learnNext"), learn ? `<ul>${learn}</ul>` : "") +
     learnSection(tr("readNext"), read ? `<ul>${read}</ul>` : "") +
-    learnSection(tr("lesson"), r.lesson ? `<p>${escapeHtml(r.lesson)}</p>` : "");
+    learnSection(tr("lesson"), r.lesson ? `<p>${mdBold(r.lesson)}</p>` : "");
   el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -220,7 +242,7 @@ function renderLingo(r) {
     `<li><b>${escapeHtml(p.phrase || "")}</b> — ${escapeHtml(p.translation || "")}</li>`
   ).join("");
   const summary = r.summary_target
-    ? `<p>${escapeHtml(r.summary_target)}</p>${r.summary_native ? `<p class="muted small">${escapeHtml(r.summary_native)}</p>` : ""}`
+    ? `<p>${markHighlights(r.summary_target, "hl")}</p>${r.summary_native ? `<p class="muted small">${markHighlights(r.summary_native, "bold")}</p>` : ""}`
     : "";
   el.innerHTML =
     learnSection(tr("summaryLabel"), summary) +
@@ -258,11 +280,11 @@ async function analyze() {
       return;
     }
     if (s.provider === "server") {
-      const result = await analyzeWithBackend({ endpoint: s.backendUrl, userQuestion: "", answerText: text, numQuestions: s.numQuestions });
+      const result = await analyzeWithBackend({ endpoint: s.backendUrl, userQuestion: "", answerText: text, numQuestions: s.numQuestions, language: UI_LANG });
       renderResult({ ...result, source: "server" });
       return;
     }
-    const result = await analyzeWithGemini({ apiKey: s.apiKey, model: s.model, userQuestion: "", answerText: text, numQuestions: s.numQuestions });
+    const result = await analyzeWithGemini({ apiKey: s.apiKey, model: s.model, userQuestion: "", answerText: text, numQuestions: s.numQuestions, language: UI_LANG });
     renderResult({ ...result, source: "gemini" });
   } catch (err) {
     renderResult({ ...heuristicQuestions(text, s.numQuestions), source: "heuristic", warning: `Gemini: ${String(err?.message || err)}` });
@@ -283,12 +305,12 @@ async function runStory() {
   try {
     let result;
     if (s.provider === "server") {
-      result = await learnWithBackend({ endpoint: s.backendUrl, mode: "story", profile, answerText: text });
+      result = await learnWithBackend({ endpoint: s.backendUrl, mode: "story", profile, answerText: text, language: UI_LANG });
     } else {
       result = await runGeminiJSON({
         apiKey: s.apiKey,
         model: s.model,
-        system: buildStorySystemPrompt(),
+        system: buildStorySystemPrompt(UI_LANG),
         user: buildStoryUserPrompt(profile, text),
       });
     }
@@ -312,12 +334,12 @@ async function runLingo() {
   try {
     let result;
     if (s.provider === "server") {
-      result = await learnWithBackend({ endpoint: s.backendUrl, mode: "lingo", profile, answerText: text });
+      result = await learnWithBackend({ endpoint: s.backendUrl, mode: "lingo", profile, answerText: text, language: UI_LANG });
     } else {
       result = await runGeminiJSON({
         apiKey: s.apiKey,
         model: s.model,
-        system: buildLingoSystemPrompt(profile),
+        system: buildLingoSystemPrompt(profile, UI_LANG),
         user: buildLingoUserPrompt(profile, text),
       });
     }

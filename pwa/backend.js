@@ -1,10 +1,10 @@
 // Wywołanie Twojego backendu (Cloudflare Worker). Klucz API jest po stronie serwera.
-export async function analyzeWithBackend({ endpoint, userQuestion, answerText, numQuestions }) {
+export async function analyzeWithBackend({ endpoint, userQuestion, answerText, numQuestions, language }) {
   const url = endpoint.replace(/\/+$/, "");
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userQuestion: userQuestion || "", answerText, numQuestions }),
+    body: JSON.stringify({ userQuestion: userQuestion || "", answerText, numQuestions, language }),
   });
   if (!res.ok) {
     let detail = "";
@@ -19,12 +19,12 @@ export async function analyzeWithBackend({ endpoint, userQuestion, answerText, n
 }
 
 // Tryby uczące (My Story / Linglerno) przez backend – prompt budowany po stronie serwera.
-export async function learnWithBackend({ endpoint, mode, profile, answerText }) {
+export async function learnWithBackend({ endpoint, mode, profile, answerText, language }) {
   const url = endpoint.replace(/\/+$/, "");
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ mode, profile: profile || {}, answerText }),
+    body: JSON.stringify({ mode, profile: profile || {}, answerText, language }),
   });
   if (!res.ok) {
     let detail = "";

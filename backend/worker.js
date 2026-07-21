@@ -114,6 +114,7 @@ export default {
 
     const model = env.GEMINI_MODEL || DEFAULT_MODEL;
     const mode = String(payload.mode || "factcheck");
+    const language = String(payload.language || "").slice(0, 5);
     const profile =
       payload.profile && typeof payload.profile === "object" ? payload.profile : {};
 
@@ -121,17 +122,17 @@ export default {
     let maxTokens = MAX_OUTPUT_TOKENS;
     let loose = false;
     if (mode === "story") {
-      system = buildStorySystemPrompt();
+      system = buildStorySystemPrompt(language);
       user = buildStoryUserPrompt(profile, answerText);
       maxTokens = LEARN_OUTPUT_TOKENS;
       loose = true;
     } else if (mode === "lingo") {
-      system = buildLingoSystemPrompt(profile);
+      system = buildLingoSystemPrompt(profile, language);
       user = buildLingoUserPrompt(profile, answerText);
       maxTokens = LEARN_OUTPUT_TOKENS;
       loose = true;
     } else {
-      system = buildSystemPrompt(numQuestions);
+      system = buildSystemPrompt(numQuestions, language);
       user = buildUserPrompt({ userQuestion, answerText });
     }
 

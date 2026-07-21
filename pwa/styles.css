@@ -227,3 +227,15 @@ button.ghost { background: #fff; color: var(--muted); }
 .dlg-body { padding: 20px; }
 .dlg-body h2 { margin: 0 0 12px; font-size: 18px; }
 .dlg-body label { margin-top: 12px; }
+
+/* Podświetlenie kluczowych słów w streszczeniu Linglerno */
+mark.hl {
+  background: #fde68a;
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 3px;
+  font-weight: 600;
+}
+.read-links { margin-top: 4px; font-size: 13px; }
+.read-links a { color: #4338ca; text-decoration: none; }
+.read-links a:hover { text-decoration: underline; }

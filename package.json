@@ -1,0 +1,10 @@
+{
+  "name": "fact-checker-ai",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Fact Checker AI – browser extension + PWA. Assesses credibility of AI answers/news and offers learning modes.",
+  "scripts": {
+    "test": "node --test"
+  }
+}

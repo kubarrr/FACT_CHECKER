@@ -52,9 +52,9 @@ function parseLooseJson(text) {
   return JSON.parse(t);
 }
 
-export async function analyzeWithGemini({ apiKey, model, userQuestion, answerText, numQuestions }) {
+export async function analyzeWithGemini({ apiKey, model, userQuestion, answerText, numQuestions, language }) {
   const trimmed = (answerText || "").slice(0, MAX_INPUT_CHARS);
-  const system = buildSystemPrompt(numQuestions);
+  const system = buildSystemPrompt(numQuestions, language);
   const user = buildUserPrompt({ userQuestion, answerText: trimmed });
   const m = model || "gemini-3.1-flash-lite";
 
