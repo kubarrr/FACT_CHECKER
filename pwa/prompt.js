@@ -342,13 +342,19 @@ export function buildStorySystemPrompt(language) {
     "For read_next: give a search QUERY (a topic, skill or well-known course subject) the user can",
     "look up — do NOT invent specific article titles, URLs, authors or book names (avoid hallucination).",
     "",
+    'For "skills": tag this content with 2-3 SHORT skill/competence labels (1-3 words, lowercase,',
+    "in English so they group consistently over time), e.g. \"sql\", \"negotiation\", \"distributed systems\".",
+    "Reuse the user's own skill names when they fit. These build the user's long-term competence map.",
+    "",
     "Return ONLY valid JSON in this exact shape:",
     "{",
     '  "takeaways": ["2-3 concrete ways to use this in their work/field"],',
     '  "read_next": [{"query": "a short search query / topic to explore next", "why": "one sentence"}],',
-    '  "lesson": "a short 2-3 sentence micro-lesson that teaches the key concept from the content"',
+    '  "lesson": "a short 2-3 sentence micro-lesson that teaches the key concept from the content",',
+    '  "topic": "a 2-5 word label for what this content was about (in the output language)",',
+    '  "skills": ["skill-tag", "skill-tag"]',
     "}",
-    "EXACTLY 2 items in read_next. Keep takeaways to 2-3. No text outside JSON, no markdown fences.",
+    "EXACTLY 2 items in read_next. Keep takeaways to 2-3. 2-3 skills. No text outside JSON, no markdown fences.",
   ].join("\n");
 }
 
