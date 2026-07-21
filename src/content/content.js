@@ -20,6 +20,20 @@
   function tr(k) {
     return T[k] != null ? T[k] : I18N.en[k] != null ? I18N.en[k] : k;
   }
+
+  // Tłumaczenia typu treści (model zwraca kanoniczne EN: fact/opinion/…).
+  const TYPE_I18N = {
+    en: { fact: "fact", opinion: "opinion", clickbait: "clickbait", mixed: "mixed content", uncertain: "uncertain" },
+    pl: { fact: "fakt", opinion: "opinia", clickbait: "clickbait", mixed: "treść mieszana", uncertain: "niepewne" },
+    es: { fact: "hecho", opinion: "opinión", clickbait: "clickbait", mixed: "contenido mixto", uncertain: "incierto" },
+    de: { fact: "Fakt", opinion: "Meinung", clickbait: "Clickbait", mixed: "gemischt", uncertain: "unsicher" },
+    fr: { fact: "fait", opinion: "opinion", clickbait: "clickbait", mixed: "contenu mixte", uncertain: "incertain" },
+  };
+  function typeLabel(type) {
+    const key = String(type || "").toLowerCase().trim();
+    const dict = TYPE_I18N[UI_LANG] || TYPE_I18N.en;
+    return dict[key] || TYPE_I18N.en[key] || type;
+  }
   // Aktywny tryb panelu: "factcheck" | "story" | "lingo".
   let currentMode = "factcheck";
 
@@ -256,7 +270,7 @@
       level = "low";
       label = T.riskLow;
     }
-    const typeTxt = a.type ? ` · ${escapeHtml(a.type)}` : "";
+    const typeTxt = a.type ? ` · ${escapeHtml(typeLabel(a.type))}` : "";
     const note = a.note ? `<div class="krytykai-assess-note">${escapeHtml(a.note)}</div>` : "";
     return `
       <div class="krytykai-assess krytykai-assess-${level}">
