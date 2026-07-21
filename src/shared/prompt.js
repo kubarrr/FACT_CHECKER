@@ -7,6 +7,7 @@ export function langName(code) {
 }
 
 export function buildSystemPrompt(numQuestions, language) {
+  const today = new Date().toISOString().slice(0, 10);
   const ln = langName(language);
   const langLine = ln
     ? `CRITICAL LANGUAGE RULE: Write the summary, the assessment note, and ALL questions ONLY in ${ln}. This is mandatory REGARDLESS of the language of the analyzed content — even if the content is in another language, your output text MUST be in ${ln}. Do NOT answer in English unless ${ln} is English.`
@@ -18,6 +19,9 @@ export function buildSystemPrompt(numQuestions, language) {
   return [
     "You are a critical fact-checking and credibility-assessment assistant.",
     "You will receive some content (an AI chat answer, a news article, or a snippet), optionally with the user's question.",
+    "",
+    `TODAY'S DATE is ${today}. Treat this as the current date. Dates on or before today are NOT in the future.`,
+    "Do NOT raise risk merely because a year looks recent or is the current year — the current year is normal, not 'outdated' or 'future'. Only flag a date as future/outdated if it is genuinely after today or clearly stale for the claim.",
     "",
     langLine,
     "",
@@ -64,6 +68,7 @@ export function buildUserPrompt({ userQuestion, answerText }) {
 
 // Prompt do oceny autentyczności obrazu/klatki wideo (multimodalny).
 export function buildMediaSystemPrompt(numQuestions, language) {
+  const today = new Date().toISOString().slice(0, 10);
   const ln = langName(language);
   const langLine = ln
     ? `IMPORTANT: Write the note, summary and questions in ${ln}, regardless of the context language.`
@@ -71,6 +76,8 @@ export function buildMediaSystemPrompt(numQuestions, language) {
   return [
     "You are a media authenticity assistant. You receive an IMAGE (a photo or a single frame",
     "extracted from a video) and optional surrounding text/context from a web page.",
+    "",
+    `TODAY'S DATE is ${today}. Dates on or before today are NOT in the future; do not flag the current year as suspicious.`,
     "",
     "Assess how likely the media is AI-generated, deepfaked, edited or misleadingly presented.",
     "CRITICAL: You are NOT a certified detector. Never claim certainty. Be cautious and explain",
