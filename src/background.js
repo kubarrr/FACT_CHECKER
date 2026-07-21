@@ -323,16 +323,25 @@ async function callOpenAIVision(settings, system, user, inline) {
 }
 
 // --- Tryby uczące: My Story AI / Linglerno AI ------------------------------
-const LEARN_OUTPUT_TOKENS = 1100;
+// Mniej tokenów = szybsza odpowiedź (JSON i tak jest zwięzły).
+const LEARN_OUTPUT_TOKENS = 850;
+const MAX_LEARN_INPUT = 5000;
 
 async function analyzeLearn(mode, payload) {
   const settings = await loadSettings();
-  const answerText = (payload?.answerText || "").slice(0, MAX_INPUT_CHARS);
+  const answerText = (payload?.answerText || "").slice(0, MAX_LEARN_INPUT);
   if (!answerText.trim()) {
     throw new Error("Brak treści do analizy.");
   }
 
   const profile = settings.profile || {};
+
+  // Cache – identyczny tryb + treść + profil zwracamy natychmiast.
+  const cacheKey = `learn|${mode}|${settings.provider}|${hashStr(
+    JSON.stringify(profile)
+  )}|${answerText.length}|${hashStr(answerText)}`;
+  const cachedLearn = cacheGet(cacheKey);
+  if (cachedLearn) return { ...cachedLearn, cached: true };
 
   // Model wbudowany (Gemini Nano) – bez klucza, prywatnie. Działa najlepiej po
   // angielsku; przy innych językach (zwłaszcza Linglerno) jakość bywa niższa.
@@ -343,7 +352,9 @@ async function analyzeLearn(mode, payload) {
         profile,
         answerText: answerText.slice(0, MAX_ONDEVICE_CHARS),
       });
-      return { ...result, mode, source: "ondevice" };
+      const out = { ...result, mode, source: "ondevice" };
+      cacheSet(cacheKey, out);
+      return out;
     } catch (err) {
       return {
         needCloud: true,
@@ -379,7 +390,9 @@ async function analyzeLearn(mode, payload) {
       ? await callGeminiJSON(settings, system, user, LEARN_OUTPUT_TOKENS)
       : await callOpenAIJSON(settings, system, user, LEARN_OUTPUT_TOKENS);
   const parsed = parseLooseJson(raw);
-  return { ...parsed, mode, source: settings.provider };
+  const out = { ...parsed, mode, source: settings.provider };
+  cacheSet(cacheKey, out);
+  return out;
 }
 
 async function runOnDeviceLearn(payload) {

@@ -115,9 +115,19 @@
 
   function activateMode(mode) {
     currentMode = mode;
-    updateTabs();
+    setPanelHeader(mode);
     if (mode === "factcheck") runAnalysis({ mode: sourceMode() });
     else runLearn(mode);
+  }
+
+  // Ustawia tytuł i kolor nagłówka osobnego okna danego trybu.
+  function setPanelHeader(mode) {
+    ensurePanel();
+    const m = LAUNCHER_MODES.find((x) => x.mode === mode) || LAUNCHER_MODES[0];
+    const header = panelEl.querySelector(".krytykai-header");
+    if (header) header.className = `krytykai-header krytykai-header-${m.cls}`;
+    const title = panelEl.querySelector(".krytykai-title");
+    if (title) title.textContent = `${m.emoji} ${m.label}`;
   }
 
   function makeLauncherDraggable(el) {
@@ -187,45 +197,15 @@
     panelEl = document.createElement("div");
     panelEl.className = "krytykai-panel";
     panelEl.innerHTML = `
-      <div class="krytykai-header">
+      <div class="krytykai-header krytykai-header-fact">
         <span class="krytykai-title">🔍 ${escapeHtml(T.title)}</span>
         <button class="krytykai-close" title="${escapeHtml(T.close)}">×</button>
-      </div>
-      <div class="krytykai-tabs">
-        <button class="krytykai-tab" data-mode="factcheck">${escapeHtml(tr("tabFact"))}</button>
-        <button class="krytykai-tab" data-mode="story">${escapeHtml(tr("tabStory"))}</button>
-        <button class="krytykai-tab" data-mode="lingo">${escapeHtml(tr("tabLingo"))}</button>
       </div>
       <div class="krytykai-body"></div>
     `;
     panelEl.querySelector(".krytykai-close").addEventListener("click", hidePanel);
-    panelEl.querySelectorAll(".krytykai-tab").forEach((tab) => {
-      tab.addEventListener("click", () => switchMode(tab.dataset.mode));
-    });
     document.documentElement.appendChild(panelEl);
-    updateTabs();
     return panelEl;
-  }
-
-  function updateTabs() {
-    if (!panelEl) return;
-    panelEl.querySelectorAll(".krytykai-tab").forEach((tab) => {
-      tab.classList.toggle("krytykai-tab-active", tab.dataset.mode === currentMode);
-    });
-  }
-
-  function switchMode(mode) {
-    if (mode === currentMode && panelEl?.querySelector(".krytykai-body")?.innerHTML.trim()) {
-      // ten sam tryb – nie przeliczaj ponownie
-      return;
-    }
-    currentMode = mode;
-    updateTabs();
-    if (mode === "factcheck") {
-      runAnalysis({ mode: sourceMode() });
-    } else {
-      runLearn(mode);
-    }
   }
 
   // Domyślne źródło treści dla bieżącej strony.
@@ -369,7 +349,7 @@
 
   async function runAnalysis({ mode }) {
     currentMode = "factcheck";
-    updateTabs();
+    setPanelHeader("factcheck");
     let payload;
     if (mode === "chat") {
       payload = extractChat();
