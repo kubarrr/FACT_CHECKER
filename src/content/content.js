@@ -95,11 +95,27 @@
   function extractArticle() {
     const sel = extractSelection();
     if (sel.length > 40) return sel;
-    const container =
-      document.querySelector("article") ||
-      document.querySelector("main") ||
-      document.body;
+    const container = articleContainer();
     return (container?.innerText || "").trim().slice(0, 8000);
+  }
+
+  function articleContainer() {
+    return (
+      document.querySelector("article") || document.querySelector("main") || document.body
+    );
+  }
+
+  function lastNode(selector) {
+    if (!selector) return null;
+    const nodes = document.querySelectorAll(selector);
+    return nodes.length ? nodes[nodes.length - 1] : null;
+  }
+
+  // Element strony, na którym podświetlamy sporne fragmenty (flags).
+  function sourceElForMode(mode) {
+    if (mode === "chat") return lastNode(SITE.cfg?.answer);
+    if (mode === "selection") return null; // zaznaczenie nie jest stabilnym elementem
+    return articleContainer();
   }
 
   // --- UI --------------------------------------------------------------------
@@ -240,6 +256,7 @@
   }
   function hidePanel() {
     if (panelEl) panelEl.classList.remove("krytykai-open");
+    clearFlags();
   }
 
   function setBody(html) {
@@ -401,10 +418,13 @@
 
   // --- Przepływ analizy ------------------------------------------------------
   let lastContext = null;
+  let lastSourceEl = null;
 
   async function runAnalysis({ mode }) {
     currentMode = "factcheck";
     setPanelHeader("factcheck");
+    clearFlags();
+    lastSourceEl = sourceElForMode(mode);
     let payload;
     if (mode === "chat") {
       payload = extractChat();
@@ -433,6 +453,7 @@
         return;
       }
       renderResult(resp.result, payload);
+      highlightFlags(lastSourceEl, resp.result?.flags);
     } catch (err) {
       const msg = String(err?.message || err);
       if (isContextInvalidated(msg)) {
@@ -441,6 +462,52 @@
         renderError(msg);
       }
     }
+  }
+
+  // --- Podświetlanie spornych fragmentów (EKSPERYMENTALNE) ------------------
+  function clearFlags() {
+    document.querySelectorAll("mark.krytykai-flag").forEach((m) => {
+      const parent = m.parentNode;
+      if (!parent) return;
+      parent.replaceChild(document.createTextNode(m.textContent), m);
+      parent.normalize();
+    });
+  }
+
+  function highlightFlags(root, flags) {
+    if (!root || !Array.isArray(flags)) return;
+    for (const f of flags) {
+      const quote = String(f?.quote || "").trim();
+      // Zbyt krótkie cytaty pomijamy – ryzyko fałszywych trafień.
+      if (quote.length < 10) continue;
+      wrapFirstMatch(root, quote, String(f?.why || ""));
+    }
+  }
+
+  function wrapFirstMatch(root, quote, why) {
+    const needle = quote.toLowerCase();
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+    let node;
+    while ((node = walker.nextNode())) {
+      if (node.parentElement && node.parentElement.closest("mark.krytykai-flag")) continue;
+      const text = node.nodeValue || "";
+      const idx = text.toLowerCase().indexOf(needle);
+      if (idx === -1) continue;
+      const before = text.slice(0, idx);
+      const match = text.slice(idx, idx + quote.length);
+      const after = text.slice(idx + quote.length);
+      const mark = document.createElement("mark");
+      mark.className = "krytykai-flag";
+      mark.textContent = match;
+      if (why) mark.title = why;
+      const frag = document.createDocumentFragment();
+      if (before) frag.appendChild(document.createTextNode(before));
+      frag.appendChild(mark);
+      if (after) frag.appendChild(document.createTextNode(after));
+      node.parentNode.replaceChild(frag, node);
+      return true;
+    }
+    return false;
   }
 
   // --- Tryby uczące: My Story / Linglerno -----------------------------------

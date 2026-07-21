@@ -284,6 +284,16 @@ a.krytykai-btn {
   padding: 8px 0;
 }
 
+/* Sporne fragmenty podświetlone bezpośrednio na stronie (eksperymentalne) */
+mark.krytykai-flag {
+  background: #fef08a;
+  color: inherit;
+  border-bottom: 2px solid #f59e0b;
+  border-radius: 2px;
+  padding: 0 1px;
+  cursor: help;
+}
+
 /* --- Zakładki trybów (Fact Check / My Story / Linglerno) --- */
 /* --- Sekcje trybów uczących --- */
 .krytykai-learn-sec {

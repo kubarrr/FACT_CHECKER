@@ -61,6 +61,14 @@ const RESPONSE_SCHEMA = {
         required: ["q", "why"],
       },
     },
+    flags: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: { quote: { type: "string" }, why: { type: "string" } },
+        required: ["quote"],
+      },
+    },
   },
   required: ["assessment", "summary", "questions"],
 };
@@ -125,6 +133,15 @@ function hasPromptApi() {
   return typeof self !== "undefined" && "LanguageModel" in self;
 }
 
+// Prompt API deklaruje tylko de/en/es/fr/ja. Dla obsługiwanych języków deklarujemy
+// je wprost (lepsza jakość), dla pozostałych (np. pl) zostajemy przy "en", a o język
+// prosimy w treści promptu.
+const OD_SUPPORTED = ["en", "de", "es", "fr", "ja"];
+function outputLang(language) {
+  const c = String(language || "").toLowerCase().slice(0, 2);
+  return OD_SUPPORTED.includes(c) ? c : "en";
+}
+
 async function checkAvailability() {
   if (!hasPromptApi()) return "unavailable";
   try {
@@ -147,11 +164,10 @@ async function ensureBaseSession(numQuestions, language) {
     baseSession = null;
   }
   const system = buildSystemPrompt(numQuestions, language);
-  // Prompt API wspiera tylko de/en/es/fr/ja. Deklarujemy "en" (unikamy ostrzeżenia
-  // i NotSupportedError), a o polski prosimy w treści promptu.
+  const outLang = outputLang(language);
   baseSession = await self.LanguageModel.create({
     expectedInputs: [{ type: "text", languages: ["en"] }],
-    expectedOutputs: [{ type: "text", languages: ["en"] }],
+    expectedOutputs: [{ type: "text", languages: [outLang] }],
     initialPrompts: [{ role: "system", content: system }],
     monitor(m) {
       m.addEventListener("downloadprogress", (e) => {
@@ -227,7 +243,7 @@ async function analyzeLearnOnDevice({ mode, profile, answerText, language }) {
 
   const session = await self.LanguageModel.create({
     expectedInputs: [{ type: "text", languages: ["en"] }],
-    expectedOutputs: [{ type: "text", languages: ["en"] }],
+    expectedOutputs: [{ type: "text", languages: [outputLang(language)] }],
     initialPrompts: [{ role: "system", content: system }],
   });
   try {

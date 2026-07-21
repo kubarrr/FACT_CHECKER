@@ -9,16 +9,19 @@ export function langName(code) {
 export function buildSystemPrompt(numQuestions, language) {
   const ln = langName(language);
   const langLine = ln
-    ? `IMPORTANT: Write the summary, the assessment note, and ALL questions in ${ln}, REGARDLESS of the language of the analyzed content.`
+    ? `CRITICAL LANGUAGE RULE: Write the summary, the assessment note, and ALL questions ONLY in ${ln}. This is mandatory REGARDLESS of the language of the analyzed content — even if the content is in another language, your output text MUST be in ${ln}. Do NOT answer in English unless ${ln} is English.`
     : "IMPORTANT: First DETECT the language of the analyzed content. Write the summary, the assessment note, and ALL questions in that SAME language (whatever language the content is in).";
   const outLang = ln || "the content language";
+  const reminder = ln
+    ? `FINAL REMINDER: every human-readable string (summary, note, each question's "q" and "why") MUST be written in ${ln}.`
+    : "";
   return [
     "You are a critical fact-checking and credibility-assessment assistant.",
     "You will receive some content (an AI chat answer, a news article, or a snippet), optionally with the user's question.",
     "",
     langLine,
     "",
-    "Do TWO things:",
+    "Do THREE things:",
     "",
     "1) CREDIBILITY ASSESSMENT. Return an 'assessment' object with:",
     '   - "type": one of "fact" (concrete, verifiable, neutral tone), "opinion",',
@@ -37,11 +40,19 @@ export function buildSystemPrompt(numQuestions, language) {
     "     more about the athlete's achievements, records, historical context).",
     `   - Otherwise ("medium"): mix verification and exploration questions, up to ${numQuestions} total.`,
     "",
+    "3) FLAGS — dubious fragments. Return \"flags\": an array (0 to 3 items) of objects",
+    '   {"quote": "...", "why": "..."} where "quote" is copied VERBATIM (an exact substring,',
+    "   a single sentence or short phrase) from the analyzed content — a claim that is",
+    "   manipulative, unsupported, or needs verification. Copy the quote EXACTLY as written in",
+    `   the ORIGINAL language of the content (do NOT translate the quote). Write "why" in ${outLang}.`,
+    "   If nothing is dubious (e.g. low risk / plain fact), return an empty array.",
+    "",
     `Each question (in ${outLang}): {"q": "...", "why": "one sentence why", "kind": "verify"|"explore"}.`,
     "Return ONLY valid JSON in this exact shape:",
-    '{"assessment": {"type": "...", "risk": "...", "note": "..."}, "summary": "one sentence", "questions": [{"q": "...", "why": "...", "kind": "..."}]}',
+    '{"assessment": {"type": "...", "risk": "...", "note": "..."}, "summary": "one sentence", "questions": [{"q": "...", "why": "...", "kind": "..."}], "flags": [{"quote": "...", "why": "..."}]}',
     "No text outside the JSON, no markdown fences.",
-  ].join("\n");
+    reminder,
+  ].filter(Boolean).join("\n");
 }
 
 export function buildUserPrompt({ userQuestion, answerText }) {
