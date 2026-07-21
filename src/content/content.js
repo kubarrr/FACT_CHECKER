@@ -14,8 +14,15 @@
     de: { launcher: "Prüfen", title: "Fact Checker AI", close: "Schließen", copy: "Kopieren", copied: "Kopiert", ask: "Gemini fragen", loading: "Analysiere…", noAnswer: "Keine KI-Antwort auf dieser Seite gefunden. Warte, bis der Chat fertig ist.", selectFirst: "Markiere zuerst einen Text zur Überprüfung.", ctx: "Die Erweiterung wurde neu geladen oder aktualisiert; dieser Tab nutzt noch die alte Version.", reload: "Seite neu laden", riskHigh: "Hohes Risiko – Vorsicht", riskMed: "Mittleres Risiko", riskLow: "Geringes Risiko – wirkt glaubwürdig", kindVerify: "Prüfung", kindExplore: "Vertiefung", noQuestions: "Keine Fragen." },
     fr: { launcher: "Vérifier", title: "Fact Checker AI", close: "Fermer", copy: "Copier", copied: "Copié", ask: "Demander à Gemini", loading: "Analyse…", noAnswer: "Aucune réponse d'IA trouvée sur cette page. Attends la fin de la réponse.", selectFirst: "Sélectionne d'abord un texte à vérifier.", ctx: "L'extension a été rechargée ou mise à jour, et cet onglet utilise l'ancienne version.", reload: "Recharger la page", riskHigh: "Risque élevé – prudence", riskMed: "Risque moyen", riskLow: "Risque faible – semble crédible", kindVerify: "vérification", kindExplore: "découverte", noQuestions: "Aucune question." },
   };
-  const UI_LANG = (navigator.language || "en").slice(0, 2).toLowerCase();
-  const T = I18N[UI_LANG] || I18N.en;
+  // Język UI/odpowiedzi = język aplikacji z ustawień (ustawiany w init).
+  // Domyślnie język przeglądarki, dopóki nie wczytamy ustawień.
+  let activeLang = (navigator.language || "en").slice(0, 2).toLowerCase();
+  let T = I18N[activeLang] || I18N.en;
+  function setActiveLang(code) {
+    const c = String(code || "").toLowerCase().slice(0, 2);
+    if (c) activeLang = c;
+    T = I18N[activeLang] || I18N.en;
+  }
   // Fallback do EN dla kluczy, których dany język nie ma.
   function tr(k) {
     return T[k] != null ? T[k] : I18N.en[k] != null ? I18N.en[k] : k;
@@ -31,7 +38,7 @@
   };
   function typeLabel(type) {
     const key = String(type || "").toLowerCase().trim();
-    const dict = TYPE_I18N[UI_LANG] || TYPE_I18N.en;
+    const dict = TYPE_I18N[activeLang] || TYPE_I18N.en;
     return dict[key] || TYPE_I18N.en[key] || type;
   }
   // Aktywny tryb panelu: "factcheck" | "story" | "lingo".
@@ -657,6 +664,7 @@
   chrome.storage.sync.get(STORAGE_KEY, (data) => {
     const s = { ...DEFAULTS, ...(data[STORAGE_KEY] || {}) };
     if (!s.enabled) return;
+    if (s.language) setActiveLang(s.language);
     ensureLauncher();
     if (s.autoAnalyzeChat) watchChatForAuto();
     // Rozgrzej model lokalny w tle, by pierwsza analiza była szybsza.

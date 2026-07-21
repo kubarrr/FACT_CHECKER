@@ -119,11 +119,11 @@ async function analyze({ userQuestion, answerText }) {
   }
 
   // Cache – identyczna treść i ustawienia zwracane natychmiast.
-  const cacheKey = `${settings.provider}|${n}|${trimmed.length}|${hashStr(userQuestion + "\u0000" + trimmed)}`;
+  const cacheKey = `${settings.provider}|${n}|${settings.language || ""}|${trimmed.length}|${hashStr(userQuestion + "\u0000" + trimmed)}`;
   const cached = cacheGet(cacheKey);
   if (cached) return { ...cached, cached: true };
 
-  const system = buildSystemPrompt(n);
+  const system = buildSystemPrompt(n, settings.language);
   const user = buildUserPrompt({ userQuestion, answerText: trimmed });
 
   // Model lokalny (Gemini Nano) – bez klucza, prywatnie. Fallback na heurystyki.
@@ -133,6 +133,7 @@ async function analyze({ userQuestion, answerText }) {
         userQuestion,
         answerText: trimmed.slice(0, MAX_ONDEVICE_CHARS),
         numQuestions: n,
+        language: settings.language,
       });
       const out = { ...result, source: "ondevice" };
       cacheSet(cacheKey, out);
@@ -212,7 +213,7 @@ async function analyzeMedia(payload) {
     };
   }
 
-  const system = buildMediaSystemPrompt(n);
+  const system = buildMediaSystemPrompt(n, settings.language);
   const user = buildMediaUserPrompt({ context, mediaType: payload.mediaType });
 
   try {
@@ -336,8 +337,8 @@ async function analyzeLearn(mode, payload) {
 
   const profile = settings.profile || {};
 
-  // Cache – identyczny tryb + treść + profil zwracamy natychmiast.
-  const cacheKey = `learn|${mode}|${settings.provider}|${hashStr(
+  // Cache – identyczny tryb + treść + profil + język zwracamy natychmiast.
+  const cacheKey = `learn|${mode}|${settings.provider}|${settings.language || ""}|${hashStr(
     JSON.stringify(profile)
   )}|${answerText.length}|${hashStr(answerText)}`;
   const cachedLearn = cacheGet(cacheKey);
@@ -351,6 +352,7 @@ async function analyzeLearn(mode, payload) {
         mode,
         profile,
         answerText: answerText.slice(0, MAX_ONDEVICE_CHARS),
+        language: settings.language,
       });
       const out = { ...result, mode, source: "ondevice" };
       cacheSet(cacheKey, out);
@@ -378,10 +380,10 @@ async function analyzeLearn(mode, payload) {
 
   let system, user;
   if (mode === "lingo") {
-    system = buildLingoSystemPrompt(profile);
+    system = buildLingoSystemPrompt(profile, settings.language);
     user = buildLingoUserPrompt(profile, answerText);
   } else {
-    system = buildStorySystemPrompt();
+    system = buildStorySystemPrompt(settings.language);
     user = buildStoryUserPrompt(profile, answerText);
   }
 
@@ -498,6 +500,7 @@ async function warmUpOnDevice() {
     target: "offscreen",
     type: "OD_WARMUP",
     numQuestions: settings.numQuestions,
+    language: settings.language,
   });
 }
 

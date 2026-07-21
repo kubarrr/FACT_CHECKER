@@ -7,6 +7,7 @@ const DEFAULTS = {
   openaiModel: "gpt-4o-mini",
   autoAnalyzeChat: false,
   numQuestions: 4,
+  language: "pl",
   profile: {
     role: "",
     industry: "",
@@ -87,6 +88,7 @@ async function load() {
   $("enabled").checked = !!s.enabled;
   $("autoAnalyzeChat").checked = !!s.autoAnalyzeChat;
   $("numQuestions").value = s.numQuestions;
+  $("language").value = s.language || "pl";
   const p = s.profile || {};
   $("pfRole").value = p.role || "";
   $("pfIndustry").value = p.industry || "";
@@ -112,6 +114,7 @@ function readForm() {
     enabled: $("enabled").checked,
     autoAnalyzeChat: $("autoAnalyzeChat").checked,
     numQuestions: n,
+    language: $("language").value,
     profile: {
       role: $("pfRole").value.trim(),
       industry: $("pfIndustry").value.trim(),

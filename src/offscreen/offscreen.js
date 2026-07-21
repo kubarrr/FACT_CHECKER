@@ -138,14 +138,15 @@ async function checkAvailability() {
 // na każde zapytanie – tworzenie sesji od zera przy każdej analizie jest wolne.
 let baseSession = null;
 let baseSessionN = null;
+let baseSessionLang = null;
 
-async function ensureBaseSession(numQuestions) {
-  if (baseSession && baseSessionN === numQuestions) return baseSession;
+async function ensureBaseSession(numQuestions, language) {
+  if (baseSession && baseSessionN === numQuestions && baseSessionLang === language) return baseSession;
   if (baseSession) {
     try { baseSession.destroy(); } catch {}
     baseSession = null;
   }
-  const system = buildSystemPrompt(numQuestions);
+  const system = buildSystemPrompt(numQuestions, language);
   // Prompt API wspiera tylko de/en/es/fr/ja. Deklarujemy "en" (unikamy ostrzeżenia
   // i NotSupportedError), a o polski prosimy w treści promptu.
   baseSession = await self.LanguageModel.create({
@@ -161,17 +162,18 @@ async function ensureBaseSession(numQuestions) {
     },
   });
   baseSessionN = numQuestions;
+  baseSessionLang = language;
   return baseSession;
 }
 
-async function warmUp(numQuestions) {
+async function warmUp(numQuestions, language) {
   if (!hasPromptApi()) return;
   const availability = await self.LanguageModel.availability();
   if (availability === "unavailable") return;
-  await ensureBaseSession(numQuestions || 4);
+  await ensureBaseSession(numQuestions || 4, language);
 }
 
-async function analyzeOnDevice({ userQuestion, answerText, numQuestions }) {
+async function analyzeOnDevice({ userQuestion, answerText, numQuestions, language }) {
   if (!hasPromptApi()) {
     throw new Error("Prompt API niedostępne w tej wersji Chrome.");
   }
@@ -181,7 +183,7 @@ async function analyzeOnDevice({ userQuestion, answerText, numQuestions }) {
   }
 
   const user = buildUserPrompt({ userQuestion, answerText });
-  const base = await ensureBaseSession(numQuestions);
+  const base = await ensureBaseSession(numQuestions, language);
   // Klon dziedziczy prompt systemowy i jest tani; izoluje kontekst pojedynczej analizy.
   const session = await base.clone();
 
@@ -205,7 +207,7 @@ async function analyzeOnDevice({ userQuestion, answerText, numQuestions }) {
 
 // Tryby uczące na modelu wbudowanym. Osobna sesja per zapytanie (prompt zależy
 // od profilu i trybu), więc nie podtrzymujemy sesji bazowej jak przy fact-checku.
-async function analyzeLearnOnDevice({ mode, profile, answerText }) {
+async function analyzeLearnOnDevice({ mode, profile, answerText, language }) {
   if (!hasPromptApi()) {
     throw new Error("Prompt API niedostępne w tej wersji Chrome.");
   }
@@ -215,7 +217,9 @@ async function analyzeLearnOnDevice({ mode, profile, answerText }) {
   }
 
   const isLingo = mode === "lingo";
-  const system = isLingo ? buildLingoSystemPrompt(profile) : buildStorySystemPrompt();
+  const system = isLingo
+    ? buildLingoSystemPrompt(profile, language)
+    : buildStorySystemPrompt(language);
   const user = isLingo
     ? buildLingoUserPrompt(profile, answerText)
     : buildStoryUserPrompt(profile, answerText);
@@ -267,7 +271,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   }
 
   if (msg.type === "OD_WARMUP") {
-    warmUp(msg.numQuestions)
+    warmUp(msg.numQuestions, msg.language)
       .then(() => sendResponse({ ok: true }))
       .catch((err) => sendResponse({ ok: false, error: String(err?.message || err) }));
     return true;
