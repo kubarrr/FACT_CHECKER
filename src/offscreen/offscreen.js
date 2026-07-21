@@ -78,20 +78,12 @@ const STORY_SCHEMA = {
   type: "object",
   properties: {
     takeaways: { type: "array", items: { type: "string" } },
-    learn_next: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: { topic: { type: "string" }, why: { type: "string" } },
-        required: ["topic"],
-      },
-    },
     read_next: {
       type: "array",
       items: {
         type: "object",
-        properties: { title: { type: "string" }, why: { type: "string" } },
-        required: ["title"],
+        properties: { query: { type: "string" }, why: { type: "string" } },
+        required: ["query"],
       },
     },
     lesson: { type: "string" },
@@ -111,6 +103,7 @@ const LINGO_SCHEMA = {
         properties: {
           term: { type: "string" },
           translation: { type: "string" },
+          pos: { type: "string", enum: ["noun", "verb", "adjective", "other"] },
           example: { type: "string" },
         },
         required: ["term", "translation"],

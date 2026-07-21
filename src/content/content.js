@@ -8,8 +8,8 @@
   // Analiza (podsumowanie, ocena, pytania) jest w języku treści; poniżej tylko
   // stałe etykiety panelu, tłumaczone wg języka przeglądarki (domyślnie EN).
   const I18N = {
-    en: { launcher: "Fact Check", title: "Fact Checker AI", close: "Close", copy: "Copy", copied: "Copied", ask: "Ask Gemini", loading: "Analyzing…", noAnswer: "No AI answer found on this page. Wait until the chat finishes responding.", selectFirst: "Select some text to verify first.", ctx: "The extension was reloaded or updated, and this tab still uses the old version.", reload: "Reload page", riskHigh: "High risk – be careful", riskMed: "Medium risk", riskLow: "Low risk – looks credible", kindVerify: "verify", kindExplore: "explore", noQuestions: "No questions.", reverseSearch: "Reverse search:", tabFact: "Fact Check", tabStory: "My Story", tabLingo: "Linglerno", takeaways: "How to use this", learnNext: "Learn next", readNext: "Read next", lesson: "Micro-lesson", summaryTarget: "Summary", summaryNative: "In your language", vocab: "Vocabulary", phrases: "Useful phrases", culture: "Culture note", openOptions: "Open settings", searchGoogle: "Search Google", verifyWith: "Verify:" },
-    pl: { launcher: "Sprawdź", title: "Fact Checker AI", close: "Zamknij", copy: "Kopiuj", copied: "Skopiowano", ask: "Zapytaj w Gemini", loading: "Analizuję…", noAnswer: "Nie znalazłem odpowiedzi AI na tej stronie. Poczekaj, aż czat zakończy odpowiedź.", selectFirst: "Zaznacz najpierw fragment tekstu do weryfikacji.", ctx: "Rozszerzenie zostało przeładowane lub zaktualizowane, a ta karta wciąż korzysta ze starej wersji.", reload: "Odśwież stronę", riskHigh: "Wysokie ryzyko – zachowaj ostrożność", riskMed: "Średnie ryzyko", riskLow: "Niskie ryzyko – wygląda wiarygodnie", kindVerify: "weryfikacja", kindExplore: "ciekawostka", noQuestions: "Brak pytań.", reverseSearch: "Wyszukiwanie wsteczne:", tabFact: "Fakty", tabStory: "Moja Historia", tabLingo: "Linglerno", takeaways: "Jak to wykorzystać", learnNext: "Czego się nauczyć", readNext: "Co przeczytać dalej", lesson: "Mini-lekcja", summaryTarget: "Streszczenie", summaryNative: "W Twoim języku", vocab: "Słownictwo", phrases: "Przydatne zwroty", culture: "Ciekawostka kulturowa", openOptions: "Otwórz ustawienia", searchGoogle: "Szukaj w Google", verifyWith: "Zweryfikuj:" },
+    en: { launcher: "Fact Check", title: "Fact Checker AI", close: "Close", copy: "Copy", copied: "Copied", ask: "Ask Gemini", loading: "Analyzing…", noAnswer: "No AI answer found on this page. Wait until the chat finishes responding.", selectFirst: "Select some text to verify first.", ctx: "The extension was reloaded or updated, and this tab still uses the old version.", reload: "Reload page", riskHigh: "High risk – be careful", riskMed: "Medium risk", riskLow: "Low risk – looks credible", kindVerify: "verify", kindExplore: "explore", noQuestions: "No questions.", reverseSearch: "Reverse search:", tabFact: "Fact Check", tabStory: "My Story", tabLingo: "Linglerno", takeaways: "How to use this", learnNext: "Learn next", readNext: "Read next", lesson: "Micro-lesson", summaryTarget: "Summary", summaryNative: "In your language", vocab: "Vocabulary", phrases: "Useful phrases", culture: "Culture note", openOptions: "Open settings", searchGoogle: "Search Google", verifyWith: "Verify:", course: "Course / video", posNoun: "noun", posVerb: "verb", posOther: "adjective / other" },
+    pl: { launcher: "Sprawdź", title: "Fact Checker AI", close: "Zamknij", copy: "Kopiuj", copied: "Skopiowano", ask: "Zapytaj w Gemini", loading: "Analizuję…", noAnswer: "Nie znalazłem odpowiedzi AI na tej stronie. Poczekaj, aż czat zakończy odpowiedź.", selectFirst: "Zaznacz najpierw fragment tekstu do weryfikacji.", ctx: "Rozszerzenie zostało przeładowane lub zaktualizowane, a ta karta wciąż korzysta ze starej wersji.", reload: "Odśwież stronę", riskHigh: "Wysokie ryzyko – zachowaj ostrożność", riskMed: "Średnie ryzyko", riskLow: "Niskie ryzyko – wygląda wiarygodnie", kindVerify: "weryfikacja", kindExplore: "ciekawostka", noQuestions: "Brak pytań.", reverseSearch: "Wyszukiwanie wsteczne:", tabFact: "Fakty", tabStory: "Moja Historia", tabLingo: "Linglerno", takeaways: "Jak to wykorzystać", learnNext: "Czego się nauczyć", readNext: "Co przeczytać dalej", lesson: "Mini-lekcja", summaryTarget: "Streszczenie", summaryNative: "W Twoim języku", vocab: "Słownictwo", phrases: "Przydatne zwroty", culture: "Ciekawostka kulturowa", openOptions: "Otwórz ustawienia", searchGoogle: "Szukaj w Google", verifyWith: "Zweryfikuj:", course: "Kurs / wideo", posNoun: "rzeczownik", posVerb: "czasownik", posOther: "przymiotnik / inne" },
     es: { launcher: "Verificar", title: "Fact Checker AI", close: "Cerrar", copy: "Copiar", copied: "Copiado", ask: "Preguntar a Gemini", loading: "Analizando…", noAnswer: "No se encontró respuesta de IA en esta página. Espera a que el chat termine.", selectFirst: "Selecciona primero un texto para verificar.", ctx: "La extensión se recargó o actualizó y esta pestaña usa la versión anterior.", reload: "Recargar página", riskHigh: "Riesgo alto – ten cuidado", riskMed: "Riesgo medio", riskLow: "Riesgo bajo – parece creíble", kindVerify: "verificación", kindExplore: "curiosidad", noQuestions: "Sin preguntas." },
     de: { launcher: "Prüfen", title: "Fact Checker AI", close: "Schließen", copy: "Kopieren", copied: "Kopiert", ask: "Gemini fragen", loading: "Analysiere…", noAnswer: "Keine KI-Antwort auf dieser Seite gefunden. Warte, bis der Chat fertig ist.", selectFirst: "Markiere zuerst einen Text zur Überprüfung.", ctx: "Die Erweiterung wurde neu geladen oder aktualisiert; dieser Tab nutzt noch die alte Version.", reload: "Seite neu laden", riskHigh: "Hohes Risiko – Vorsicht", riskMed: "Mittleres Risiko", riskLow: "Geringes Risiko – wirkt glaubwürdig", kindVerify: "Prüfung", kindExplore: "Vertiefung", noQuestions: "Keine Fragen." },
     fr: { launcher: "Vérifier", title: "Fact Checker AI", close: "Fermer", copy: "Copier", copied: "Copié", ask: "Demander à Gemini", loading: "Analyse…", noAnswer: "Aucune réponse d'IA trouvée sur cette page. Attends la fin de la réponse.", selectFirst: "Sélectionne d'abord un texte à vérifier.", ctx: "L'extension a été rechargée ou mise à jour, et cet onglet utilise l'ancienne version.", reload: "Recharger la page", riskHigh: "Risque élevé – prudence", riskMed: "Risque moyen", riskLow: "Risque faible – semble crédible", kindVerify: "vérification", kindExplore: "découverte", noQuestions: "Aucune question." },
@@ -577,6 +577,16 @@
     )}</div><ul class="krytykai-learn-list">${li}</ul></div>`;
   }
 
+  // Kolor wg części mowy: rzeczownik = pomarańczowy (tłumaczenie niebieskie),
+  // czasownik = zielony, przymiotnik/inne = pogrubione.
+  function posSpan(text, pos, side) {
+    const t = escapeHtml(text);
+    if (pos === "noun")
+      return `<span class="${side === "trans" ? "krytykai-pos-noun-tr" : "krytykai-pos-noun"}">${t}</span>`;
+    if (pos === "verb") return `<span class="krytykai-pos-verb">${t}</span>`;
+    return `<b>${t}</b>`; // adjective / other
+  }
+
   function renderStory(r) {
     showPanel();
     const badge = `<span class="krytykai-badge">${escapeHtml(r.source || "gemini")}</span>`;
@@ -584,24 +594,37 @@
       tr("takeaways"),
       (r.takeaways || []).map((t) => escapeHtml(t))
     );
-    const learn = listBlock(
-      tr("learnNext"),
-      (r.learn_next || []).map(
-        (x) => `<b>${escapeHtml(x.topic || "")}</b>${x.why ? " – " + escapeHtml(x.why) : ""}`
-      )
-    );
-    const read = listBlock(
-      tr("readNext"),
-      (r.read_next || []).map(
-        (x) => `<b>${escapeHtml(x.title || "")}</b>${x.why ? " – " + escapeHtml(x.why) : ""}`
-      )
-    );
+    const read = readNextBlock(r.read_next || []);
     const lesson = r.lesson
       ? `<div class="krytykai-learn-sec"><div class="krytykai-learn-h">${escapeHtml(
           tr("lesson")
         )}</div><div class="krytykai-summary">${escapeHtml(r.lesson)}</div></div>`
       : "";
-    setBody(`<div class="krytykai-meta">${badge}</div>${takeaways}${learn}${read}${lesson}`);
+    setBody(`<div class="krytykai-meta">${badge}</div>${takeaways}${read}${lesson}`);
+  }
+
+  // „Co dalej" jako linki do wyszukiwarki/kursu (zapytania z modelu → gotowe URL-e,
+  // więc bez zmyślonych źródeł/adresów).
+  function readNextBlock(items) {
+    const list = (items || []).slice(0, 2);
+    if (!list.length) return "";
+    const li = list
+      .map((x) => {
+        const query = x.query || x.title || "";
+        const q = encodeURIComponent(String(query).slice(0, 200));
+        const why = x.why ? ` – ${escapeHtml(x.why)}` : "";
+        const g = `https://www.google.com/search?q=${q}`;
+        const yt = `https://www.youtube.com/results?search_query=${q}`;
+        return `<li><b>${escapeHtml(query)}</b>${why}
+          <div class="krytykai-actions krytykai-actions-wrap" style="margin-top:4px;">
+            <a class="krytykai-btn" href="${g}" target="_blank" rel="noopener">${escapeHtml(tr("searchGoogle"))}</a>
+            <a class="krytykai-btn" href="${yt}" target="_blank" rel="noopener">${escapeHtml(tr("course"))}</a>
+          </div></li>`;
+      })
+      .join("");
+    return `<div class="krytykai-learn-sec"><div class="krytykai-learn-h">${escapeHtml(
+      tr("readNext")
+    )}</div><ul class="krytykai-learn-list">${li}</ul></div>`;
   }
 
   function renderLingo(r) {
@@ -617,13 +640,25 @@
               : ""
           }</div>`
         : "";
-    const vocab = listBlock(
-      tr("vocab"),
-      (r.vocab || []).map((v) => {
+    const vocabItems = (r.vocab || [])
+      .map((v) => {
+        const pos = String(v.pos || "").toLowerCase();
+        const term = posSpan(v.term || "", pos, "term");
+        const trans = posSpan(v.translation || "", pos, "trans");
         const ex = v.example ? `<div class="krytykai-why">${escapeHtml(v.example)}</div>` : "";
-        return `<b>${escapeHtml(v.term || "")}</b> — ${escapeHtml(v.translation || "")}${ex}`;
+        return `<li>${term} — ${trans}${ex}</li>`;
       })
-    );
+      .join("");
+    const legend = `<div class="krytykai-poslegend">
+      <span class="krytykai-pos-noun">${escapeHtml(tr("posNoun"))}</span> ·
+      <span class="krytykai-pos-verb">${escapeHtml(tr("posVerb"))}</span> ·
+      <b>${escapeHtml(tr("posOther"))}</b>
+    </div>`;
+    const vocab = vocabItems
+      ? `<div class="krytykai-learn-sec"><div class="krytykai-learn-h">${escapeHtml(
+          tr("vocab")
+        )}</div>${legend}<ul class="krytykai-learn-list">${vocabItems}</ul></div>`
+      : "";
     const phrases = listBlock(
       tr("phrases"),
       (r.phrases || []).map(
