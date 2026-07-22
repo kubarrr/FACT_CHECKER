@@ -11,6 +11,8 @@ import {
   heuristicQuestions,
   parseModelJson,
   parseLooseJson,
+  buildCommentsUserPrompt,
+  buildCommentsSystemPrompt,
 } from "../src/shared/prompt.js";
 
 test("langName maps codes and falls back to null", () => {
@@ -99,4 +101,23 @@ test("parseLooseJson: parses learning-mode JSON without questions[]", () => {
   const r = parseLooseJson('noise {"takeaways":["x"],"lesson":"y"} trailing');
   assert.deepEqual(r.takeaways, ["x"]);
   assert.equal(r.lesson, "y");
+});
+
+test("buildCommentsUserPrompt: numbers comments from 1 and caps their length", () => {
+  const items = [{ text: "pierwszy" }, { text: "drugi" }, { text: "x".repeat(900) }];
+  const out = buildCommentsUserPrompt(items);
+  // Model odsyła indeksy, więc numeracja od 1 jest częścią kontraktu.
+  assert.match(out, /^1\. pierwszy$/m);
+  assert.match(out, /^2\. drugi$/m);
+  assert.ok(!out.includes("x".repeat(601)), "pojedynczy komentarz musi być przycięty");
+});
+
+test("buildCommentsSystemPrompt: judges comments, never their authors", () => {
+  const p = buildCommentsSystemPrompt("pl");
+  assert.match(p, /never label a person/i);
+  assert.match(p, /never infer anything about the person/i);
+  // Ostry ton nie może być sam w sobie powodem odrzucenia.
+  assert.match(p, /Strong language does NOT disqualify/i);
+  // Pusta lista musi być dozwolona, inaczej model będzie naciągał.
+  assert.match(p, /empty "top" is a valid answer/i);
 });

@@ -19,6 +19,9 @@ import {
 } from "./prompt.js";
 
 const MAX_INPUT_CHARS = 8000;
+// Tryb komentarzy ma własne limity: liczba pozycji i długość każdej z nich.
+const MAX_COMMENTS = 40;
+const MAX_COMMENT_CHARS = 600;
 const MAX_OUTPUT_TOKENS = 700;
 const LEARN_OUTPUT_TOKENS = 1100;
 const DEFAULT_MODEL = "gemini-3.1-flash-lite";
@@ -125,7 +128,8 @@ export default {
     }
 
     const answerText = String(payload.answerText || "").slice(0, MAX_INPUT_CHARS);
-    if (!answerText.trim()) {
+    // Tryb komentarzy nie używa answerText – niesie własną tablicę `comments`.
+    if (payload.mode !== "comments" && !answerText.trim()) {
       return json({ error: "answerText is required" }, 400, origin);
     }
     const userQuestion = String(payload.userQuestion || "").slice(0, 1000);
@@ -156,19 +160,17 @@ export default {
       maxTokens = LEARN_OUTPUT_TOKENS;
       loose = true;
     } else if (mode === "comments") {
-      // Komentarze przychodzą jako tablica; answerText niesie je w JSON-ie,
-      // żeby nie zmieniać kontraktu wejściowego backendu.
-      let items = [];
-      try {
-        items = JSON.parse(answerText);
-      } catch {
-        return json({ error: "comments mode expects answerText to be a JSON array" }, 400, origin);
-      }
-      if (!Array.isArray(items) || !items.length) {
-        return json({ error: "no comments to rank" }, 400, origin);
+      // Komentarze przychodzą własnym polem, a nie w answerText: ten drugi jest
+      // przycinany do MAX_INPUT_CHARS, co rozbijało JSON w połowie znaku.
+      // Limit nakładamy tu na LICZBĘ pozycji i długość każdej z osobna.
+      const items = Array.isArray(payload.comments) ? payload.comments : [];
+      if (!items.length) {
+        return json({ error: "comments mode expects a non-empty 'comments' array" }, 400, origin);
       }
       system = buildCommentsSystemPrompt(language);
-      user = buildCommentsUserPrompt(items.slice(0, 40));
+      user = buildCommentsUserPrompt(
+        items.slice(0, MAX_COMMENTS).map((c) => ({ text: String(c?.text || "").slice(0, MAX_COMMENT_CHARS) }))
+      );
       maxTokens = LEARN_OUTPUT_TOKENS;
       loose = true;
     } else {

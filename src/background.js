@@ -518,7 +518,7 @@ async function analyzeComments(payload) {
   if (settings.backendUrl) {
     const parsed = await callBackend(settings.backendUrl, {
       mode: "comments",
-      answerText: packed,
+      comments: items.map((c) => ({ text: c.text })),
       language: settings.language,
     });
     const out = { ...parsed, source: "server" };
