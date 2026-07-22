@@ -14,6 +14,8 @@ import {
   buildStoryUserPrompt,
   buildLingoSystemPrompt,
   buildLingoUserPrompt,
+  buildCommentsSystemPrompt,
+  buildCommentsUserPrompt,
 } from "./prompt.js";
 
 const MAX_INPUT_CHARS = 8000;
@@ -151,6 +153,22 @@ export default {
     } else if (mode === "lingo") {
       system = buildLingoSystemPrompt(profile, language);
       user = buildLingoUserPrompt(profile, answerText);
+      maxTokens = LEARN_OUTPUT_TOKENS;
+      loose = true;
+    } else if (mode === "comments") {
+      // Komentarze przychodzą jako tablica; answerText niesie je w JSON-ie,
+      // żeby nie zmieniać kontraktu wejściowego backendu.
+      let items = [];
+      try {
+        items = JSON.parse(answerText);
+      } catch {
+        return json({ error: "comments mode expects answerText to be a JSON array" }, 400, origin);
+      }
+      if (!Array.isArray(items) || !items.length) {
+        return json({ error: "no comments to rank" }, 400, origin);
+      }
+      system = buildCommentsSystemPrompt(language);
+      user = buildCommentsUserPrompt(items.slice(0, 40));
       maxTokens = LEARN_OUTPUT_TOKENS;
       loose = true;
     } else {

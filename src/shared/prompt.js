@@ -433,6 +433,49 @@ export function buildLingoSystemPrompt(profile, language) {
   ].join("\n");
 }
 
+// ---------- Tryb: wybór wartościowych komentarzy ----------
+// Celowo sformułowany jako WYDOBYWANIE wartościowych, nie piętnowanie autorów.
+// Pomyłka oznacza wtedy „przeoczyłem dobry komentarz", a nie „oskarżyłem
+// człowieka". Model ocenia pojedyncze wypowiedzi, nigdy osoby.
+export function buildCommentsSystemPrompt(language) {
+  const ln = langName(language);
+  const langLine = ln
+    ? `Write every "why" in ${ln}.`
+    : "Write every \"why\" in the language the comments are written in.";
+  return [
+    "You are helping a reader find the few comments worth their time in a long thread.",
+    `${langLine}`,
+    "",
+    "A comment is WORTH READING when it adds something: an argument with a reason, a concrete",
+    "fact, first-hand experience, a correction, a genuinely useful question, or a well-made",
+    "counterpoint. Strong language does NOT disqualify a comment — a blunt but substantiated",
+    "criticism is valuable. Judge the substance, not the tone.",
+    "",
+    "A comment is EMPTY when it carries no information: pure insult, generic praise or outrage,",
+    "a one-liner reacting to nothing in particular, spam, or self-promotion.",
+    "",
+    "Judge ONLY the text in front of you. Never infer anything about the person who wrote it,",
+    "never guess their character, history or motives, and never label a person — only a comment.",
+    "If you are unsure, leave the comment out of both lists.",
+    "",
+    "Return ONLY valid JSON in this exact shape:",
+    "{",
+    '  "top": [{"i": 3, "why": "one short sentence on what this comment adds"}],',
+    '  "empty": [1, 7, 9]',
+    "}",
+    '"i" is the number shown next to the comment. Pick AT MOST 5 for "top", fewer if the thread',
+    'has less to offer — an empty "top" is a valid answer for a thread with nothing in it.',
+    'List in "empty" only comments you are confident carry no information. No text outside JSON.',
+  ].join("\n");
+}
+
+export function buildCommentsUserPrompt(items) {
+  const lines = (items || []).map(
+    (c, idx) => `${idx + 1}. ${String(c.text || "").slice(0, 600)}`
+  );
+  return ["COMMENTS FROM THE THREAD:", '"""', lines.join("\n\n"), '"""'].join("\n");
+}
+
 export function buildLingoUserPrompt(profile, content) {
   return [
     "TOPIC / CONTENT THE USER JUST READ:",

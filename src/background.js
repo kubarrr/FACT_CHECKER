@@ -8,6 +8,8 @@ import {
   buildStoryUserPrompt,
   buildLingoSystemPrompt,
   buildLingoUserPrompt,
+  buildCommentsSystemPrompt,
+  buildCommentsUserPrompt,
   heuristicQuestions,
   parseModelJson,
   parseLooseJson,
@@ -130,6 +132,12 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   }
   if (msg?.type === "KRYTYKAI_ANALYZE_LEARN") {
     analyzeLearn(msg.mode, msg.payload)
+      .then((result) => sendResponse({ ok: true, result }))
+      .catch((err) => sendResponse({ ok: false, error: String(err?.message || err) }));
+    return true; // async
+  }
+  if (msg?.type === "KRYTYKAI_ANALYZE_COMMENTS") {
+    analyzeComments(msg.payload)
       .then((result) => sendResponse({ ok: true, result }))
       .catch((err) => sendResponse({ ok: false, error: String(err?.message || err) }));
     return true; // async
@@ -489,6 +497,52 @@ async function analyzeLearn(mode, payload) {
       : await callOpenAIJSON(settings, system, user, LEARN_OUTPUT_TOKENS);
   const parsed = parseLooseJson(raw);
   const out = { ...parsed, mode, source: settings.provider };
+  cacheSet(cacheKey, out);
+  return out;
+}
+
+// --- Wybór wartościowych komentarzy ---------------------------------------
+// Osobna ścieżka, bo wejściem jest lista wypowiedzi, a nie jeden tekst.
+// Model lokalny jest tu pominięty: partia kilkudziesięciu komentarzy przekracza
+// jego okno i jakość, więc tryb wymaga backendu albo klucza.
+async function analyzeComments(payload) {
+  const settings = await loadSettings();
+  const items = Array.isArray(payload?.items) ? payload.items.slice(0, 40) : [];
+  if (!items.length) throw new Error("Brak komentarzy do oceny.");
+
+  const packed = JSON.stringify(items.map((c) => ({ text: c.text })));
+  const cacheKey = `comments|${settings.backendUrl ? "srv" : settings.provider}|${settings.language || ""}|${hashStr(packed)}`;
+  const cached = cacheGet(cacheKey);
+  if (cached) return { ...cached, cached: true };
+
+  if (settings.backendUrl) {
+    const parsed = await callBackend(settings.backendUrl, {
+      mode: "comments",
+      answerText: packed,
+      language: settings.language,
+    });
+    const out = { ...parsed, source: "server" };
+    cacheSet(cacheKey, out);
+    return out;
+  }
+
+  const canCloud =
+    (settings.provider === "gemini" || settings.provider === "openai") && settings.apiKey;
+  if (!canCloud) {
+    return {
+      needCloud: true,
+      warning:
+        "Ten tryb wymaga serwera w chmurze albo klucza API (Gemini/OpenAI). Model wbudowany nie poradzi sobie z oceną wielu komentarzy naraz.",
+    };
+  }
+
+  const system = buildCommentsSystemPrompt(settings.language);
+  const user = buildCommentsUserPrompt(items);
+  const raw =
+    settings.provider === "gemini"
+      ? await callGeminiJSON(settings, system, user, LEARN_OUTPUT_TOKENS)
+      : await callOpenAIJSON(settings, system, user, LEARN_OUTPUT_TOKENS);
+  const out = { ...parseLooseJson(raw), source: settings.provider };
   cacheSet(cacheKey, out);
   return out;
 }

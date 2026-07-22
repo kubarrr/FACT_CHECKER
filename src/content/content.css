@@ -346,6 +346,56 @@ mark.krytykai-flag {
   font-style: italic;
 }
 
+.krytykai-lbtn-comments {
+  background: linear-gradient(135deg, #0891b2, #06b6d4);
+}
+.krytykai-header-comments {
+  background: linear-gradient(135deg, #0891b2, #06b6d4);
+}
+
+/* --- Wartościowe komentarze --- */
+/* Wyróżnienie jest dodatkiem NA istniejący element strony – żadnych zmian
+   układu, żeby nie rozjechać serwisu. Wygaszenie jest odwracalne. */
+.krytykai-c-top {
+  outline: 2px solid #06b6d4 !important;
+  outline-offset: 2px;
+  border-radius: 6px;
+  scroll-margin-top: 90px;
+}
+.krytykai-c-tag {
+  display: inline-block;
+  margin: 0 6px 4px 0;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #06b6d4;
+  color: #fff;
+  font: 700 10.5px/1.6 -apple-system, "Segoe UI", Roboto, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  vertical-align: middle;
+}
+.krytykai-c-dim {
+  opacity: 0.35;
+  transition: opacity 0.2s ease;
+}
+.krytykai-c-dim:hover {
+  opacity: 1;
+}
+.krytykai-c-quote {
+  margin-top: 4px;
+  padding-left: 8px;
+  border-left: 2px solid #cffafe;
+  color: #374151;
+  font-size: 12.5px;
+}
+.krytykai-c-note {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #f3f4f6;
+  color: #6b7280;
+  font-size: 11.5px;
+}
+
 /* --- Weryfikacja w źródłach (grounding na żądanie) --- */
 .krytykai-ground {
   margin-top: 12px;
