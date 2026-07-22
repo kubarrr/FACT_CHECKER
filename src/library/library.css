@@ -519,6 +519,104 @@ body {
   color: #fff;
 }
 
+/* --- Wybór zawodu (ESCO) -------------------------------------------------- */
+.occ-search {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.occ-search input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--k-border);
+  border-radius: 10px;
+  background: var(--k-bg);
+  color: var(--k-fg);
+  font: inherit;
+  font-size: 14px;
+}
+.occ-current {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--k-primary);
+  border-radius: 12px;
+  background: color-mix(in oklch, var(--k-primary) 10%, var(--k-card));
+}
+.occ-title {
+  font-weight: 800;
+  font-size: 16px;
+}
+#occResults {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+.occ-hit {
+  text-align: left;
+  padding: 10px 13px;
+  border: 1px solid var(--k-border);
+  border-radius: 10px;
+  background: var(--k-bg);
+  color: var(--k-fg);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.occ-hit:hover {
+  border-color: var(--k-primary);
+  background: color-mix(in oklch, var(--k-primary) 8%, var(--k-bg));
+}
+
+/* --- Pokrycie umiejętności zawodu ----------------------------------------- */
+.cov {
+  background: var(--k-card);
+  border: 1px solid var(--k-border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+.cov-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.cov-occ {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.cov-num {
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--k-primary);
+}
+.cov-num span {
+  font-size: 18px;
+  opacity: 0.55;
+}
+a.gap-link {
+  text-decoration: none;
+}
+a.gap-link:hover {
+  background: var(--k-primary);
+  color: #fff;
+}
+.attrib {
+  margin-top: 22px;
+  font-size: 11.5px;
+  color: var(--k-muted-fg);
+  opacity: 0.8;
+}
+
 /* --- Historia ------------------------------------------------------------- */
 .heat {
   display: grid;

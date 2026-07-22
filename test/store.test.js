@@ -108,12 +108,105 @@ test("saveLesson: tryb kariery buduje mapę umiejętności, bez słówek", async
   });
 
   assert.equal(res.savedVocab, 0);
-  assert.deepEqual(res.lesson.skills, ["distributed systems", "sql"]);
+  // Bez wybranego zawodu zostają wolne etykiety, sprowadzone do wspólnego kształtu.
+  assert.deepEqual(
+    res.lesson.skills.map((s) => s.title),
+    ["distributed systems", "sql"]
+  );
+  assert.ok(res.lesson.skills.every((s) => s.uri === null));
 
   const summary = await S.getSkillSummary();
   assert.equal(summary.length, 2);
   assert.equal(summary[0].count, 1);
   assert.equal(summary[0].sources[0].url, "https://example.com/post");
+});
+
+// Zawód z ESCO: model wybiera identyfikatory z zamkniętego menu zamiast
+// wymyślać nazwy – to jedyne, co powstrzymuje mapę kompetencji przed rozpadem
+// na warianty tego samego pojęcia.
+const OCCUPATION = {
+  uri: "http://data.europa.eu/esco/occupation/plumber",
+  title: "hydraulik",
+  essential: [
+    { uri: "esco/skill/1", title: "udrażniać kanalizację" },
+    { uri: "esco/skill/2", title: "wymieniać krany" },
+  ],
+  optional: [{ uri: "esco/skill/3", title: "zamawiać materiały budowlane" }],
+  options: [
+    { id: "s1", uri: "esco/skill/1", title: "udrażniać kanalizację", essential: true },
+    { id: "s2", uri: "esco/skill/2", title: "wymieniać krany", essential: true },
+    { id: "s3", uri: "esco/skill/3", title: "zamawiać materiały budowlane", essential: false },
+  ],
+};
+
+test("kariera z zawodem: identyfikatory z menu mapują się na umiejętności ESCO", async () => {
+  const S = globalThis.KRYTYKAI_STORE;
+  const res = await S.saveLesson({
+    mode: "career",
+    sourceUrl: "https://example.com/rury",
+    result: { ...CAREER_RESULT, skills: ["s3", "s1"] },
+    profile: PROFILE,
+    occupation: OCCUPATION,
+  });
+
+  assert.deepEqual(res.lesson.skills, [
+    { uri: "esco/skill/3", title: "zamawiać materiały budowlane", essential: false },
+    { uri: "esco/skill/1", title: "udrażniać kanalizację", essential: true },
+  ]);
+  assert.equal(res.lesson.occupation_uri, OCCUPATION.uri);
+});
+
+test("kariera z zawodem: wymyślone i powtórzone identyfikatory są odrzucane", async () => {
+  const S = globalThis.KRYTYKAI_STORE;
+  const res = await S.saveLesson({
+    mode: "career",
+    sourceUrl: "https://example.com/x",
+    // s9 nie istnieje, "sql" to halucynacja starego formatu, s2 powtórzone
+    result: { ...CAREER_RESULT, skills: ["s2", "s9", "sql", "s2"] },
+    profile: PROFILE,
+    occupation: OCCUPATION,
+  });
+
+  assert.deepEqual(
+    res.lesson.skills.map((s) => s.uri),
+    ["esco/skill/2"]
+  );
+});
+
+test("kariera z zawodem: pusta lista to poprawna odpowiedź", async () => {
+  const S = globalThis.KRYTYKAI_STORE;
+  const res = await S.saveLesson({
+    mode: "career",
+    sourceUrl: "https://example.com/offtopic",
+    result: { ...CAREER_RESULT, skills: [] },
+    profile: PROFILE,
+    occupation: OCCUPATION,
+  });
+
+  assert.deepEqual(res.lesson.skills, []);
+  assert.equal((await S.getSkillSummary()).length, 0);
+});
+
+test("getSkillSummary grupuje po URI, nie po etykiecie", async () => {
+  const S = globalThis.KRYTYKAI_STORE;
+  await S.saveLesson({
+    mode: "career", sourceUrl: "https://a.pl",
+    result: { ...CAREER_RESULT, skills: ["s1"] }, profile: PROFILE, occupation: OCCUPATION,
+  });
+  // Ta sama umiejętność pod zmienioną etykietą (np. po aktualizacji ESCO).
+  const renamed = {
+    ...OCCUPATION,
+    options: [{ id: "s1", uri: "esco/skill/1", title: "udrażnianie kanalizacji", essential: true }],
+  };
+  await S.saveLesson({
+    mode: "career", sourceUrl: "https://b.pl",
+    result: { ...CAREER_RESULT, skills: ["s1"] }, profile: PROFILE, occupation: renamed,
+  });
+
+  const summary = await S.getSkillSummary();
+  assert.equal(summary.length, 1, "zmiana nazwy nie może tworzyć drugiego wpisu");
+  assert.equal(summary[0].count, 2);
+  assert.equal(summary[0].essential, true);
 });
 
 test("reviewVocab: poprawna odpowiedź przesuwa słówko do wyższego pudełka i odsuwa termin", async () => {

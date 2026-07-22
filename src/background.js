@@ -402,7 +402,18 @@ async function analyzeLearn(mode, payload) {
     throw new Error("Brak treści do analizy.");
   }
 
-  const profile = settings.profile || {};
+  const profile = { ...(settings.profile || {}) };
+
+  // Zawód z ESCO wybrany w Bibliotece daje modelowi zamkniętą listę umiejętności
+  // do wyboru. Doklejamy ją do profilu, więc trafia zarówno do backendu, jak i
+  // do modelu lokalnego bez osobnej ścieżki.
+  if (mode === "story") {
+    const occ = (await chrome.storage.local.get("krytykai_occupation")).krytykai_occupation;
+    if (occ?.options?.length) {
+      profile.occupation = occ.title;
+      profile.skillOptions = occ.options.map((o) => ({ id: o.id, title: o.title, essential: o.essential }));
+    }
+  }
 
   // Cache – identyczny tryb + treść + profil + język zwracamy natychmiast.
   const cacheKey = `learn|${mode}|${settings.backendUrl ? "srv" : settings.provider}|${settings.language || ""}|${hashStr(
@@ -468,7 +479,7 @@ async function analyzeLearn(mode, payload) {
     system = buildLingoSystemPrompt(profile, settings.language);
     user = buildLingoUserPrompt(profile, answerText);
   } else {
-    system = buildStorySystemPrompt(settings.language);
+    system = buildStorySystemPrompt(settings.language, profile.skillOptions);
     user = buildStoryUserPrompt(profile, answerText);
   }
 

@@ -144,7 +144,7 @@ export default {
     // Ustaw zmienną środowiskową GROUNDING="off", by wyłączyć (szybciej/taniej).
     let useGrounding = false;
     if (mode === "story") {
-      system = buildStorySystemPrompt(language);
+      system = buildStorySystemPrompt(language, profile.skillOptions);
       user = buildStoryUserPrompt(profile, answerText);
       maxTokens = LEARN_OUTPUT_TOKENS;
       loose = true;

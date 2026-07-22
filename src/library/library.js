@@ -6,6 +6,7 @@
 
   const C = globalThis.KRYTYKAI_CATALOG;
   const S = globalThis.KRYTYKAI_STORE;
+  const E = globalThis.KRYTYKAI_ESCO;
   const SETTINGS_KEY = "krytykai_settings";
 
   const $ = (id) => document.getElementById(id);
@@ -320,25 +321,63 @@
       return;
     }
 
-    // Deklarowane cele z profilu vs to, co faktycznie czytasz.
-    const declared = String(settings.profile?.skills || "")
-      .split(/[,;]/)
-      .map((s) => s.trim().toLowerCase())
-      .filter(Boolean);
-    const touched = new Set(skills.map((s) => s.tag));
-    const gapHtml = declared.length
-      ? `<div class="gapbox">
-           <h3>Twoje cele a to, co czytasz</h3>
-           <div class="gap-tags">
-             ${declared
-               .map((d) => {
-                 const hit = [...touched].some((t) => t.includes(d) || d.includes(t));
-                 return `<span class="gap-tag${hit ? " covered" : ""}">${hit ? "✓ " : "○ "}${esc(d)}</span>`;
-               })
-               .join("")}
-           </div>
-         </div>`
-      : "";
+    // Pokrycie względem oficjalnych umiejętności zawodu. To jedyna metryka tutaj,
+    // która mierzy coś poza samą częstotliwością czytania: ile z tego, czego
+    // zawód naprawdę wymaga, w ogóle dotknąłeś.
+    const occ = await E.getSavedOccupation();
+    const touchedUris = new Set(skills.map((s) => s.uri).filter(Boolean));
+
+    let coverageHtml = "";
+    if (occ) {
+      const ess = occ.essential || [];
+      const opt = occ.optional || [];
+      const covEss = ess.filter((s) => touchedUris.has(s.uri)).length;
+      const covOpt = opt.filter((s) => touchedUris.has(s.uri)).length;
+      const pct = ess.length ? Math.round((covEss / ess.length) * 100) : 0;
+      const gaps = ess.filter((s) => !touchedUris.has(s.uri));
+
+      coverageHtml = `
+        <div class="cov">
+          <div class="cov-head">
+            <div>
+              <div class="cov-occ">${esc(occ.title)}</div>
+              <div class="stat-l">pokrycie umiejętności kluczowych</div>
+            </div>
+            <div class="cov-num">${covEss}<span>/${ess.length}</span></div>
+          </div>
+          <div class="skill-bar"><i style="width:${pct}%"></i></div>
+          <div class="stat-l" style="margin-top:8px">
+            Dodatkowo ${covOpt} z ${opt.length} umiejętności opcjonalnych.
+          </div>
+        </div>
+
+        ${
+          gaps.length
+            ? `<div class="day-h">Luki — czego jeszcze nie tknąłeś (${gaps.length})</div>
+               <div class="gap-tags">
+                 ${gaps
+                   .slice(0, 24)
+                   .map(
+                     (g) =>
+                       `<a class="gap-tag gap-link" target="_blank" rel="noopener"
+                           href="https://www.google.com/search?q=${encodeURIComponent(g.title + " kurs")}"
+                           title="Poszukaj materiałów: ${esc(g.title)}">${esc(g.title)}</a>`
+                   )
+                   .join("")}
+               </div>`
+            : `<div class="gapbox">Wszystkie umiejętności kluczowe tego zawodu masz już ruszone. 🎉</div>`
+        }`;
+    } else {
+      coverageHtml = `
+        <div class="gapbox">
+          <h3>Ustaw zawód, żeby mierzyć postęp</h3>
+          <p class="stat-l" style="margin:0 0 10px">
+            Bez zawodu widzisz tylko, jak często czytasz o czym. Po wybraniu zawodu z klasyfikacji
+            ESCO lekcje mapują się na jego oficjalne umiejętności i widać, ile z nich pokryłeś.
+          </p>
+          <button class="btn btn-primary" id="goProfile">Wybierz zawód</button>
+        </div>`;
+    }
 
     const max = skills[0]?.count || 1;
     const skillsHtml = skills
@@ -346,7 +385,7 @@
         (s) => `
       <div class="skill">
         <div class="skill-head">
-          <span class="skill-tag">${esc(s.tag)}</span>
+          <span class="skill-tag">${s.essential ? "★ " : ""}${esc(s.tag)}</span>
           <span class="skill-count">${s.count} ${s.count === 1 ? "lekcja" : "lekcji"}</span>
         </div>
         <div class="skill-bar"><i style="width:${(s.count / max) * 100}%"></i></div>
@@ -386,10 +425,13 @@
       .join("");
 
     el.innerHTML = `
-      ${gapHtml}
-      ${skills.length ? `<div class="day-h">Mapa kompetencji</div>${skillsHtml}` : ""}
+      ${coverageHtml}
+      ${skills.length ? `<div class="day-h">Czego dotknąłeś</div>${skillsHtml}` : ""}
       <div class="day-h">Ostatnie lekcje</div>
-      ${recent}`;
+      ${recent}
+      ${occ ? `<p class="attrib">Zawody i umiejętności: klasyfikacja ESCO (Komisja Europejska).</p>` : ""}`;
+
+    $("goProfile")?.addEventListener("click", () => selectTab("profile"));
   }
 
   // --- Zakładka: historia ---------------------------------------------------
@@ -452,9 +494,80 @@
     { key: "interests", label: "Zainteresowania", placeholder: "np. AI, bieganie" },
   ];
 
-  function renderProfile() {
+  // Wybór zawodu z ESCO. Wyszukiwarka jest leksykalna, więc pokazujemy listę
+  // trafień do wzrokowego wyboru zamiast zgadywać za użytkownika.
+  function occupationBoxHtml(occ) {
+    if (occ) {
+      const n = (occ.essential?.length || 0) + (occ.optional?.length || 0);
+      return `
+        <div class="occ-current">
+          <div>
+            <div class="occ-title">${esc(occ.title)}</div>
+            <div class="stat-l">${occ.essential?.length || 0} umiejętności kluczowych, ${occ.optional?.length || 0} opcjonalnych · ${n} łącznie</div>
+          </div>
+          <button class="btn" id="occClear">Zmień</button>
+        </div>`;
+    }
+    return `
+      <div class="occ-search">
+        <input type="text" id="occQuery" placeholder="Wpisz zawód, np. hydraulik, analityk danych…" />
+        <button class="btn btn-primary" id="occSearch">Szukaj</button>
+      </div>
+      <div class="stat-l" id="occHint">Lista zawodów pochodzi z ESCO — europejskiej klasyfikacji zawodów i umiejętności.</div>
+      <div id="occResults"></div>`;
+  }
+
+  function bindOccupationBox(el, occ, onChange) {
+    if (occ) {
+      el.querySelector("#occClear")?.addEventListener("click", async () => {
+        await E.clearOccupation();
+        onChange();
+      });
+      return;
+    }
+
+    const run = async () => {
+      const q = el.querySelector("#occQuery").value;
+      const hint = el.querySelector("#occHint");
+      const box = el.querySelector("#occResults");
+      hint.textContent = "Szukam…";
+      try {
+        const results = await E.searchOccupations(q, "pl");
+        hint.textContent = results.length
+          ? "Wybierz najbliższy swojemu — nazwy w ESCO bywają urzędowe."
+          : "Brak trafień. Spróbuj innego słowa.";
+        box.innerHTML = results
+          .map(
+            (r) =>
+              `<button class="occ-hit" data-uri="${esc(r.uri)}">${esc(r.title)}</button>`
+          )
+          .join("");
+        box.querySelectorAll("[data-uri]").forEach((b) =>
+          b.addEventListener("click", async () => {
+            hint.textContent = "Pobieram umiejętności…";
+            try {
+              await E.selectOccupation(b.dataset.uri, "pl");
+              onChange();
+            } catch (err) {
+              hint.textContent = `Nie udało się pobrać: ${err.message}`;
+            }
+          })
+        );
+      } catch (err) {
+        hint.textContent = `Błąd wyszukiwania: ${err.message}`;
+      }
+    };
+
+    el.querySelector("#occSearch").addEventListener("click", run);
+    el.querySelector("#occQuery").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") run();
+    });
+  }
+
+  async function renderProfile() {
     const el = $("panel-profile");
     const p = settings.profile || {};
+    const occ = await E.getSavedOccupation();
 
     const nativeSel = p.nativeLangCode || C.codeFromLegacyName(p.nativeLang);
     const targetSel = p.targetLangCode || C.codeFromLegacyName(p.targetLang);
@@ -467,6 +580,9 @@
 
     el.innerHTML = `
       <div class="form">
+        <h3 class="form-h">Zawód — wyznacza umiejętności, po których mierzysz postęp</h3>
+        ${occupationBoxHtml(occ)}
+
         <h3 class="form-h">Kariera — zasila zakładkę Kariera i tryb 📖 My Career</h3>
         ${PROFILE_FIELDS.map(
           (f) => `
@@ -508,6 +624,8 @@
           <span class="stat-l" id="saveMsg"></span>
         </div>
       </div>`;
+
+    bindOccupationBox(el, occ, renderProfile);
 
     let level = p.level || "A2";
     el.querySelectorAll("#lvlPicker .lvl").forEach((b) =>

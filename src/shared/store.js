@@ -115,18 +115,39 @@
     return items;
   }
 
-  function normalizeSkills(list) {
-    return (Array.isArray(list) ? list : [])
+  // Model zwraca albo identyfikatory z menu ESCO ("s3"), albo — gdy zawód nie
+  // jest wybrany — wolne etykiety. Jedno i drugie sprowadzamy do wspólnego
+  // kształtu {uri, title, essential}; `uri` odróżnia umiejętność z klasyfikacji
+  // od tagu wymyślonego przez model.
+  function resolveSkills(list, occupation) {
+    const raw = Array.isArray(list) ? list : [];
+    const options = occupation?.options || [];
+
+    if (options.length) {
+      const byId = new Map(options.map((o) => [String(o.id).toLowerCase(), o]));
+      const out = [];
+      const seen = new Set();
+      for (const item of raw) {
+        const hit = byId.get(String(item || "").trim().toLowerCase());
+        if (!hit || seen.has(hit.uri)) continue;
+        seen.add(hit.uri);
+        out.push({ uri: hit.uri, title: hit.title, essential: !!hit.essential });
+      }
+      return out.slice(0, 3);
+    }
+
+    return raw
       .map((s) => String(s || "").trim().toLowerCase())
       .filter((s) => s.length > 1 && s.length <= 40)
-      .slice(0, 4);
+      .slice(0, 4)
+      .map((title) => ({ uri: null, title, essential: false }));
   }
 
   /**
    * Zapisuje wynik lekcji (lingo albo career) i aktualizuje XP/serię/odznaki.
    * Zwraca podsumowanie do pokazania w panelu.
    */
-  async function saveLesson({ mode, sourceUrl, sourceTitle, result, profile }) {
+  async function saveLesson({ mode, sourceUrl, sourceTitle, result, profile, occupation }) {
     const C = globalThis.KRYTYKAI_CATALOG;
     const store = await readAll();
     const p = profile || {};
@@ -144,7 +165,8 @@
       level: p.level || "",
       topic: mode === "lingo" ? extractTopic(result) : (result.topic || sourceTitle || "").slice(0, 120),
       payload: result,
-      skills: mode === "career" ? normalizeSkills(result.skills) : [],
+      skills: mode === "career" ? resolveSkills(result.skills, occupation) : [],
+      occupation_uri: occupation?.uri || null,
       xp_earned: C.XP_PER_LESSON,
       created_at: nowIso,
     };
@@ -179,10 +201,12 @@
       }
     }
 
-    const newSkillEvents = lesson.skills.map((tag) => ({
+    const newSkillEvents = lesson.skills.map((s) => ({
       id: uid(),
       lesson_id: lesson.id,
-      skill_tag: tag,
+      skill_uri: s.uri,
+      skill_tag: s.title,
+      essential: s.essential,
       source_url: lesson.source_url,
       source_title: lesson.source_title,
       created_at: nowIso,
@@ -335,17 +359,27 @@
       const cutoff = Date.now() - days * 86400000;
       events = events.filter((e) => new Date(e.created_at).getTime() >= cutoff);
     }
-    const byTag = new Map();
+    // Grupujemy po URI, gdy umiejętność pochodzi z klasyfikacji – etykieta może
+    // się zmienić między wersjami ESCO, identyfikator nie.
+    const byKey = new Map();
     for (const e of events) {
-      const cur = byTag.get(e.skill_tag) || { tag: e.skill_tag, count: 0, last_at: e.created_at, sources: [] };
+      const key = e.skill_uri || e.skill_tag;
+      const cur = byKey.get(key) || {
+        uri: e.skill_uri || null,
+        tag: e.skill_tag,
+        essential: !!e.essential,
+        count: 0,
+        last_at: e.created_at,
+        sources: [],
+      };
       cur.count += 1;
       if (new Date(e.created_at) > new Date(cur.last_at)) cur.last_at = e.created_at;
       if (cur.sources.length < 5 && e.source_url) {
         cur.sources.push({ url: e.source_url, title: e.source_title || e.source_url });
       }
-      byTag.set(e.skill_tag, cur);
+      byKey.set(key, cur);
     }
-    return [...byTag.values()].sort((a, b) => b.count - a.count);
+    return [...byKey.values()].sort((a, b) => b.count - a.count);
   }
 
   /** Aktywność dzienna (do „trawnika" w nagłówku biblioteki). */

@@ -326,7 +326,17 @@ function profileBlock(p) {
   return lines.length ? lines.join("\n") : "(no profile provided)";
 }
 
-export function buildStorySystemPrompt(language) {
+// Lista umiejętności zawodu (z ESCO) podana modelowi jako ZAMKNIĘTY słownik.
+// Bez niej model wymyśla nazwy i po kilkudziesięciu lekcjach mapa kompetencji
+// rozpada się na warianty tego samego pojęcia.
+function skillMenuBlock(skillOptions) {
+  const list = (skillOptions || []).slice(0, 60);
+  if (!list.length) return null;
+  return list.map((s) => `${s.id}: ${s.title}${s.essential ? " (key)" : ""}`).join("\n");
+}
+
+export function buildStorySystemPrompt(language, skillOptions) {
+  const menu = skillMenuBlock(skillOptions);
   const ln = langName(language);
   const langLine = ln
     ? `Write EVERYTHING (takeaways, topics, reasons, lesson) in ${ln}, regardless of the language of the content.`
@@ -342,19 +352,33 @@ export function buildStorySystemPrompt(language) {
     "For read_next: give a search QUERY (a topic, skill or well-known course subject) the user can",
     "look up — do NOT invent specific article titles, URLs, authors or book names (avoid hallucination).",
     "",
-    'For "skills": tag this content with 2-3 SHORT skill/competence labels (1-3 words, lowercase,',
-    "in English so they group consistently over time), e.g. \"sql\", \"negotiation\", \"distributed systems\".",
-    "Reuse the user's own skill names when they fit. These build the user's long-term competence map.",
-    "",
+    ...(menu
+      ? [
+          'For "skills": pick 0-3 ids from the SKILL MENU below — the official skills of the',
+          "user's occupation. Choose ONLY skills this content genuinely helps with; an empty list",
+          "is the right answer when nothing fits. Never invent an id and never invent a skill name.",
+          "",
+          "SKILL MENU (id: skill; \"(key)\" marks skills essential to the occupation):",
+          menu,
+          "",
+        ]
+      : [
+          'For "skills": tag this content with 2-3 SHORT skill/competence labels (1-3 words, lowercase,',
+          "in English so they group consistently over time), e.g. \"sql\", \"negotiation\", \"distributed systems\".",
+          "Reuse the user's own skill names when they fit. These build the user's long-term competence map.",
+          "",
+        ]),
     "Return ONLY valid JSON in this exact shape:",
     "{",
     '  "takeaways": ["2-3 concrete ways to use this in their work/field"],',
     '  "read_next": [{"query": "a short search query / topic to explore next", "why": "one sentence"}],',
     '  "lesson": "a short 2-3 sentence micro-lesson that teaches the key concept from the content",',
     '  "topic": "a 2-5 word label for what this content was about (in the output language)",',
-    '  "skills": ["skill-tag", "skill-tag"]',
+    menu ? '  "skills": ["s3", "s11"]' : '  "skills": ["skill-tag", "skill-tag"]',
     "}",
-    "EXACTLY 2 items in read_next. Keep takeaways to 2-3. 2-3 skills. No text outside JSON, no markdown fences.",
+    menu
+      ? "EXACTLY 2 items in read_next. Keep takeaways to 2-3. 0-3 skill ids, menu only. No text outside JSON, no markdown fences."
+      : "EXACTLY 2 items in read_next. Keep takeaways to 2-3. 2-3 skills. No text outside JSON, no markdown fences.",
   ].join("\n");
 }
 
