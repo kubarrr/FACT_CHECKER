@@ -1,65 +1,96 @@
 # Privacy Policy — Fact Checker AI
 
-_Last updated: 2026-07-20_
+_Last updated: 2026-07-22_
 
-Fact Checker AI ("the extension") helps you assess the credibility of AI chat answers and web
-content by generating critical verification questions. This policy explains what data the
-extension handles and how.
+Fact Checker AI ("the extension") helps you assess the credibility of what you read, turn it into
+short lessons, and find the comments worth your time. This policy explains what data the extension
+handles and where it goes.
 
 ## Summary
 
-- The extension does **not** have its own servers. It does not collect, store, or transmit your
-  data to us.
-- Depending on the engine you choose, the analyzed text is either processed **entirely on your
-  device** or sent **directly to the AI provider you configured** (Google Gemini or OpenAI).
-- Your settings (including your API key) are stored **locally in your browser**.
+- Your **learning data** — saved lessons, vocabulary, review schedule, progress and profile — stays
+  **in your browser**. It is never uploaded.
+- The **text you ask the extension to analyse** is sent to whichever engine you selected. That can
+  be your own device, an AI provider under your own API key, or a **cloud server operated by the
+  extension's developer** if you configure one.
+- Your settings and API key are stored locally in your browser profile.
 
-## What data is processed
+## Where the analysed text goes
 
-When you click the extension button (or use the context menu), the extension reads the text you
-asked it to check — the latest AI chat answer, the article/page content, or your selected text —
-and processes it to generate the credibility assessment and questions.
+When you trigger the extension it reads the text you pointed it at — the latest AI chat answer, the
+article or page content, your selected text, or the comments currently visible on the page — and
+processes it. Where that text travels depends on the engine set in Options:
 
-Depending on the selected provider:
+- **On-device (Gemini Nano):** processed locally by Chrome's built-in model. **Nothing leaves your
+  device.**
+- **Google Gemini or OpenAI (your API key):** sent directly from your browser to that provider,
+  under [Google's Privacy Policy](https://policies.google.com/privacy) /
+  [Gemini API terms](https://ai.google.dev/gemini-api/terms) or
+  [OpenAI's Privacy Policy](https://openai.com/policies/privacy-policy).
+- **Cloud server (the "Server URL" setting):** sent to a server operated by the extension's
+  developer, which forwards it to Google Gemini using the developer's own API key and returns the
+  result. **In this mode the developer's server does receive the analysed text.** It is used only
+  to produce your result. The server does not write the text to a database and does not keep it
+  after the request completes. Leave "Server URL" empty if you do not want this.
+- **Offline mode:** questions come from built-in rules. Nothing leaves your device.
 
-- **On-device (Gemini Nano):** the text is processed locally by Chrome's built-in model. **No
-  data leaves your device.**
-- **Google Gemini (your API key):** the text is sent directly from your browser to Google's
-  Generative Language API. It is subject to
-  [Google's Privacy Policy](https://policies.google.com/privacy) and the
-  [Gemini API terms](https://ai.google.dev/gemini-api/terms).
-- **OpenAI (your API key):** the text is sent directly from your browser to OpenAI's API. It is
-  subject to [OpenAI's Privacy Policy](https://openai.com/policies/privacy-policy).
-- **Offline mode:** questions are generated locally from built-in rules. No data leaves your
-  device.
+### Rate limiting on the cloud server
 
-We (the extension developer) never receive this text. There is no intermediary server operated by
-us.
+To stop the developer's API key from being abused, the cloud server counts requests per IP address
+for one minute and one day. It stores only these counters, keyed by IP, with short expiry. No
+request content is stored alongside them.
 
-## Storage
+### Comments
 
-- **Settings** (provider choice, model name, toggles, number of questions) and your **API key**
-  are stored using `chrome.storage.sync`, which keeps them in your browser profile (and may sync
-  across your signed-in Chrome instances). The API key is sent only to the provider you selected.
-- A small **in-memory cache** of recent results exists only while the extension is running and is
-  never persisted or transmitted.
+The "worth reading" feature reads comments that are **currently visible** on the page and sends
+their text to the engine you selected, so it can pick out the substantive ones. Notes:
+
+- Comments are written by other people. Choose this feature deliberately, as you would when pasting
+  someone else's text into any AI tool.
+- The extension judges **individual comments, never their authors**. It does not build profiles, does
+  not track anyone across pages, and stores nothing about commenters — not even for the current
+  page once you close the panel.
+- Only what is on screen is read. The extension does not scroll or crawl to gather more.
+
+### Occupation lookup
+
+If you pick an occupation in the Library, the extension queries the European Commission's public
+[ESCO](https://esco.ec.europa.eu/) API to fetch that occupation and its skills. Only your search
+term and the chosen occupation identifier are sent. No personal data, and no information about what
+you read, is included. The result is cached locally afterwards.
+
+## What is stored, and where
+
+**In your browser only (`chrome.storage.local`), never uploaded:**
+
+- Saved lessons, including the page title and URL they came from
+- Vocabulary with its spaced-repetition schedule
+- Skill tags derived from what you read, and your chosen occupation
+- XP, streak, badges and counters
+
+You can export all of it as JSON, or clear it, from the Library.
+
+**In your browser profile (`chrome.storage.sync`, may sync across your signed-in Chrome
+instances):** your settings, your profile fields (role, industry, goals, languages, level) and your
+API key. The API key is sent only to the provider you selected.
+
+**In memory only:** a short-lived cache of recent results, discarded when the browser closes.
 
 ## Permissions and why they are used
 
-- `storage` — to save your settings and API key locally.
-- `activeTab` / `scripting` — to read the content of the current page when you trigger a check.
-- `contextMenus` — to add the right-click "verify selection / page" options.
-- `offscreen` — to run Chrome's on-device model (the Prompt API cannot run in the background
-  service worker).
-- `host_permissions: <all_urls>` — so the on-page panel and verification can work on any site
-  where you choose to use it. Page content is read only when you explicitly trigger the extension
-  (or, if you enable it, automatically on supported AI chat sites).
+- `storage` — to save your settings, profile and learning data locally.
+- `activeTab` / `scripting` — to read the current page when you trigger a check.
+- `contextMenus` — for the right-click "verify selection / page" options.
+- `offscreen` — to run Chrome's on-device model, which cannot run in the background service worker.
+- `host_permissions: <all_urls>` — so the panel works on any site you choose to use it on, and so
+  the Library can reach the ESCO API. Page content is read only when you trigger the extension, or
+  automatically on supported AI chat sites if you switch that on.
 
 ## Data sharing
 
-We do not sell, rent, or share your data. The only external transmission that can occur is the
-direct request from your browser to the AI provider you configured (Google or OpenAI), using your
-own API key.
+Your data is not sold, rented or shared. External transmission happens only in the cases named
+above: to the AI provider you configured, to the developer's cloud server if you set one, and to
+the ESCO API when you look up an occupation.
 
 ## Children
 
@@ -67,7 +98,7 @@ The extension is not directed at children under 13.
 
 ## Changes
 
-We may update this policy; material changes will be reflected here with a new "Last updated" date.
+This policy may be updated; material changes appear here with a new "Last updated" date.
 
 ## Contact
 

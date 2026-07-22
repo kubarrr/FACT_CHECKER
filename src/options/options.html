@@ -42,10 +42,15 @@
         <label for="backendUrl">Server URL</label>
         <input id="backendUrl" type="text" placeholder="https://your-worker.workers.dev" autocomplete="off" />
         <p class="hint">
-          When set, Fact Checker runs on your cloud server (your API key stays on the server) and
-          uses <b>Google Search grounding</b> — it verifies claims against real web sources and shows
-          them under the result. My Career / Linglerno also use this server. Leave empty to run
-          locally (on-device / your own key), without web verification.
+          When set, everything runs on your cloud server and your API key stays on it, so nobody
+          has to paste a key of their own. My Career, Linglerno and the “worth reading” comment
+          pass all use it. Leave empty to run locally (on-device / your own key).
+        </p>
+        <p class="hint">
+          <b>Verifying against sources</b> (Google Search grounding) is a button under each
+          fact-check result, not something that runs on every analysis — web search has a much
+          tighter quota at the provider than plain generation, and it requires billing enabled on
+          your Google account.
         </p>
       </section>
 
