@@ -7,7 +7,12 @@
   const C = globalThis.KRYTYKAI_CATALOG;
   const S = globalThis.KRYTYKAI_STORE;
   const E = globalThis.KRYTYKAI_ESCO;
+  const STR = globalThis.KRYTYKAI_STRINGS;
   const SETTINGS_KEY = "krytykai_settings";
+
+  // Język interfejsu = ustawienie „App language". Podstawiany w starcie.
+  let t = STR.forLang("en");
+  let uiLang = "en";
 
   const $ = (id) => document.getElementById(id);
   const esc = (s) =>
@@ -36,28 +41,37 @@
         }</button>`;
       })
       .join("");
-    return `<button class="chip" data-lang="" aria-pressed="${active === null}">Wszystkie</button>${chips}`;
+    return `<button class="chip" data-lang="" aria-pressed="${active === null}">${esc(t("all"))}</button>${chips}`;
   }
 
   // --- Formatowanie ---------------------------------------------------------
-  const dtf = new Intl.DateTimeFormat("pl-PL", { day: "numeric", month: "long", year: "numeric" });
-  const tf = new Intl.DateTimeFormat("pl-PL", { hour: "2-digit", minute: "2-digit" });
+  let dtf = new Intl.DateTimeFormat("en", { day: "numeric", month: "long", year: "numeric" });
+  let tf = new Intl.DateTimeFormat("en", { hour: "2-digit", minute: "2-digit" });
+
+  function setUiLang(lang) {
+    uiLang = String(lang || "en").toLowerCase().slice(0, 2);
+    t = STR.forLang(uiLang);
+    const loc = uiLang === "pl" ? "pl-PL" : uiLang;
+    dtf = new Intl.DateTimeFormat(loc, { day: "numeric", month: "long", year: "numeric" });
+    tf = new Intl.DateTimeFormat(loc, { hour: "2-digit", minute: "2-digit" });
+    document.documentElement.lang = uiLang;
+  }
 
   function dayLabel(key) {
     const today = S.dayKey(new Date());
     const y = new Date();
     y.setDate(y.getDate() - 1);
-    if (key === today) return "Dzisiaj";
-    if (key === S.dayKey(y)) return "Wczoraj";
+    if (key === today) return t("today");
+    if (key === S.dayKey(y)) return t("yesterday");
     return dtf.format(new Date(`${key}T12:00:00`));
   }
 
   function relFuture(iso) {
     const ms = new Date(iso).getTime() - Date.now();
-    if (ms <= 0) return "teraz";
+    if (ms <= 0) return t("now");
     const h = Math.round(ms / 3600000);
-    if (h < 24) return `za ${Math.max(1, h)} godz.`;
-    return `za ${Math.round(h / 24)} dni`;
+    if (h < 24) return t("inHours", Math.max(1, h));
+    return t("inDays", Math.round(h / 24));
   }
 
   function hostOf(url) {
@@ -99,30 +113,30 @@
     const lang = C.findLanguage(code);
     C.applyTheme(document.documentElement, code || "en");
 
-    const lvl = C.getUserAppLevel(st.xp);
+    const lvl = C.getUserAppLevel(st.xp, uiLang);
     $("heroFlag").textContent = lang ? lang.flag : "📚";
     $("heroLevel").textContent = lvl.name;
     $("heroSub").textContent = lang
-      ? `${lang.name} · poziom ${settings.profile?.level || "A2"}`
-      : "Ustaw język nauki w ustawieniach";
+      ? t("heroLevelAt", lang.name, settings.profile?.level || "A2")
+      : t("heroSubEmpty");
     $("heroStreak").textContent = `🔥 ${st.streak}`;
-    $("heroStreak").title = st.streak === 1 ? "1 dzień z rzędu" : `${st.streak} dni z rzędu`;
+    $("heroStreak").title = t("streakDays", st.streak);
     $("xpFill").style.width = `${lvl.progress}%`;
     $("xpNow").textContent = `${st.xp} XP`;
-    $("xpNext").textContent = lvl.next > st.xp ? `${lvl.next - st.xp} XP do następnego poziomu` : "poziom maksymalny";
+    $("xpNext").textContent = lvl.next > st.xp ? t("xpToNext", lvl.next - st.xp) : t("xpMax");
 
     $("stats").innerHTML = [
-      { n: st.due_count, l: "do powtórki", due: true },
-      { n: st.vocab_count, l: "słówek w albumie" },
-      { n: st.mastered_count, l: "opanowanych" },
-      { n: st.lessons_count, l: "lekcji łącznie" },
+      { n: st.due_count, l: t("statDue"), due: true },
+      { n: st.vocab_count, l: t("statVocab") },
+      { n: st.mastered_count, l: t("statMastered") },
+      { n: st.lessons_count, l: t("statLessons") },
     ]
       .map((s) => `<div class="stat${s.due ? " is-due" : ""}"><div class="stat-n">${s.n}</div><div class="stat-l">${esc(s.l)}</div></div>`)
       .join("");
 
     $("badges").innerHTML = C.BADGES.map((b) => {
       const got = st.badges.includes(b.id);
-      return `<span class="badge${got ? "" : " locked"}" title="${esc(b.description)}"><em>${b.icon}</em>${esc(b.name)}</span>`;
+      return `<span class="badge${got ? "" : " locked"}" title="${esc(C.pick(b.description, uiLang))}"><em>${b.icon}</em>${esc(C.pick(b.name, uiLang))}</span>`;
     }).join("");
 
     const pill = $("duePill");
@@ -166,8 +180,8 @@
           switcher +
           emptyState(
             "🌱",
-            lang ? `Brak słówek (${lang.name})` : "Album jest jeszcze pusty",
-            "Otwórz dowolny artykuł, kliknij 🗣️ Linglerno — słówka z lekcji trafią tutaj automatycznie i wrócą do Ciebie w powtórkach."
+            lang ? t("emptyVocabLangTitle", lang.name) : t("emptyVocabTitle"),
+            t("emptyVocabBody")
           );
         bindSwitcher();
         return;
@@ -177,8 +191,8 @@
         switcher +
         emptyState(
           "✅",
-          "Na dziś wszystko powtórzone",
-          `Masz ${all.length} słówek w tym zestawie. Następne wraca ${relFuture(next.due_at)}.`
+          t("allReviewedTitle"),
+          t("allReviewedBody", all.length, relFuture(next.due_at))
         );
       bindSwitcher();
       return;
@@ -192,9 +206,9 @@
       ? `<div class="card-answer">
            <div class="card-translation">${esc(v.translation || "—")}</div>
            ${v.example ? `<div class="card-example">${esc(v.example)}</div>` : ""}
-           ${v.source_url ? `<div class="card-src"><a href="${esc(v.source_url)}" target="_blank" rel="noopener">z: ${esc(hostOf(v.source_url) || "źródło")}</a></div>` : ""}
+           ${v.source_url ? `<div class="card-src"><a href="${esc(v.source_url)}" target="_blank" rel="noopener">${esc(t("fromSource"))}: ${esc(hostOf(v.source_url))}</a></div>` : ""}
          </div>`
-      : `<div class="card-hint">kliknij, aby odsłonić</div>`;
+      : `<div class="card-hint">${esc(t("flipHint"))}</div>`;
 
     el.innerHTML = `
       ${switcher}
@@ -207,12 +221,12 @@
         ${
           flipped
             ? `<div class="review-actions">
-                 <button class="btn btn-bad" data-grade="0">Jeszcze nie</button>
-                 <button class="btn btn-good" data-grade="1">Wiem ✓</button>
+                 <button class="btn btn-bad" data-grade="0">${esc(t("notYet"))}</button>
+                 <button class="btn btn-good" data-grade="1">${esc(t("known"))}</button>
                </div>`
-            : `<div class="review-actions"><button class="btn btn-primary" id="flipBtn">Pokaż odpowiedź</button></div>`
+            : `<div class="review-actions"><button class="btn btn-primary" id="flipBtn">${esc(t("showAnswer"))}</button></div>`
         }
-        <div class="stat-l">${done} / ${total} w tej sesji</div>
+        <div class="stat-l">${esc(t("inSession", done, total))}</div>
       </div>`;
 
     const flip = () => {
@@ -234,7 +248,7 @@
     const res = await S.reviewVocab(v.id, correct);
     // Pomyłka wraca na koniec kolejki – powtórka jeszcze w tej samej sesji.
     if (!correct) queue.push({ ...v, box: 0 });
-    for (const b of res?.newBadges || []) toast(`${b.icon} Nowa odznaka: ${b.name}`);
+    for (const b of res?.newBadges || []) toast(`${b.icon} ${t("newBadge", C.pick(b.name, uiLang))}`);
     await renderHeader();
     await renderReview();
   }
@@ -258,8 +272,8 @@
     if (!all.length) {
       el.innerHTML = emptyState(
         "📖",
-        "Brak słówek",
-        "Każda lekcja Linglerno dokłada tu słownictwo i zwroty — bez ręcznego przepisywania."
+        t("emptyDictTitle"),
+        t("emptyDictBody")
       );
       return;
     }
@@ -268,9 +282,9 @@
     const items = await S.getVocab({ language: vocabLang, sort: vocabSort });
 
     const sortChips = [
-      ["recent", "Najnowsze"],
-      ["alpha", "A–Z"],
-      ["box", "Najlepiej znane"],
+      ["recent", t("sortRecent")],
+      ["alpha", t("sortAlpha")],
+      ["box", t("sortBox")],
     ]
       .map(([k, label]) => `<button class="chip" data-sort="${k}" aria-pressed="${vocabSort === k}">${label}</button>`)
       .join("");
@@ -286,11 +300,11 @@
           .map(
             (v) => `
           <div class="vcard">
-            <button class="vcard-del" data-del="${esc(v.id)}" title="Usuń">×</button>
+            <button class="vcard-del" data-del="${esc(v.id)}" title="${esc(t("deleteWord"))}">×</button>
             <div class="vcard-term">${esc(v.term)}</div>
             <div class="vcard-tr">${esc(v.translation)}</div>
             ${v.example ? `<div class="vcard-ex">${esc(v.example)}</div>` : ""}
-            <div class="boxdots" title="Etap powtórek: ${v.box} z ${S.MAX_BOX}">
+            <div class="boxdots" title="${esc(t("boxStage", v.box, S.MAX_BOX))}">
               ${Array.from({ length: S.MAX_BOX }, (_, i) => `<i class="${i < v.box ? "on" : ""}"></i>`).join("")}
             </div>
           </div>`
@@ -328,8 +342,8 @@
     if (!lessons.length) {
       el.innerHTML = emptyState(
         "🧭",
-        "Mapa kompetencji jest pusta",
-        "Kliknij 📖 My Career na dowolnym artykule. Każda lekcja oznacza, czego dotyczyła — po kilku tygodniach zobaczysz, w co naprawdę inwestujesz czas."
+        t("emptyCareerTitle"),
+        t("emptyCareerBody")
       );
       return;
     }
@@ -354,41 +368,38 @@
           <div class="cov-head">
             <div>
               <div class="cov-occ">${esc(occ.title)}</div>
-              <div class="stat-l">pokrycie umiejętności kluczowych</div>
+              <div class="stat-l">${esc(t("coverageLabel"))}</div>
             </div>
             <div class="cov-num">${covEss}<span>/${ess.length}</span></div>
           </div>
           <div class="skill-bar"><i style="width:${pct}%"></i></div>
           <div class="stat-l" style="margin-top:8px">
-            Dodatkowo ${covOpt} z ${opt.length} umiejętności opcjonalnych.
+            ${esc(t("coverageOptional", covOpt, opt.length))}
           </div>
         </div>
 
         ${
           gaps.length
-            ? `<div class="day-h">Luki — czego jeszcze nie tknąłeś (${gaps.length})</div>
+            ? `<div class="day-h">${esc(t("gapsTitle", gaps.length))}</div>
                <div class="gap-tags">
                  ${gaps
                    .slice(0, 24)
                    .map(
                      (g) =>
                        `<a class="gap-tag gap-link" target="_blank" rel="noopener"
-                           href="https://www.google.com/search?q=${encodeURIComponent(g.title + " kurs")}"
-                           title="Poszukaj materiałów: ${esc(g.title)}">${esc(g.title)}</a>`
+                           href="https://www.google.com/search?q=${encodeURIComponent(g.title + (uiLang === "pl" ? " kurs" : " course"))}"
+                           title="${esc(t("gapSearch", g.title))}">${esc(g.title)}</a>`
                    )
                    .join("")}
                </div>`
-            : `<div class="gapbox">Wszystkie umiejętności kluczowe tego zawodu masz już ruszone. 🎉</div>`
+            : `<div class="gapbox">${esc(t("gapsNone"))}</div>`
         }`;
     } else {
       coverageHtml = `
         <div class="gapbox">
-          <h3>Ustaw zawód, żeby mierzyć postęp</h3>
-          <p class="stat-l" style="margin:0 0 10px">
-            Bez zawodu widzisz tylko, jak często czytasz o czym. Po wybraniu zawodu z klasyfikacji
-            ESCO lekcje mapują się na jego oficjalne umiejętności i widać, ile z nich pokryłeś.
-          </p>
-          <button class="btn btn-primary" id="goProfile">Wybierz zawód</button>
+          <h3>${esc(t("noOccupationTitle"))}</h3>
+          <p class="stat-l" style="margin:0 0 10px">${esc(t("noOccupationBody"))}</p>
+          <button class="btn btn-primary" id="goProfile">${esc(t("pickOccupation"))}</button>
         </div>`;
     }
 
@@ -399,7 +410,7 @@
       <div class="skill">
         <div class="skill-head">
           <span class="skill-tag">${s.essential ? "★ " : ""}${esc(s.tag)}</span>
-          <span class="skill-count">${s.count} ${s.count === 1 ? "lekcja" : "lekcji"}</span>
+          <span class="skill-count">${esc(t("lessonsCount", s.count))}</span>
         </div>
         <div class="skill-bar"><i style="width:${(s.count / max) * 100}%"></i></div>
         <div class="skill-srcs">
@@ -439,10 +450,10 @@
 
     el.innerHTML = `
       ${coverageHtml}
-      ${skills.length ? `<div class="day-h">Czego dotknąłeś</div>${skillsHtml}` : ""}
-      <div class="day-h">Ostatnie lekcje</div>
+      ${skills.length ? `<div class="day-h">${esc(t("touched"))}</div>${skillsHtml}` : ""}
+      <div class="day-h">${esc(t("recentLessons"))}</div>
       ${recent}
-      ${occ ? `<p class="attrib">Zawody i umiejętności: klasyfikacja ESCO (Komisja Europejska).</p>` : ""}`;
+      ${occ ? `<p class="attrib">${esc(t("escoAttribution"))}</p>` : ""}`;
 
     $("goProfile")?.addEventListener("click", () => selectTab("profile"));
   }
@@ -452,7 +463,7 @@
     const el = $("panel-history");
     const lessons = await S.getLessons({ limit: 200 });
     if (!lessons.length) {
-      el.innerHTML = emptyState("🗂️", "Brak historii", "Tu wylądują wszystkie lekcje — językowe i karierowe — z linkiem do strony, z której powstały.");
+      el.innerHTML = emptyState("🗂️", t("emptyHistoryTitle"), t("emptyHistoryBody"));
       return;
     }
 
@@ -500,11 +511,11 @@
   // Wszystko, co personalizuje lekcje. Ustawienia wtyczki zostają techniczne
   // (silnik, klucz, adres serwera) – tu jest to, co użytkownik zmienia naprawdę.
   const PROFILE_FIELDS = [
-    { key: "role", label: "Rola / stanowisko", placeholder: "np. analityk danych" },
-    { key: "industry", label: "Branża / dziedzina", placeholder: "np. medtech" },
-    { key: "goals", label: "Cele", placeholder: "np. zbudować startup EEG" },
-    { key: "skills", label: "Umiejętności do rozwoju", placeholder: "np. SQL, negocjacje (po przecinku)" },
-    { key: "interests", label: "Zainteresowania", placeholder: "np. AI, bieganie" },
+    { key: "role", label: "fieldRole", placeholder: "phRole" },
+    { key: "industry", label: "fieldIndustry", placeholder: "phIndustry" },
+    { key: "goals", label: "fieldGoals", placeholder: "phGoals" },
+    { key: "skills", label: "fieldSkills", placeholder: "phSkills" },
+    { key: "interests", label: "fieldInterests", placeholder: "phInterests" },
   ];
 
   // Wybór zawodu z ESCO. Wyszukiwarka jest leksykalna, więc pokazujemy listę
@@ -516,17 +527,17 @@
         <div class="occ-current">
           <div>
             <div class="occ-title">${esc(occ.title)}</div>
-            <div class="stat-l">${occ.essential?.length || 0} umiejętności kluczowych, ${occ.optional?.length || 0} opcjonalnych · ${n} łącznie</div>
+            <div class="stat-l">${esc(t("skillCounts", occ.essential?.length || 0, occ.optional?.length || 0, n))}</div>
           </div>
-          <button class="btn" id="occClear">Zmień</button>
+          <button class="btn" id="occClear">${esc(t("change"))}</button>
         </div>`;
     }
     return `
       <div class="occ-search">
-        <input type="text" id="occQuery" placeholder="Wpisz zawód, np. hydraulik, analityk danych…" />
-        <button class="btn btn-primary" id="occSearch">Szukaj</button>
+        <input type="text" id="occQuery" placeholder="${esc(t("occupationPlaceholder"))}" />
+        <button class="btn btn-primary" id="occSearch">${esc(t("search"))}</button>
       </div>
-      <div class="stat-l" id="occHint">Lista zawodów pochodzi z ESCO — europejskiej klasyfikacji zawodów i umiejętności.</div>
+      <div class="stat-l" id="occHint">${esc(t("escoHint"))}</div>
       <div id="occResults"></div>`;
   }
 
@@ -543,12 +554,10 @@
       const q = el.querySelector("#occQuery").value;
       const hint = el.querySelector("#occHint");
       const box = el.querySelector("#occResults");
-      hint.textContent = "Szukam…";
+      hint.textContent = t("searching");
       try {
-        const results = await E.searchOccupations(q, "pl");
-        hint.textContent = results.length
-          ? "Wybierz najbliższy swojemu — nazwy w ESCO bywają urzędowe."
-          : "Brak trafień. Spróbuj innego słowa.";
+        const results = await E.searchOccupations(q, uiLang);
+        hint.textContent = results.length ? t("escoPickHint") : t("escoNoHits");
         box.innerHTML = results
           .map(
             (r) =>
@@ -557,17 +566,17 @@
           .join("");
         box.querySelectorAll("[data-uri]").forEach((b) =>
           b.addEventListener("click", async () => {
-            hint.textContent = "Pobieram umiejętności…";
+            hint.textContent = t("escoFetching");
             try {
-              await E.selectOccupation(b.dataset.uri, "pl");
+              await E.selectOccupation(b.dataset.uri, uiLang);
               onChange();
             } catch (err) {
-              hint.textContent = `Nie udało się pobrać: ${err.message}`;
+              hint.textContent = t("escoFetchError", err.message);
             }
           })
         );
       } catch (err) {
-        hint.textContent = `Błąd wyszukiwania: ${err.message}`;
+        hint.textContent = t("escoSearchError", err.message);
       }
     };
 
@@ -586,54 +595,54 @@
     const targetSel = p.targetLangCode || C.codeFromLegacyName(p.targetLang);
 
     const langOptions = (selected) =>
-      `<option value="">— wybierz —</option>` +
+      `<option value="">${esc(t("pickOne"))}</option>` +
       C.LANGUAGES.map(
         (l) => `<option value="${l.code}"${l.code === selected ? " selected" : ""}>${l.flag} ${esc(l.name)}</option>`
       ).join("");
 
     el.innerHTML = `
       <div class="form">
-        <h3 class="form-h">Zawód — wyznacza umiejętności, po których mierzysz postęp</h3>
+        <h3 class="form-h">${esc(t("occupationSection"))}</h3>
         ${occupationBoxHtml(occ)}
 
-        <h3 class="form-h">Kariera — zasila zakładkę Kariera i tryb 📖 My Career</h3>
+        <h3 class="form-h">${esc(t("careerSection"))}</h3>
         ${PROFILE_FIELDS.map(
           (f) => `
           <label class="field">
-            <span>${esc(f.label)}</span>
-            <input type="text" data-pf="${f.key}" value="${esc(p[f.key] || "")}" placeholder="${esc(f.placeholder)}" />
+            <span>${esc(t(f.label))}</span>
+            <input type="text" data-pf="${f.key}" value="${esc(p[f.key] || "")}" placeholder="${esc(t(f.placeholder))}" />
           </label>`
         ).join("")}
 
-        <h3 class="form-h">Języki — zasilają 🗣️ Linglerno i motyw tej strony</h3>
+        <h3 class="form-h">${esc(t("languagesSection"))}</h3>
         <div class="field-row">
           <label class="field">
-            <span>Twój język</span>
+            <span>${esc(t("yourLanguage"))}</span>
             <select data-pf="nativeLangCode">${langOptions(nativeSel)}</select>
           </label>
           <label class="field">
-            <span>Język, którego się uczysz</span>
+            <span>${esc(t("learnLanguage"))}</span>
             <select data-pf="targetLangCode">${langOptions(targetSel)}</select>
           </label>
         </div>
 
         <label class="field">
-          <span>Kraj / kultura</span>
-          <input type="text" data-pf="country" value="${esc(p.country || "")}" placeholder="np. Włochy" />
+          <span>${esc(t("countryCulture"))}</span>
+          <input type="text" data-pf="country" value="${esc(p.country || "")}" placeholder="${esc(t("phCountry"))}" />
         </label>
 
-        <span class="field-label">Poziom</span>
+        <span class="field-label">${esc(t("levelLabel"))}</span>
         <div class="levels" id="lvlPicker">
           ${C.LEVELS.map(
             (l) => `
             <button type="button" class="lvl" data-level="${l.code}" aria-pressed="${(p.level || "A2") === l.code}">
-              <b>${esc(l.label)}</b><span>${esc(l.description)}</span>
+              <b>${esc(l.label)}</b><span>${esc(C.pick(l.description, uiLang))}</span>
             </button>`
           ).join("")}
         </div>
 
         <div class="form-actions">
-          <button class="btn btn-primary" id="saveProfile">Zapisz profil</button>
+          <button class="btn btn-primary" id="saveProfile">${esc(t("saveProfile"))}</button>
           <span class="stat-l" id="saveMsg"></span>
         </div>
       </div>`;
@@ -670,8 +679,8 @@
         queue = [];
       }
       await renderHeader();
-      toast("Profil zapisany");
-      $("saveMsg").textContent = "Zapisano ✓";
+      toast(t("profileSaved"));
+      $("saveMsg").textContent = t("saved");
       setTimeout(() => ($("saveMsg").textContent = ""), 2000);
     });
   }
@@ -698,6 +707,26 @@
     t.addEventListener("click", () => selectTab(t.dataset.tab))
   );
 
+  // Napisy osadzone w HTML (zakładki, stopka) – ustawiane raz przy starcie.
+  function applyStaticLabels() {
+    const map = {
+      review: "tabReview", vocab: "tabVocab", career: "tabCareer",
+      history: "tabHistory", profile: "tabProfile",
+    };
+    document.querySelectorAll(".tab").forEach((el) => {
+      const key = map[el.dataset.tab];
+      if (!key) return;
+      // Pigułka z licznikiem jest osobnym elementem – nie nadpisujemy jej.
+      const pill = el.querySelector(".pill");
+      el.textContent = t(key) + " ";
+      if (pill) el.appendChild(pill);
+    });
+    $("footerNote").textContent = t("localOnly");
+    $("exportBtn").textContent = t("exportJson");
+    $("settingsBtn").textContent = t("settings");
+    document.title = `${t("libraryTitle")} · Fact Checker AI`;
+  }
+
   $("settingsBtn").addEventListener("click", () => chrome.runtime.openOptionsPage());
   $("exportBtn").addEventListener("click", async () => {
     const data = await S.exportAll();
@@ -707,13 +736,15 @@
     a.download = `krytykai-biblioteka-${S.dayKey(new Date())}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    toast("Wyeksportowano");
+    toast(t("exported"));
   });
 
   // --- Start ----------------------------------------------------------------
   (async () => {
     const data = await chrome.storage.sync.get(SETTINGS_KEY);
     settings = data[SETTINGS_KEY] || {};
+    setUiLang(settings.language);
+    applyStaticLabels();
     vocabLang = currentLang();
     reviewLang = currentLang();
     await renderHeader();

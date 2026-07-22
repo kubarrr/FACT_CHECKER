@@ -144,13 +144,20 @@
     vi: "Vietnamese", id: "Indonesian", ms: "Malay", he: "Hebrew", fa: "Persian",
   };
 
+  // Teksty widoczne dla użytkownika trzymamy w obu językach interfejsu.
+  // `pick` wybiera wersję wg ustawienia aplikacji, z angielskim jako zapasem.
+  function pick(obj, lang) {
+    if (obj == null || typeof obj === "string") return obj;
+    return obj[lang] != null ? obj[lang] : obj.en;
+  }
+
   const LEVELS = [
-    { code: "A1", label: "A1 — Beginner", description: "Pierwsze słowa i zwroty" },
-    { code: "A2", label: "A2 — Elementary", description: "Podstawowa komunikacja" },
-    { code: "B1", label: "B1 — Intermediate", description: "Codzienne sytuacje" },
-    { code: "B2", label: "B2 — Upper-Intermediate", description: "Złożone tematy" },
-    { code: "C1", label: "C1 — Advanced", description: "Swobodna wypowiedź" },
-    { code: "C2", label: "C2 — Mastery", description: "Poziom zbliżony do rodzimego" },
+    { code: "A1", label: "A1 — Beginner", description: { pl: "Pierwsze słowa i zwroty", en: "First words and phrases" } },
+    { code: "A2", label: "A2 — Elementary", description: { pl: "Podstawowa komunikacja", en: "Basic communication" } },
+    { code: "B1", label: "B1 — Intermediate", description: { pl: "Codzienne sytuacje", en: "Everyday situations" } },
+    { code: "B2", label: "B2 — Upper-Intermediate", description: { pl: "Złożone tematy", en: "Complex topics" } },
+    { code: "C1", label: "C1 — Advanced", description: { pl: "Swobodna wypowiedź", en: "Fluent expression" } },
+    { code: "C2", label: "C2 — Mastery", description: { pl: "Poziom zbliżony do rodzimego", en: "Native-level proficiency" } },
   ];
 
   // --- Gamifikacja ----------------------------------------------------------
@@ -159,9 +166,12 @@
   const XP_PER_REVIEW_CORRECT = 5;
 
   const XP_THRESHOLDS = [0, 100, 250, 500, 1000, 2000, 5000];
-  const LEVEL_NAMES = ["Ziarno", "Kiełek", "Liść", "Gałąź", "Drzewo", "Las", "Legenda"];
+  const LEVEL_NAMES = {
+    pl: ["Ziarno", "Kiełek", "Liść", "Gałąź", "Drzewo", "Las", "Legenda"],
+    en: ["Seed", "Sprout", "Leaf", "Branch", "Tree", "Forest", "Legend"],
+  };
 
-  function getUserAppLevel(xp) {
+  function getUserAppLevel(xp, lang = "en") {
     let level = 0;
     for (let i = XP_THRESHOLDS.length - 1; i >= 0; i--) {
       if (xp >= XP_THRESHOLDS[i]) { level = i; break; }
@@ -170,19 +180,20 @@
     const next = XP_THRESHOLDS[level + 1];
     // Na ostatnim progu nie ma już „następnego" – pasek zostaje pełny.
     const progress = next ? ((xp - current) / (next - current)) * 100 : 100;
-    return { level, name: LEVEL_NAMES[level], progress: Math.min(progress, 100), next: next || current };
+    const names = LEVEL_NAMES[lang] || LEVEL_NAMES.en;
+    return { level, name: names[level], progress: Math.min(progress, 100), next: next || current };
   }
 
   const BADGES = [
-    { id: "first_lesson", name: "Pierwszy krok", description: "Pierwsza zapisana lekcja", icon: "🌱", condition: (s) => s.lessons_count >= 1 },
-    { id: "streak_3", name: "Rozpęd", description: "3 dni z rzędu", icon: "🔥", condition: (s) => s.streak >= 3 },
-    { id: "streak_7", name: "Tydzień formy", description: "7 dni z rzędu", icon: "⚡", condition: (s) => s.streak >= 7 },
-    { id: "streak_30", name: "Mistrz miesiąca", description: "30 dni z rzędu", icon: "💎", condition: (s) => s.streak >= 30 },
-    { id: "lessons_10", name: "Odkrywca", description: "10 lekcji", icon: "🗺️", condition: (s) => s.lessons_count >= 10 },
-    { id: "lessons_50", name: "Podróżnik", description: "50 lekcji", icon: "🏆", condition: (s) => s.lessons_count >= 50 },
-    { id: "vocab_100", name: "Kolekcjoner słów", description: "100 słówek w albumie", icon: "📚", condition: (s) => s.vocab_count >= 100 },
-    { id: "reviews_100", name: "Powtórkowicz", description: "100 powtórek", icon: "🔁", condition: (s) => s.reviews_done >= 100 },
-    { id: "xp_1000", name: "Łowca XP", description: "1000 XP", icon: "⭐", condition: (s) => s.xp >= 1000 },
+    { id: "first_lesson", name: { pl: "Pierwszy krok", en: "First step" }, description: { pl: "Pierwsza zapisana lekcja", en: "Your first saved lesson" }, icon: "🌱", condition: (s) => s.lessons_count >= 1 },
+    { id: "streak_3", name: { pl: "Rozpęd", en: "On a roll" }, description: { pl: "3 dni z rzędu", en: "3-day streak" }, icon: "🔥", condition: (s) => s.streak >= 3 },
+    { id: "streak_7", name: { pl: "Tydzień formy", en: "Week warrior" }, description: { pl: "7 dni z rzędu", en: "7-day streak" }, icon: "⚡", condition: (s) => s.streak >= 7 },
+    { id: "streak_30", name: { pl: "Mistrz miesiąca", en: "Month master" }, description: { pl: "30 dni z rzędu", en: "30-day streak" }, icon: "💎", condition: (s) => s.streak >= 30 },
+    { id: "lessons_10", name: { pl: "Odkrywca", en: "Explorer" }, description: { pl: "10 lekcji", en: "10 lessons" }, icon: "🗺️", condition: (s) => s.lessons_count >= 10 },
+    { id: "lessons_50", name: { pl: "Podróżnik", en: "Adventurer" }, description: { pl: "50 lekcji", en: "50 lessons" }, icon: "🏆", condition: (s) => s.lessons_count >= 50 },
+    { id: "vocab_100", name: { pl: "Kolekcjoner słów", en: "Word collector" }, description: { pl: "100 słówek w albumie", en: "100 words in the album" }, icon: "📚", condition: (s) => s.vocab_count >= 100 },
+    { id: "reviews_100", name: { pl: "Powtórkowicz", en: "Reviewer" }, description: { pl: "100 powtórek", en: "100 reviews" }, icon: "🔁", condition: (s) => s.reviews_done >= 100 },
+    { id: "xp_1000", name: { pl: "Łowca XP", en: "XP hunter" }, description: { pl: "1000 XP", en: "1000 XP" }, icon: "⭐", condition: (s) => s.xp >= 1000 },
   ];
 
   function findLanguage(code) {
@@ -236,6 +247,7 @@
     XP_THRESHOLDS,
     LEVEL_NAMES,
     getUserAppLevel,
+    pick,
     findLanguage,
     codeFromLegacyName,
     themeFor,

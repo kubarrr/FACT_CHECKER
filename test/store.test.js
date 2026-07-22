@@ -149,11 +149,60 @@ test("kariera z zawodem: identyfikatory z menu mapują się na umiejętności ES
     occupation: OCCUPATION,
   });
 
-  assert.deepEqual(res.lesson.skills, [
-    { uri: "esco/skill/3", title: "zamawiać materiały budowlane", essential: false },
-    { uri: "esco/skill/1", title: "udrażniać kanalizację", essential: true },
-  ]);
+  assert.deepEqual(
+    res.lesson.skills.map(({ uri, title, essential }) => ({ uri, title, essential })),
+    [
+      { uri: "esco/skill/3", title: "zamawiać materiały budowlane", essential: false },
+      { uri: "esco/skill/1", title: "udrażniać kanalizację", essential: true },
+    ]
+  );
   assert.equal(res.lesson.occupation_uri, OCCUPATION.uri);
+});
+
+// Bramka trafności: zamknięta lista powstrzymuje wymyślanie nazw, ale nie
+// naciąganie istniejącej nazwy na dowolny tekst. Cytat musi być weryfikowalny.
+const ARTYKUL = "Rury miedziane łączy się przez lutowanie kapilarne. Przed montażem należy sprawdzić ciśnienie w instalacji.";
+
+test("bramka trafności: cytat obecny w treści przepuszcza umiejętność", async () => {
+  const S = globalThis.KRYTYKAI_STORE;
+  const res = await S.saveLesson({
+    mode: "career", sourceUrl: "https://a.pl", profile: PROFILE, occupation: OCCUPATION,
+    sourceText: ARTYKUL,
+    result: { ...CAREER_RESULT, skills: [{ id: "s1", evidence: "Przed montażem należy sprawdzić ciśnienie w instalacji." }] },
+  });
+  assert.equal(res.lesson.skills.length, 1);
+  assert.equal(res.lesson.skills[0].uri, "esco/skill/1");
+  assert.match(res.lesson.skills[0].evidence, /ciśnienie/);
+});
+
+test("bramka trafności: zmyślony cytat odrzuca umiejętność", async () => {
+  const S = globalThis.KRYTYKAI_STORE;
+  const res = await S.saveLesson({
+    mode: "career", sourceUrl: "https://a.pl", profile: PROFILE, occupation: OCCUPATION,
+    sourceText: ARTYKUL,
+    // Cytat brzmi wiarygodnie, ale nie ma go w tekście.
+    result: { ...CAREER_RESULT, skills: [{ id: "s1", evidence: "Kanalizację udrażnia się sprężyną hydrauliczną." }] },
+  });
+  assert.deepEqual(res.lesson.skills, []);
+});
+
+test("bramka trafności: pusty lub za krótki cytat nie wystarcza", async () => {
+  const S = globalThis.KRYTYKAI_STORE;
+  const res = await S.saveLesson({
+    mode: "career", sourceUrl: "https://a.pl", profile: PROFILE, occupation: OCCUPATION,
+    sourceText: ARTYKUL,
+    result: { ...CAREER_RESULT, skills: [{ id: "s1", evidence: "" }, { id: "s2", evidence: "rury" }] },
+  });
+  assert.deepEqual(res.lesson.skills, []);
+});
+
+test("bramka trafności: bez tekstu źródłowego cytat nie jest wymagany (zgodność wstecz)", async () => {
+  const S = globalThis.KRYTYKAI_STORE;
+  const res = await S.saveLesson({
+    mode: "career", sourceUrl: "https://a.pl", profile: PROFILE, occupation: OCCUPATION,
+    result: { ...CAREER_RESULT, skills: ["s1"] },
+  });
+  assert.equal(res.lesson.skills.length, 1);
 });
 
 test("kariera z zawodem: wymyślone i powtórzone identyfikatory są odrzucane", async () => {

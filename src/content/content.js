@@ -742,6 +742,9 @@
         result,
         profile: userProfile,
         occupation,
+        // Treść analizowana przez model – służy do sprawdzenia, czy cytat
+        // uzasadniający umiejętność faktycznie w niej występuje.
+        sourceText: lastContext?.answerText || "",
       });
       renderSaveStrip(res);
     } catch (err) {
@@ -759,8 +762,15 @@
     if (res.savedVocab) bits.push(`${res.savedVocab} ${tr("wordsSaved")}`);
     if (res.streakBonus) bits.push(`🔥 ${res.streak}`);
 
+    // Nazwy odznak są dwujęzyczne – bierzemy wersję zgodną z językiem panelu.
+    const catalog = globalThis.KRYTYKAI_CATALOG;
     const badges = res.newBadges
-      .map((b) => `<span class="krytykai-newbadge">${b.icon} ${escapeHtml(b.name)}</span>`)
+      .map(
+        (b) =>
+          `<span class="krytykai-newbadge">${b.icon} ${escapeHtml(
+            catalog ? catalog.pick(b.name, activeLang) : b.id
+          )}</span>`
+      )
       .join("");
 
     const due = res.dueCount

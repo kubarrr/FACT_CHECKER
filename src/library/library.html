@@ -27,14 +27,15 @@
       <div class="stats" id="stats"></div>
       <div class="badges" id="badges"></div>
 
+      <!-- Etykiety zakładek wstawia applyStaticLabels() wg języka aplikacji. -->
       <div class="tabs" role="tablist">
         <button class="tab" role="tab" data-tab="review" aria-selected="true">
-          Powtórki <span class="pill" id="duePill" hidden>0</span>
+          <span class="pill" id="duePill" hidden>0</span>
         </button>
-        <button class="tab" role="tab" data-tab="vocab" aria-selected="false">Słownik</button>
-        <button class="tab" role="tab" data-tab="career" aria-selected="false">Kariera</button>
-        <button class="tab" role="tab" data-tab="history" aria-selected="false">Historia</button>
-        <button class="tab" role="tab" data-tab="profile" aria-selected="false">Profil</button>
+        <button class="tab" role="tab" data-tab="vocab" aria-selected="false"></button>
+        <button class="tab" role="tab" data-tab="career" aria-selected="false"></button>
+        <button class="tab" role="tab" data-tab="history" aria-selected="false"></button>
+        <button class="tab" role="tab" data-tab="profile" aria-selected="false"></button>
       </div>
 
       <section class="panel" id="panel-review" role="tabpanel"></section>
@@ -45,15 +46,16 @@
     </div>
 
     <footer class="footer">
-      <span>Wszystko zapisane lokalnie w tej przeglądarce — nic nie wychodzi na serwer.</span>
+      <span id="footerNote"></span>
       <span class="spacer" style="flex: 1"></span>
-      <button class="btn" id="exportBtn">Eksportuj JSON</button>
-      <button class="btn" id="settingsBtn">Ustawienia</button>
+      <button class="btn" id="exportBtn"></button>
+      <button class="btn" id="settingsBtn"></button>
     </footer>
 
     <div class="toasts" id="toasts"></div>
 
     <script src="../shared/catalog.js"></script>
+    <script src="../shared/strings.js"></script>
     <script src="../shared/store.js"></script>
     <script src="../shared/esco.js"></script>
     <script src="library.js"></script>

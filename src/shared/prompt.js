@@ -354,9 +354,17 @@ export function buildStorySystemPrompt(language, skillOptions) {
     "",
     ...(menu
       ? [
-          'For "skills": pick 0-3 ids from the SKILL MENU below — the official skills of the',
-          "user's occupation. Choose ONLY skills this content genuinely helps with; an empty list",
-          "is the right answer when nothing fits. Never invent an id and never invent a skill name.",
+          'RELEVANCE GATE for "skills" — apply this BEFORE picking anything:',
+          "Ask yourself: does this content actually teach, demonstrate or practise the skill?",
+          "If linking the content to the skill needs an analogy, a metaphor, or a sentence like",
+          '"just as X, so your work Y" — the answer is NO. Return an empty list.',
+          "An empty list is a normal, expected, CORRECT answer. Most content a person reads has",
+          "nothing to do with their occupation. Do not reach.",
+          "",
+          "Then pick 0-3 ids from the SKILL MENU below. For each pick you MUST quote the exact",
+          'sentence from the content that justifies it, copied VERBATIM into "evidence". If you',
+          "cannot quote a literal sentence that is really about that skill, do not pick it.",
+          "Never invent an id and never invent a skill name.",
           "",
           "SKILL MENU (id: skill; \"(key)\" marks skills essential to the occupation):",
           menu,
@@ -374,10 +382,12 @@ export function buildStorySystemPrompt(language, skillOptions) {
     '  "read_next": [{"query": "a short search query / topic to explore next", "why": "one sentence"}],',
     '  "lesson": "a short 2-3 sentence micro-lesson that teaches the key concept from the content",',
     '  "topic": "a 2-5 word label for what this content was about (in the output language)",',
-    menu ? '  "skills": ["s3", "s11"]' : '  "skills": ["skill-tag", "skill-tag"]',
+    menu
+      ? '  "skills": [{"id": "s3", "evidence": "a sentence copied word-for-word from the content"}]'
+      : '  "skills": ["skill-tag", "skill-tag"]',
     "}",
     menu
-      ? "EXACTLY 2 items in read_next. Keep takeaways to 2-3. 0-3 skill ids, menu only. No text outside JSON, no markdown fences."
+      ? "EXACTLY 2 items in read_next. Keep takeaways to 2-3. 0-3 skills, ids from the menu only, each with a verbatim quote. No text outside JSON, no markdown fences."
       : "EXACTLY 2 items in read_next. Keep takeaways to 2-3. 2-3 skills. No text outside JSON, no markdown fences.",
   ].join("\n");
 }

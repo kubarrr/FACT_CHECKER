@@ -123,19 +123,38 @@
   // jest wybrany — wolne etykiety. Jedno i drugie sprowadzamy do wspólnego
   // kształtu {uri, title, essential}; `uri` odróżnia umiejętność z klasyfikacji
   // od tagu wymyślonego przez model.
-  function resolveSkills(list, occupation) {
+  // Normalizacja do porównywania cytatów: model bywa niedokładny w spacjach
+  // i wielkości liter, ale treść cytatu musi się zgadzać.
+  function normQuote(s) {
+    return String(s || "").toLowerCase().replace(/\s+/g, " ").replace(/[„”"'`]/g, "").trim();
+  }
+
+  function resolveSkills(list, occupation, sourceText) {
     const raw = Array.isArray(list) ? list : [];
     const options = occupation?.options || [];
 
     if (options.length) {
       const byId = new Map(options.map((o) => [String(o.id).toLowerCase(), o]));
+      const haystack = sourceText ? normQuote(sourceText) : null;
       const out = [];
       const seen = new Set();
       for (const item of raw) {
-        const hit = byId.get(String(item || "").trim().toLowerCase());
+        // Nowy kształt to {id, evidence}; starsze odpowiedzi to samo "s3".
+        const id = typeof item === "string" ? item : item?.id;
+        const evidence = typeof item === "string" ? "" : item?.evidence || "";
+        const hit = byId.get(String(id || "").trim().toLowerCase());
         if (!hit || seen.has(hit.uri)) continue;
+
+        // Bramka trafności: bez cytatu, który NAPRAWDĘ występuje w treści,
+        // umiejętności nie zaliczamy. To zatrzymuje naciągane skojarzenia
+        // („kuchnia włoska dzieli się na regiony, więc to kategoryzacja danych").
+        if (haystack) {
+          const q = normQuote(evidence);
+          if (q.length < 15 || !haystack.includes(q)) continue;
+        }
+
         seen.add(hit.uri);
-        out.push({ uri: hit.uri, title: hit.title, essential: !!hit.essential });
+        out.push({ uri: hit.uri, title: hit.title, essential: !!hit.essential, evidence: evidence.slice(0, 300) });
       }
       return out.slice(0, 3);
     }
@@ -151,7 +170,7 @@
    * Zapisuje wynik lekcji (lingo albo career) i aktualizuje XP/serię/odznaki.
    * Zwraca podsumowanie do pokazania w panelu.
    */
-  async function saveLesson({ mode, sourceUrl, sourceTitle, result, profile, occupation }) {
+  async function saveLesson({ mode, sourceUrl, sourceTitle, result, profile, occupation, sourceText }) {
     const C = globalThis.KRYTYKAI_CATALOG;
     const store = await readAll();
     const p = profile || {};
@@ -169,7 +188,7 @@
       level: p.level || "",
       topic: mode === "lingo" ? extractTopic(result) : (result.topic || sourceTitle || "").slice(0, 120),
       payload: result,
-      skills: mode === "career" ? resolveSkills(result.skills, occupation) : [],
+      skills: mode === "career" ? resolveSkills(result.skills, occupation, sourceText) : [],
       occupation_uri: occupation?.uri || null,
       xp_earned: C.XP_PER_LESSON,
       created_at: nowIso,
