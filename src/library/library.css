@@ -441,10 +441,11 @@ body {
   justify-content: space-between;
   gap: 10px;
 }
+/* Bez capitalize: nazwy umiejętności ESCO to całe frazy („wykonywać pracę
+   w ergonomiczny sposób"), które z wielkich liter wyglądają jak tytuł. */
 .skill-tag {
   font-weight: 800;
   font-size: 15px;
-  text-transform: capitalize;
 }
 .skill-count {
   font-size: 12.5px;
@@ -699,7 +700,6 @@ a.gap-link:hover {
   color: var(--k-muted-fg);
   font-size: 11.5px;
   font-weight: 600;
-  text-transform: capitalize;
 }
 
 /* --- Puste stany ---------------------------------------------------------- */

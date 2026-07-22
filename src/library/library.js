@@ -76,13 +76,25 @@
     setTimeout(() => el.remove(), 3200);
   }
 
+  // Umiejętności lekcji to obiekty {uri, title, essential} – gwiazdka oznacza
+  // umiejętność kluczową dla zawodu.
+  function skillTagsHtml(skills) {
+    if (!skills?.length) return "";
+    const tags = skills
+      .map((s) => `<span class="tag">${s.essential ? "★ " : ""}${esc(s.title)}</span>`)
+      .join("");
+    return `<div class="lesson-tags">${tags}</div>`;
+  }
+
   function emptyState(emoji, title, body) {
     return `<div class="empty"><div class="empty-emoji">${emoji}</div><h3>${esc(title)}</h3><p>${esc(body)}</p></div>`;
   }
 
   // --- Nagłówek -------------------------------------------------------------
   async function renderHeader() {
-    const st = await S.getDashboardStats();
+    // Liczniki idą za aktywnym filtrem powtórek, żeby „do powtórki" zgadzało
+    // się z tym, co użytkownik faktycznie dostanie w sesji.
+    const st = await S.getDashboardStats({ language: reviewLang });
     const code = settings.profile?.targetLangCode || "";
     const lang = C.findLanguage(code);
     C.applyTheme(document.documentElement, code || "en");
@@ -137,10 +149,11 @@
       langs.length > 1 ? `<div class="toolbar">${langChipsHtml(reviewLang, langs)}</div>` : "";
     const bindSwitcher = () =>
       el.querySelectorAll("[data-lang]").forEach((b) =>
-        b.addEventListener("click", () => {
+        b.addEventListener("click", async () => {
           reviewLang = b.dataset.lang || null;
           queue = [];
           flipped = false;
+          await renderHeader(); // liczniki muszą pójść za zmianą filtra
           renderReview();
         })
       );
@@ -419,7 +432,7 @@
                   .join("")}</ul>`
               : ""
           }
-          ${l.skills?.length ? `<div class="lesson-tags">${l.skills.map((t) => `<span class="tag">${esc(t)}</span>`).join("")}</div>` : ""}
+          ${skillTagsHtml(l.skills)}
         </div>`;
       })
       .join("");
@@ -473,7 +486,7 @@
               ? `<a class="lesson-src" href="${esc(l.source_url)}" target="_blank" rel="noopener">${esc(l.source_title || l.source_url)}</a>`
               : ""
           }
-          ${l.skills?.length ? `<div class="lesson-tags">${l.skills.map((t) => `<span class="tag">${esc(t)}</span>`).join("")}</div>` : ""}
+          ${skillTagsHtml(l.skills)}
         </div>`
         )
         .join("")}`

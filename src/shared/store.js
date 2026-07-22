@@ -73,8 +73,12 @@
   }
 
   // Statystyki wzbogacone o liczniki liczone na bieżąco (do odznak i nagłówka).
-  async function getDashboardStats() {
-    const { lessons, vocab, stats } = await readAll();
+  // `language` zawęża liczniki do jednego języka – nagłówek musi pokazywać to
+  // samo, co sesja powtórek, inaczej zostaje wiszący licznik dla języka,
+  // którego użytkownik w tej chwili nie widzi.
+  async function getDashboardStats({ language = null } = {}) {
+    const { lessons, vocab: allVocab, stats } = await readAll();
+    const vocab = language ? allVocab.filter((v) => v.target_language === language) : allVocab;
     const now = Date.now();
     return {
       ...stats,

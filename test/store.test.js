@@ -324,6 +324,31 @@ test("eksport zwraca kształt gotowy do wysłania na backend", async () => {
   assert.ok(dump.vocab[0].due_at);
 });
 
+test("getDashboardStats: liczniki idą za wybranym językiem", async () => {
+  const S = globalThis.KRYTYKAI_STORE;
+  await S.saveLesson({ mode: "lingo", sourceUrl: "https://a.pl", result: LINGO_RESULT, profile: PROFILE });
+  await S.saveLesson({
+    mode: "lingo", sourceUrl: "https://b.pl",
+    result: { vocab: [{ term: "cane", translation: "pies" }], phrases: [] },
+    profile: { ...PROFILE, targetLangCode: "it" },
+  });
+
+  // Wszystkie terminy wymagalne, żeby liczyć tylko po języku.
+  const all = await S.getVocab({});
+  all.forEach((v) => (v.due_at = new Date(Date.now() - 1000).toISOString()));
+  await chrome.storage.local.set({ krytykai_vocab: all });
+
+  const total = await S.getDashboardStats();
+  const es = await S.getDashboardStats({ language: "es" });
+  const it = await S.getDashboardStats({ language: "it" });
+
+  assert.equal(total.due_count, 4, "3 hiszpańskie + 1 włoskie");
+  assert.equal(es.due_count, 3);
+  assert.equal(it.due_count, 1);
+  // Licznik w nagłówku musi zgadzać się z tym, co poda sesja powtórek.
+  assert.equal(it.due_count, (await S.getDueVocab({ language: "it" })).length);
+});
+
 test("poziom użytkownika rośnie wraz z XP", () => {
   const C = globalThis.KRYTYKAI_CATALOG;
   assert.equal(C.getUserAppLevel(0).level, 0);
