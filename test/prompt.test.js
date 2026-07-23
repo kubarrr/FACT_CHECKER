@@ -122,12 +122,16 @@ test("buildCommentsSystemPrompt: judges comments, never their authors", () => {
   assert.match(p, /empty "top" is a valid answer/i);
 });
 
-test("buildStorySystemPrompt: refuses to force advice on irrelevant content", () => {
+test("buildStorySystemPrompt: rejects only the genuinely unrelated, not other domains", () => {
   const p = buildStorySystemPrompt("pl");
   assert.match(p, /"relevant"/);
   assert.match(p, /leave takeaways and read_next EMPTY/i);
   // Metafora nie może uchodzić za trafność — to był objaw (przepis → EEG).
-  assert.match(p, /just as X, so Y/i);
+  assert.match(p, /just as X, so/i);
+  // Ale inna dziedzina z tą samą umiejętnością MA być trafna (rolnictwo dla analityka).
+  assert.match(p, /different domain/i);
+  assert.match(p, /agriculture/i);
+  assert.match(p, /when in doubt, lean\s+towards relevant/i);
 });
 
 test("buildLingoSystemPrompt: culture note follows the target language, no country field", () => {

@@ -570,34 +570,70 @@
       if (quote.length < 10) continue;
       // „explore" = ciekawostka (niebieski), reszta = weryfikacja (czerwony).
       const kind = f?.kind === "explore" ? "explore" : "verify";
-      wrapFirstMatch(root, quote, String(f?.why || ""), kind);
+      wrapQuote(root, quote, String(f?.why || ""), kind);
     }
   }
 
-  function wrapFirstMatch(root, quote, why, kind) {
-    const needle = quote.toLowerCase();
+  // Normalizacja do porównania: białe znaki (spacje, nowe linie, twarda spacja)
+  // sprowadzone do jednej spacji. Cytat z modelu i tekst strony bywają różnie
+  // złamane, a bez tego dopasowanie po prostu nie trafiało.
+  function normWs(s) {
+    return String(s || "").replace(/\s+/g, " ");
+  }
+
+  // Buduje spłaszczony tekst kontenera i mapę pozycji → (węzeł, offset), żeby
+  // znaleźć cytat nawet gdy przechodzi przez <a>/<strong>/<em> (wiele węzłów).
+  function buildTextMap(root) {
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+    let flat = "";
+    const map = []; // map[i] = { node, offset } dla znaku flat[i]
     let node;
     while ((node = walker.nextNode())) {
       if (node.parentElement && node.parentElement.closest("mark.krytykai-flag")) continue;
-      const text = node.nodeValue || "";
-      const idx = text.toLowerCase().indexOf(needle);
-      if (idx === -1) continue;
-      const before = text.slice(0, idx);
-      const match = text.slice(idx, idx + quote.length);
-      const after = text.slice(idx + quote.length);
+      const raw = node.nodeValue || "";
+      for (let i = 0; i < raw.length; i++) {
+        // Ciągi białych znaków kolapsujemy do jednej spacji także w mapie.
+        const isWs = /\s/.test(raw[i]);
+        if (isWs && flat.endsWith(" ")) continue;
+        flat += isWs ? " " : raw[i];
+        map.push({ node, offset: i });
+      }
+    }
+    return { flat, map };
+  }
+
+  function wrapQuote(root, quote, why, kind) {
+    const { flat, map } = buildTextMap(root);
+    const hay = flat.toLowerCase();
+    const needle = normWs(quote).toLowerCase().trim();
+    if (needle.length < 8) return false;
+    const at = hay.indexOf(needle);
+    if (at === -1) return false;
+
+    // Zakres [start, end) w płaskim tekście → realne pozycje w węzłach DOM.
+    const startPos = map[at];
+    const endPos = map[at + needle.length - 1];
+    if (!startPos || !endPos) return false;
+
+    try {
+      const range = document.createRange();
+      range.setStart(startPos.node, startPos.offset);
+      range.setEnd(endPos.node, endPos.offset + 1);
       const mark = document.createElement("mark");
       mark.className = `krytykai-flag krytykai-flag-${kind || "verify"}`;
-      mark.textContent = match;
       if (why) mark.title = why;
-      const frag = document.createDocumentFragment();
-      if (before) frag.appendChild(document.createTextNode(before));
-      frag.appendChild(mark);
-      if (after) frag.appendChild(document.createTextNode(after));
-      node.parentNode.replaceChild(frag, node);
+      // surroundContents działa tylko dla zakresu w jednym węźle; przy wielu
+      // węzłach wyciągamy zawartość do <mark> (zachowuje formatowanie w środku).
+      try {
+        range.surroundContents(mark);
+      } catch {
+        mark.appendChild(range.extractContents());
+        range.insertNode(mark);
+      }
       return true;
+    } catch {
+      return false;
     }
-    return false;
   }
 
   // --- Tryby uczące: My Story / Linglerno -----------------------------------
