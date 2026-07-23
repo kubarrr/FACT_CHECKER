@@ -216,6 +216,7 @@
   }
 
   // Nakłada motyw języka na element jako zmienne CSS (--k-*).
+  // (pełny motyw — używane tam, gdzie cała powierzchnia ma barwy flagi)
   function applyTheme(el, code) {
     const t = themeFor(code);
     const map = {
@@ -235,6 +236,40 @@
     return t;
   }
 
+  // Opcja B: baza (tło/tekst/karty) zostaje neutralna i stała, a za aktywną
+  // sekcją idzie tylko AKCENT (gradient + primary + glow). Dzięki temu Kariera
+  // nie nosi barw języka, a zakładki językowe zachowują flagowy klimat.
+  function applyAccent(el, code) {
+    const t = themeFor(code);
+    el.style.setProperty("--k-primary", t.primary);
+    el.style.setProperty("--k-from", t.from);
+    el.style.setProperty("--k-to", t.to);
+    el.style.setProperty("--k-glow", t.glow);
+    return t;
+  }
+
+  // Stały akcent zawodowy (grafit → morska zieleń) — niezależny od języka.
+  const CAREER_ACCENT = {
+    primary: "oklch(0.55 0.11 210)",
+    from: "oklch(0.42 0.07 235)",
+    to: "oklch(0.60 0.10 200)",
+    glow: "oklch(0.55 0.11 210 / 0.35)",
+  };
+  // Spokojny akcent neutralny (indygo) — historia i profil.
+  const NEUTRAL_ACCENT = {
+    primary: "oklch(0.52 0.12 275)",
+    from: "oklch(0.46 0.11 275)",
+    to: "oklch(0.58 0.12 285)",
+    glow: "oklch(0.52 0.12 275 / 0.3)",
+  };
+
+  function applyAccentPreset(el, preset) {
+    el.style.setProperty("--k-primary", preset.primary);
+    el.style.setProperty("--k-from", preset.from);
+    el.style.setProperty("--k-to", preset.to);
+    el.style.setProperty("--k-glow", preset.glow);
+  }
+
   globalThis.KRYTYKAI_CATALOG = {
     LANGUAGES,
     ENGLISH_NAMES,
@@ -252,5 +287,9 @@
     codeFromLegacyName,
     themeFor,
     applyTheme,
+    applyAccent,
+    applyAccentPreset,
+    CAREER_ACCENT,
+    NEUTRAL_ACCENT,
   };
 })();

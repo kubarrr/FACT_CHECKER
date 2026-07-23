@@ -26,9 +26,12 @@
       // Zakładki
       tabReview: "Reviews",
       tabVocab: "Vocabulary",
-      tabCareer: "Career",
+      tabCareer: "Coverage",
       tabHistory: "History",
       tabProfile: "Profile",
+      groupLang: "Language",
+      groupCareer: "Career",
+      groupMore: "More",
 
       // Powtórki
       all: "All",
@@ -139,9 +142,12 @@
 
       tabReview: "Powtórki",
       tabVocab: "Słownik",
-      tabCareer: "Kariera",
+      tabCareer: "Pokrycie",
       tabHistory: "Historia",
       tabProfile: "Profil",
+      groupLang: "Język",
+      groupCareer: "Kariera",
+      groupMore: "Więcej",
 
       all: "Wszystkie",
       showAnswer: "Pokaż odpowiedź",

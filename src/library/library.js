@@ -104,27 +104,51 @@
     return `<div class="empty"><div class="empty-emoji">${emoji}</div><h3>${esc(title)}</h3><p>${esc(body)}</p></div>`;
   }
 
-  // --- Nagłówek -------------------------------------------------------------
-  async function renderHeader() {
-    // Liczniki idą za aktywnym filtrem powtórek, żeby „do powtórki" zgadzało
-    // się z tym, co użytkownik faktycznie dostanie w sesji.
-    const st = await S.getDashboardStats({ language: reviewLang });
-    const code = settings.profile?.targetLangCode || "";
-    const lang = C.findLanguage(code);
-    C.applyTheme(document.documentElement, code || "en");
+  // --- Motyw sekcji (opcja B) ----------------------------------------------
+  // Baza (tło/karty/tekst) jest neutralna i stała; zmienia się tylko akcent,
+  // żeby Kariera nie nosiła barw języka. „career" i „profile→career" dostają
+  // akcent zawodowy, zakładki językowe flagę, reszta neutralny indygo.
+  const LANGUAGE_TABS = new Set(["review", "vocab"]);
 
-    const lvl = C.getUserAppLevel(st.xp, uiLang);
-    $("heroFlag").textContent = lang ? lang.flag : "📚";
-    $("heroLevel").textContent = lvl.name;
-    $("heroSub").textContent = lang
-      ? t("heroLevelAt", lang.name, settings.profile?.level || "A2")
-      : t("heroSubEmpty");
+  // Stały akcent klastra językowego (podpowiedź na zakładkach) – ustawiany raz,
+  // niezależnie od tego, która sekcja jest aktywna.
+  function setClusterAccents() {
+    const theme = C.themeFor(currentLang() || "en");
+    document.documentElement.style.setProperty("--k-lang-primary", theme.primary);
+  }
+
+  function applySectionTheme(name) {
+    const root = document.documentElement;
+    if (LANGUAGE_TABS.has(name)) {
+      C.applyAccent(root, currentLang() || "en");
+      root.dataset.section = "lang";
+    } else if (name === "career") {
+      C.applyAccentPreset(root, C.CAREER_ACCENT);
+      root.dataset.section = "career";
+    } else {
+      C.applyAccentPreset(root, C.NEUTRAL_ACCENT);
+      root.dataset.section = "neutral";
+    }
+  }
+
+  // --- Nagłówek -------------------------------------------------------------
+  // Nagłówek ma dwie tożsamości: językową (flaga, poziom, XP) na zakładkach
+  // języka i zawodową (zawód, pokrycie) na Karierze. Seria jest wspólna.
+  async function renderHeader() {
+    const st = await S.getDashboardStats({ language: reviewLang });
+    const hero = $("hero");
+    hero.dataset.mode = activeTab === "career" ? "career" : "lang";
+
     $("heroStreak").textContent = `🔥 ${st.streak}`;
     $("heroStreak").title = t("streakDays", st.streak);
-    $("xpFill").style.width = `${lvl.progress}%`;
-    $("xpNow").textContent = `${st.xp} XP`;
-    $("xpNext").textContent = lvl.next > st.xp ? t("xpToNext", lvl.next - st.xp) : t("xpMax");
 
+    if (activeTab === "career") {
+      await renderCareerHero(st);
+    } else {
+      renderLanguageHero(st);
+    }
+
+    // Kafelki i odznaki to postęp ŁĄCZNY — wspólne dla obu światów.
     $("stats").innerHTML = [
       { n: st.due_count, l: t("statDue"), due: true },
       { n: st.vocab_count, l: t("statVocab") },
@@ -142,6 +166,44 @@
     const pill = $("duePill");
     pill.textContent = st.due_count;
     pill.hidden = st.due_count === 0;
+  }
+
+  function renderLanguageHero(st) {
+    const lang = C.findLanguage(currentLang() || "");
+    const lvl = C.getUserAppLevel(st.xp, uiLang);
+    $("heroFlag").textContent = lang ? lang.flag : "📚";
+    $("heroLevel").textContent = lvl.name;
+    $("heroSub").textContent = lang
+      ? t("heroLevelAt", lang.name, settings.profile?.level || "A2")
+      : t("heroSubEmpty");
+    $("xpFill").style.width = `${lvl.progress}%`;
+    $("xpNow").textContent = `${st.xp} XP`;
+    $("xpNext").textContent = lvl.next > st.xp ? t("xpToNext", lvl.next - st.xp) : t("xpMax");
+  }
+
+  async function renderCareerHero(st) {
+    const occ = await E.getSavedOccupation();
+    if (!occ) {
+      $("heroFlag").textContent = "🧭";
+      $("heroLevel").textContent = t("tabCareer");
+      $("heroSub").textContent = t("noOccupationTitle");
+      $("xpFill").style.width = "0%";
+      $("xpNow").textContent = "";
+      $("xpNext").textContent = "";
+      return;
+    }
+    const summary = await S.getSkillSummary();
+    const touched = new Set(summary.map((s) => s.uri).filter(Boolean));
+    const ess = occ.essential || [];
+    const covered = ess.filter((s) => touched.has(s.uri)).length;
+    const pct = ess.length ? Math.round((covered / ess.length) * 100) : 0;
+
+    $("heroFlag").textContent = "🧭";
+    $("heroLevel").textContent = occ.title;
+    $("heroSub").textContent = t("coverageLabel");
+    $("xpFill").style.width = `${pct}%`;
+    $("xpNow").textContent = `${covered}/${ess.length}`;
+    $("xpNext").textContent = `${pct}%`;
   }
 
   // --- Zakładka: powtórki ---------------------------------------------------
@@ -668,11 +730,12 @@
       settings = { ...settings, profile: next };
       await chrome.storage.sync.set({ [SETTINGS_KEY]: settings });
 
-      // Zmiana języka nauki przestawia też filtry, żeby widok był spójny z profilem.
+      // Zmiana języka nauki przestawia też filtry i akcent klastra językowego.
       if (langChanged) {
         vocabLang = currentLang();
         reviewLang = currentLang();
         queue = [];
+        setClusterAccents();
       }
       await renderHeader();
       toast(t("profileSaved"));
@@ -696,6 +759,9 @@
       t.setAttribute("aria-selected", String(t.dataset.tab === name))
     );
     for (const key of Object.keys(RENDERERS)) $(`panel-${key}`).hidden = key !== name;
+    // Motyw i tożsamość nagłówka idą za sekcją (opcja B).
+    applySectionTheme(name);
+    renderHeader();
     RENDERERS[name]();
   }
 
@@ -716,6 +782,9 @@
       const pill = el.querySelector(".pill");
       el.textContent = t(key) + " ";
       if (pill) el.appendChild(pill);
+    });
+    document.querySelectorAll("[data-grouplabel]").forEach((el) => {
+      el.textContent = t(el.dataset.grouplabel);
     });
     $("footerNote").textContent = t("localOnly");
     $("exportBtn").textContent = t("exportJson");
@@ -741,13 +810,14 @@
     settings = data[SETTINGS_KEY] || {};
     setUiLang(settings.language);
     applyStaticLabels();
+    setClusterAccents();
     vocabLang = currentLang();
     reviewLang = currentLang();
-    await renderHeader();
 
-    // Bez ustawionego języka nauki nic sensownego nie pokażemy – zaczynamy
-    // od profilu, żeby użytkownik od razu wiedział, czego brakuje.
+    // selectTab ustawia motyw sekcji i renderuje nagłówek, więc wchodzimy
+    // przez nią (bez osobnego renderHeader, żeby nie renderować dwa razy).
     if (!currentLang()) {
+      // Bez języka nauki zaczynamy od profilu, żeby było widać, czego brakuje.
       selectTab("profile");
       return;
     }

@@ -1,22 +1,26 @@
-/* Biblioteka – motyw sterowany zmiennymi --k-* nakładanymi przez
-   KRYTYKAI_CATALOG.applyTheme() wg wybranego języka nauki. */
+/* Biblioteka (opcja B): baza tła/kart/tekstu jest NEUTRALNA i stała, a za
+   aktywną sekcją idzie tylko akcent (--k-primary/from/to/glow), nakładany
+   przez KRYTYKAI_CATALOG.applyAccent/applyAccentPreset. Dzięki temu Kariera
+   nie nosi barw języka. */
 
 :root {
-  --k-bg: #f7f7fb;
-  --k-fg: #16181d;
+  --k-bg: #f6f7f9;
+  --k-fg: #1a1c22;
   --k-card: #ffffff;
-  --k-muted: #eceef4;
-  --k-muted-fg: #656b7a;
-  --k-border: #dfe2ea;
+  --k-muted: #eef0f4;
+  --k-muted-fg: #667085;
+  --k-border: #e2e5ec;
+  /* akcent domyślny (nadpisywany per sekcja) */
   --k-primary: #4f46e5;
   --k-from: #4f46e5;
   --k-to: #7c3aed;
   --k-glow: rgba(79, 70, 229, 0.32);
+  /* stałe akcenty klastrów – niezależne od aktywnej sekcji, do podpowiedzi
+     kolorystycznej na zakładkach. --k-lang-primary ustawia JS wg języka. */
+  --k-lang-primary: #4f46e5;
+  --k-career-primary: oklch(0.55 0.11 210);
   --radius: 16px;
   color-scheme: light;
-}
-[data-theme-mode="dark"] {
-  color-scheme: dark;
 }
 
 * {
@@ -47,6 +51,8 @@ body {
   background: linear-gradient(135deg, var(--k-from), var(--k-to));
   box-shadow: 0 20px 45px -18px var(--k-glow);
   overflow: hidden;
+  /* akcent zmienia się przy przejściu między sekcjami – płynnie, nie skokowo */
+  transition: background 0.4s ease, box-shadow 0.4s ease;
 }
 .hero::after {
   content: "";
@@ -178,20 +184,54 @@ body {
   font-size: 15px;
 }
 
-/* --- Zakładki ------------------------------------------------------------- */
+/* --- Zakładki w klastrach (opcja B) --------------------------------------- */
 .tabs {
   display: flex;
-  gap: 6px;
-  margin: 26px 0 18px;
+  align-items: flex-end;
+  gap: 14px;
+  margin: 28px 0 18px;
+  overflow-x: auto;
+}
+.tab-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.tab-group[data-group="shared"] {
+  margin-left: auto; /* wspólne (Historia/Profil) odsunięte na prawo */
+}
+.tab-group-label {
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--k-muted-fg);
+  padding-left: 6px;
+  opacity: 0.75;
+}
+.tab-group[data-group="shared"] .tab-group-label {
+  text-align: right;
+  padding-right: 6px;
+  padding-left: 0;
+}
+.tab-group-btns {
+  display: flex;
+  gap: 4px;
   padding: 5px;
   background: var(--k-muted);
   border-radius: 14px;
-  overflow-x: auto;
+}
+/* Klaster języka i kariery dostają subtelną poświatę SWOJEGO stałego akcentu,
+   żeby przynależność koloru była czytelna zanim jeszcze klikniesz. */
+.tab-group[data-group="lang"] .tab-group-btns {
+  box-shadow: inset 0 0 0 1.5px color-mix(in oklch, var(--k-lang-primary) 30%, transparent);
+}
+.tab-group[data-group="career"] .tab-group-btns {
+  box-shadow: inset 0 0 0 1.5px color-mix(in oklch, var(--k-career-primary) 30%, transparent);
 }
 .tab {
-  flex: 1;
   min-width: max-content;
-  padding: 10px 16px;
+  padding: 9px 15px;
   border: none;
   border-radius: 10px;
   background: transparent;
