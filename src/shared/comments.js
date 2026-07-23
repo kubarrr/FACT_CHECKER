@@ -47,6 +47,16 @@
       author: '[data-testid="User-Name"]',
       text: '[data-testid="tweetText"]',
     },
+    {
+      // Facebook nie ma stabilnych klas (są losowane), więc celujemy w aria-label:
+      // komentarz to article z etykietą zaczynającą się od „Comment"/„Komentarz".
+      // Wymaga zalogowania – bez tego FB w ogóle nie renderuje komentarzy.
+      name: "facebook",
+      match: /(^|\.)facebook\.com$/,
+      item: 'div[role="article"][aria-label^="Comment"], div[role="article"][aria-label^="Komentarz"], div[role="article"][aria-label*="omment"]',
+      author: 'a[role="link"] span, strong',
+      text: 'div[dir="auto"]',
+    },
   ];
 
   // Fallback dla reszty internetu: typowe kontenery sekcji komentarzy.

@@ -309,14 +309,21 @@ a.krytykai-btn {
   padding: 8px 0;
 }
 
-/* Sporne fragmenty podświetlone bezpośrednio na stronie (eksperymentalne) */
+/* Fragmenty zaznaczone bezpośrednio na stronie.
+   Czerwony = do weryfikacji, niebieski = ciekawostka / warte uwagi. */
 mark.krytykai-flag {
-  background: #fef08a;
   color: inherit;
-  border-bottom: 2px solid #f59e0b;
   border-radius: 2px;
   padding: 0 1px;
   cursor: help;
+}
+mark.krytykai-flag-verify {
+  background: #fee2e2;
+  border-bottom: 2px solid #dc2626;
+}
+mark.krytykai-flag-explore {
+  background: #dbeafe;
+  border-bottom: 2px solid #2563eb;
 }
 
 /* --- Zakładki trybów (Fact Check / My Story / Linglerno) --- */
@@ -394,6 +401,16 @@ mark.krytykai-flag {
   border-top: 1px solid #f3f4f6;
   color: #6b7280;
   font-size: 11.5px;
+}
+
+.krytykai-offtopic {
+  padding: 14px 12px;
+  background: #f9fafb;
+  border: 1px dashed #e5e7eb;
+  border-radius: 8px;
+  color: #4b5563;
+  font-size: 13.5px;
+  line-height: 1.5;
 }
 
 /* --- Weryfikacja w źródłach (grounding na żądanie) --- */

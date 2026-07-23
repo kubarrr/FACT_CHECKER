@@ -121,3 +121,23 @@ test("buildCommentsSystemPrompt: judges comments, never their authors", () => {
   // Pusta lista musi być dozwolona, inaczej model będzie naciągał.
   assert.match(p, /empty "top" is a valid answer/i);
 });
+
+test("buildStorySystemPrompt: refuses to force advice on irrelevant content", () => {
+  const p = buildStorySystemPrompt("pl");
+  assert.match(p, /"relevant"/);
+  assert.match(p, /leave takeaways and read_next EMPTY/i);
+  // Metafora nie może uchodzić za trafność — to był objaw (przepis → EEG).
+  assert.match(p, /just as X, so Y/i);
+});
+
+test("buildLingoSystemPrompt: culture note must match the target language, not a stale country", () => {
+  // Hiszpański z pozostawionym po Włoszech krajem — ciekawostka ma iść za językiem.
+  const p = buildLingoSystemPrompt({ targetLang: "Spanish", country: "Italy" }, "pl");
+  assert.match(p, /a country where Spanish is spoken/i);
+  assert.match(p, /ONLY if Spanish is actually spoken there/i);
+});
+
+test("buildSystemPrompt: flags carry a kind for on-page colouring", () => {
+  const p = buildSystemPrompt(4, "pl");
+  assert.match(p, /"kind": "verify"\|"explore"/);
+});

@@ -55,16 +55,17 @@ export function buildSystemPrompt(numQuestions, language) {
     '   - for POLLS/STATISTICS/SURVEYS: at least ONE question about METHODOLOGY (who commissioned',
     "     it, sample size, method, margin of error, question wording, a single snapshot vs a trend).",
     "",
-    "3) FLAGS — dubious fragments. Return \"flags\": an array (0 to 3 items) of objects",
-    '   {"quote": "...", "why": "..."} where "quote" is copied VERBATIM (an exact substring,',
-    "   a single sentence or short phrase) from the analyzed content — a claim that is",
-    "   manipulative, unsupported, or needs verification. Copy the quote EXACTLY as written in",
+    "3) FLAGS — fragments worth marking on the page. Return \"flags\": an array (0 to 4 items) of",
+    '   objects {"quote": "...", "why": "...", "kind": "verify"|"explore"} where "quote" is VERBATIM',
+    "   a single sentence or short phrase) from the analyzed content. Use kind \"verify\" for a claim",
+    "   that is manipulative, unsupported or needs checking; use kind \"explore\" for a genuinely",
+    "   interesting or noteworthy fact worth a closer look. Copy the quote EXACTLY as written in",
     `   the ORIGINAL language of the content (do NOT translate the quote). Write "why" in ${outLang}.`,
-    "   If nothing is dubious (e.g. low risk / plain fact), return an empty array.",
+    "   If nothing stands out (e.g. low risk / plain fact and nothing notable), return an empty array.",
     "",
     `Each question (in ${outLang}): {"q": "...", "why": "one sentence why", "kind": "verify"|"explore"|"perspective"}.`,
     "Return ONLY valid JSON in this exact shape:",
-    '{"assessment": {"type": "...", "risk": "...", "note": "..."}, "summary": "one sentence", "questions": [{"q": "...", "why": "...", "kind": "..."}], "flags": [{"quote": "...", "why": "..."}]}',
+    '{"assessment": {"type": "...", "risk": "...", "note": "..."}, "summary": "one sentence", "questions": [{"q": "...", "why": "...", "kind": "..."}], "flags": [{"quote": "...", "why": "...", "kind": "verify"|"explore"}]}',
     "No text outside the JSON, no markdown fences.",
     reminder,
   ].filter(Boolean).join("\n");
@@ -349,6 +350,15 @@ export function buildStorySystemPrompt(language, skillOptions) {
     `Connect ideas to THEIR field, role and goals. ${langLine}`,
     "Keep it SHORT and focused — quality over quantity, do not overwhelm the user.",
     "",
+    'RELEVANCE FIRST — set "relevant" true only if this content genuinely connects to the',
+    "user's field, role or goals. A recipe, a sports result or celebrity gossip is NOT relevant",
+    "to a data analyst just because you can draw a metaphor from it. If connecting the content to",
+    'their work needs an analogy or a phrase like "treat it as an algorithm" / "just as X, so Y",',
+    'then it is NOT relevant: set "relevant" false, leave takeaways and read_next EMPTY, and put a',
+    'one-sentence honest note in "lesson" (e.g. "This is about baking, not something that ties to',
+    'your work in medtech."). Do NOT force career advice out of unrelated content — forcing it is',
+    "the failure mode we are avoiding.",
+    "",
     "For read_next: give a search QUERY (a topic, skill or well-known course subject) the user can",
     "look up — do NOT invent specific article titles, URLs, authors or book names (avoid hallucination).",
     "",
@@ -378,9 +388,10 @@ export function buildStorySystemPrompt(language, skillOptions) {
         ]),
     "Return ONLY valid JSON in this exact shape:",
     "{",
-    '  "takeaways": ["2-3 concrete ways to use this in their work/field"],',
+    '  "relevant": true,',
+    '  "takeaways": ["2-3 concrete ways to use this in their work/field (empty if not relevant)"],',
     '  "read_next": [{"query": "a short search query / topic to explore next", "why": "one sentence"}],',
-    '  "lesson": "a short 2-3 sentence micro-lesson that teaches the key concept from the content",',
+    '  "lesson": "a short 2-3 sentence micro-lesson (or, if not relevant, one honest sentence saying so)",',
     '  "topic": "a 2-5 word label for what this content was about (in the output language)",',
     menu
       ? '  "skills": [{"id": "s3", "evidence": "a sentence copied word-for-word from the content"}]'
@@ -409,7 +420,11 @@ export function buildLingoSystemPrompt(profile, language) {
   const native = p.nativeLang || langName(language) || "the user's language";
   const target = p.targetLang || "English";
   const level = p.level || "A2";
-  const country = p.country || "a country where the language is spoken";
+  // Kraj bywa nieaktualny (zostaje po poprzednim języku), dlatego traktujemy go
+  // wyłącznie jako podpowiedź i wymuszamy zgodność z językiem docelowym.
+  const countryHint = p.country
+    ? `Prefer ${p.country} ONLY if ${target} is actually spoken there; otherwise ignore it.`
+    : "";
   return [
     "You are a friendly language tutor. The user gives you something they just read. Build a",
     `short personalized lesson to learn ${target} (their level: ${level}). Their native language is ${native}.`,
@@ -427,7 +442,7 @@ export function buildLingoSystemPrompt(profile, language) {
     `  "summary_native": "the same summary in ${native} with the [[equivalents]] marked",`,
     `  "vocab": [{"term": "word/expression in ${target}", "translation": "in ${native}", "example": "short example sentence fully in ${target}"}],`,
     `  "phrases": [{"phrase": "useful phrase in ${target}", "translation": "in ${native}"}],`,
-    `  "culture": "an interesting LANGUAGE/CULTURE curiosity about ${country} related to this topic, written in ${native} (the user's language)"`,
+    `  "culture": "an interesting LANGUAGE/CULTURE curiosity about a country where ${target} is spoken, related to this topic, written in ${native} (the user's language). ${countryHint}"`,
     "}",
     "5-8 vocab items, 3-5 phrases. No text outside JSON, no markdown fences.",
   ].join("\n");
