@@ -309,21 +309,28 @@ a.krytykai-btn {
   padding: 8px 0;
 }
 
-/* Fragmenty zaznaczone bezpośrednio na stronie.
-   Czerwony = do weryfikacji, niebieski = ciekawostka / warte uwagi. */
+/* Fragmenty zaznaczone bezpośrednio na stronie — styl RAMKI, nie wypełnienia:
+   pełne tło (żółte) rozjeżdżało się z motywem czatu i wyglądało krzykliwie.
+   Obwódka jest dyskretna i czytelna na dowolnym tle.
+   Czerwona = do weryfikacji, niebieska = ciekawostka / warte uwagi.
+   box-decoration-break: clone → ramka domyka się na każdej linii z osobna. */
 mark.krytykai-flag {
+  background: transparent !important;
   color: inherit;
-  border-radius: 2px;
-  padding: 0 1px;
+  border: 1.5px solid;
+  border-radius: 5px;
+  padding: 0 3px;
   cursor: help;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 mark.krytykai-flag-verify {
-  background: #fee2e2;
-  border-bottom: 2px solid #dc2626;
+  border-color: #dc2626;
+  background: rgba(220, 38, 38, 0.06) !important;
 }
 mark.krytykai-flag-explore {
-  background: #dbeafe;
-  border-bottom: 2px solid #2563eb;
+  border-color: #2563eb;
+  background: rgba(37, 99, 235, 0.06) !important;
 }
 
 /* --- Zakładki trybów (Fact Check / My Story / Linglerno) --- */

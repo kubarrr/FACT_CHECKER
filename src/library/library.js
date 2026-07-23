@@ -626,11 +626,6 @@
           </label>
         </div>
 
-        <label class="field">
-          <span>${esc(t("countryCulture"))}</span>
-          <input type="text" data-pf="country" value="${esc(p.country || "")}" placeholder="${esc(t("phCountry"))}" />
-        </label>
-
         <span class="field-label">${esc(t("levelLabel"))}</span>
         <div class="levels" id="lvlPicker">
           ${C.LEVELS.map(
@@ -670,11 +665,6 @@
 
       const prev = settings.profile || {};
       const langChanged = next.targetLangCode !== prev.targetLangCode;
-      // Kraj był powiązany z poprzednim językiem – jeśli zmieniono język, a kraju
-      // nie ruszono, czyścimy go, żeby ciekawostka nie została „o Włoszech"
-      // przy nauce hiszpańskiego. Świadomie wpisany nowy kraj zostaje.
-      if (langChanged && next.country === (prev.country || "")) next.country = "";
-
       settings = { ...settings, profile: next };
       await chrome.storage.sync.set({ [SETTINGS_KEY]: settings });
 

@@ -420,11 +420,6 @@ export function buildLingoSystemPrompt(profile, language) {
   const native = p.nativeLang || langName(language) || "the user's language";
   const target = p.targetLang || "English";
   const level = p.level || "A2";
-  // Kraj bywa nieaktualny (zostaje po poprzednim języku), dlatego traktujemy go
-  // wyłącznie jako podpowiedź i wymuszamy zgodność z językiem docelowym.
-  const countryHint = p.country
-    ? `Prefer ${p.country} ONLY if ${target} is actually spoken there; otherwise ignore it.`
-    : "";
   return [
     "You are a friendly language tutor. The user gives you something they just read. Build a",
     `short personalized lesson to learn ${target} (their level: ${level}). Their native language is ${native}.`,
@@ -442,7 +437,7 @@ export function buildLingoSystemPrompt(profile, language) {
     `  "summary_native": "the same summary in ${native} with the [[equivalents]] marked",`,
     `  "vocab": [{"term": "word/expression in ${target}", "translation": "in ${native}", "example": "short example sentence fully in ${target}"}],`,
     `  "phrases": [{"phrase": "useful phrase in ${target}", "translation": "in ${native}"}],`,
-    `  "culture": "an interesting LANGUAGE/CULTURE curiosity about a country where ${target} is spoken, related to this topic, written in ${native} (the user's language). ${countryHint}"`,
+    `  "culture": "an interesting LANGUAGE/CULTURE curiosity about a country where ${target} is spoken, related to this topic, written in ${native} (the user's language)"`,
     "}",
     "5-8 vocab items, 3-5 phrases. No text outside JSON, no markdown fences.",
   ].join("\n");

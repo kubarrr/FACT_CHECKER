@@ -130,11 +130,12 @@ test("buildStorySystemPrompt: refuses to force advice on irrelevant content", ()
   assert.match(p, /just as X, so Y/i);
 });
 
-test("buildLingoSystemPrompt: culture note must match the target language, not a stale country", () => {
-  // Hiszpański z pozostawionym po Włoszech krajem — ciekawostka ma iść za językiem.
+test("buildLingoSystemPrompt: culture note follows the target language, no country field", () => {
+  // Pole kraju usunięte — ciekawostka zawsze idzie za językiem nauki, więc
+  // stary/nieaktualny kraj nie ma jak przeciec (objaw: hiszpański → Włochy).
   const p = buildLingoSystemPrompt({ targetLang: "Spanish", country: "Italy" }, "pl");
   assert.match(p, /a country where Spanish is spoken/i);
-  assert.match(p, /ONLY if Spanish is actually spoken there/i);
+  assert.doesNotMatch(p, /Italy/);
 });
 
 test("buildSystemPrompt: flags carry a kind for on-page colouring", () => {
