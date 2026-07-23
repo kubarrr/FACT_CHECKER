@@ -410,13 +410,26 @@ async function analyzeLearn(mode, payload) {
     throw new Error("Brak treści do analizy.");
   }
 
+  // Język jest globalny (w ustawieniach); pola KARIERY należą do aktywnej
+  // persony. Dla trybu My Career scalamy jedno z drugim.
   const profile = { ...(settings.profile || {}) };
 
-  // Zawód z ESCO wybrany w Bibliotece daje modelowi zamkniętą listę umiejętności
-  // do wyboru. Doklejamy ją do profilu, więc trafia zarówno do backendu, jak i
-  // do modelu lokalnego bez osobnej ścieżki.
   if (mode === "story") {
-    const occ = (await chrome.storage.local.get("krytykai_occupation")).krytykai_occupation;
+    const store = await chrome.storage.local.get([
+      "krytykai_personas",
+      "krytykai_active_persona",
+      "krytykai_occupation",
+    ]);
+    const personas = store.krytykai_personas || [];
+    const active =
+      personas.find((p) => p.id === store.krytykai_active_persona) || personas[0] || null;
+    if (active) {
+      // Pola karierowe z persony nadpisują (puste) globalne.
+      for (const k of ["role", "industry", "goals", "skills", "interests"]) {
+        if (active[k]) profile[k] = active[k];
+      }
+    }
+    const occ = active?.occupation || store.krytykai_occupation;
     if (occ?.options?.length) {
       profile.occupation = occ.title;
       profile.skillOptions = occ.options.map((o) => ({ id: o.id, title: o.title, essential: o.essential }));

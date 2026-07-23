@@ -617,6 +617,72 @@ body {
   background: color-mix(in oklch, var(--k-primary) 8%, var(--k-bg));
 }
 
+/* --- Persony (wirtualne profile kariery) ---------------------------------- */
+.persona-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.persona-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 150px;
+  padding: 11px 15px;
+  border: 1.5px solid var(--k-border);
+  border-radius: 14px;
+  background: var(--k-bg);
+  color: var(--k-fg);
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.persona-chip:hover {
+  border-color: var(--k-primary);
+}
+.persona-chip.active {
+  border-color: var(--k-primary);
+  background: color-mix(in oklch, var(--k-primary) 14%, var(--k-card));
+}
+.persona-chip-kind {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--k-muted-fg);
+}
+.persona-chip.real .persona-chip-kind {
+  color: var(--k-primary);
+}
+.persona-chip-name {
+  font-weight: 800;
+  font-size: 15px;
+}
+.persona-chip-badge {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--k-primary);
+  color: #fff;
+}
+.persona-add {
+  justify-content: center;
+  align-items: center;
+  border-style: dashed;
+  color: var(--k-muted-fg);
+  font-weight: 700;
+}
+.persona-editor {
+  border-top: 1px solid var(--k-border);
+  padding-top: 16px;
+}
+
 /* --- Pokrycie umiejętności zawodu ----------------------------------------- */
 .cov {
   background: var(--k-card);

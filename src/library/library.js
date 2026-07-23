@@ -180,7 +180,7 @@
       $("xpNext").textContent = "";
       return;
     }
-    const summary = await S.getSkillSummary();
+    const summary = await S.getSkillSummary({ occupationUri: occ.uri });
     const touched = new Set(summary.map((s) => s.uri).filter(Boolean));
     const ess = occ.essential || [];
     const covered = ess.filter((s) => touched.has(s.uri)).length;
@@ -358,7 +358,9 @@
   // --- Zakładka: kariera ----------------------------------------------------
   async function renderCareer() {
     const el = $("panel-career");
-    const skills = await S.getSkillSummary();
+    // Pokrycie i lekcje dotyczą AKTYWNEJ persony (jej zawodu), nie wszystkich.
+    const occ = await E.getSavedOccupation();
+    const skills = await S.getSkillSummary({ occupationUri: occ?.uri || null });
     const lessons = await S.getLessons({ mode: "career", limit: 30 });
 
     if (!lessons.length) {
@@ -373,7 +375,6 @@
     // Pokrycie względem oficjalnych umiejętności zawodu. To jedyna metryka tutaj,
     // która mierzy coś poza samą częstotliwością czytania: ile z tego, czego
     // zawód naprawdę wymaga, w ogóle dotknąłeś.
-    const occ = await E.getSavedOccupation();
     const touchedUris = new Set(skills.map((s) => s.uri).filter(Boolean));
 
     let coverageHtml = "";
@@ -563,15 +564,15 @@
       <div id="occResults"></div>`;
   }
 
-  function bindOccupationBox(el, occ, onChange) {
+  // Wyszukiwarka zawodu operująca na KONKRETNEJ personie.
+  function bindOccupationBox(el, occ, personaId, onChange) {
     if (occ) {
       el.querySelector("#occClear")?.addEventListener("click", async () => {
-        await E.clearOccupation();
+        await E.clearPersonaOccupation(personaId);
         onChange();
       });
       return;
     }
-
     const run = async () => {
       const q = el.querySelector("#occQuery").value;
       const hint = el.querySelector("#occHint");
@@ -581,16 +582,13 @@
         const results = await E.searchOccupations(q, uiLang);
         hint.textContent = results.length ? t("escoPickHint") : t("escoNoHits");
         box.innerHTML = results
-          .map(
-            (r) =>
-              `<button class="occ-hit" data-uri="${esc(r.uri)}">${esc(r.title)}</button>`
-          )
+          .map((r) => `<button class="occ-hit" data-uri="${esc(r.uri)}">${esc(r.title)}</button>`)
           .join("");
         box.querySelectorAll("[data-uri]").forEach((b) =>
           b.addEventListener("click", async () => {
             hint.textContent = t("escoFetching");
             try {
-              await E.selectOccupation(b.dataset.uri, uiLang);
+              await E.setPersonaOccupation(personaId, b.dataset.uri, uiLang);
               onChange();
             } catch (err) {
               hint.textContent = t("escoFetchError", err.message);
@@ -601,7 +599,6 @@
         hint.textContent = t("escoSearchError", err.message);
       }
     };
-
     el.querySelector("#occSearch").addEventListener("click", run);
     el.querySelector("#occQuery").addEventListener("keydown", (e) => {
       if (e.key === "Enter") run();
@@ -610,44 +607,77 @@
 
   async function renderProfile() {
     const el = $("panel-profile");
+    await E.ensureMigrated(settings.profile);
+    const personas = await E.getPersonas();
+    const active = await E.getActivePersona();
     const p = settings.profile || {};
-    const occ = await E.getSavedOccupation();
 
     const nativeSel = p.nativeLangCode || C.codeFromLegacyName(p.nativeLang);
     const targetSel = p.targetLangCode || C.codeFromLegacyName(p.targetLang);
-
     const langOptions = (selected) =>
       `<option value="">${esc(t("pickOne"))}</option>` +
       C.LANGUAGES.map(
         (l) => `<option value="${l.code}"${l.code === selected ? " selected" : ""}>${l.flag} ${esc(l.name)}</option>`
       ).join("");
 
-    el.innerHTML = `
-      <div class="form">
-        <h3 class="form-h">${esc(t("occupationSection"))}</h3>
-        ${occupationBoxHtml(occ)}
+    // --- Sekcja PERSONY -----------------------------------------------------
+    const personaChips = personas
+      .map(
+        (pr) => `
+        <button class="persona-chip${pr.id === active?.id ? " active" : ""}${pr.real ? " real" : ""}" data-persona="${esc(pr.id)}">
+          <span class="persona-chip-kind">${pr.real ? "👤 " + esc(t("realProfile")) : "🧪 " + esc(t("virtualProfile"))}</span>
+          <span class="persona-chip-name">${esc(pr.label || pr.occupation?.title || "—")}</span>
+          ${pr.id === active?.id ? `<span class="persona-chip-badge">${esc(t("activeBadge"))}</span>` : ""}
+        </button>`
+      )
+      .join("");
+    const canAdd = personas.length < E.MAX_PERSONAS;
 
-        <h3 class="form-h">${esc(t("careerSection"))}</h3>
+    const personaEditor = active
+      ? `
+      <div class="persona-editor">
+        <label class="field">
+          <span>${esc(t("personaLabel"))}</span>
+          <input type="text" id="pLabel" value="${esc(active.label || "")}" placeholder="${esc(t("phPersonaLabel"))}" />
+        </label>
+        ${occupationBoxHtml(active.occupation)}
         ${PROFILE_FIELDS.map(
           (f) => `
           <label class="field">
             <span>${esc(t(f.label))}</span>
-            <input type="text" data-pf="${f.key}" value="${esc(p[f.key] || "")}" placeholder="${esc(t(f.placeholder))}" />
+            <input type="text" data-pcf="${f.key}" value="${esc(active[f.key] || "")}" placeholder="${esc(t(f.placeholder))}" />
           </label>`
         ).join("")}
+        <div class="form-actions">
+          <button class="btn btn-primary" id="savePersona">${esc(t("savePersona"))}</button>
+          <button class="btn" id="removePersona">${esc(t("removePersona"))}</button>
+          <span class="stat-l" id="pMsg"></span>
+        </div>
+      </div>`
+      : `<div class="gapbox">${esc(t("noPersonas"))}</div>`;
 
-        <h3 class="form-h">${esc(t("languagesSection"))}</h3>
+    el.innerHTML = `
+      <div class="form">
+        <h3 class="form-h">${esc(t("personasSection"))}</h3>
+        <div class="persona-chips">
+          ${personaChips}
+          ${canAdd ? `<button class="persona-chip persona-add" id="addPersona">+ ${esc(t("newPersona"))}</button>` : ""}
+        </div>
+        ${personaEditor}
+      </div>
+
+      <div class="form" style="margin-top:16px">
+        <h3 class="form-h">${esc(t("languagesOnly"))}</h3>
         <div class="field-row">
           <label class="field">
             <span>${esc(t("yourLanguage"))}</span>
-            <select data-pf="nativeLangCode">${langOptions(nativeSel)}</select>
+            <select id="lNative">${langOptions(nativeSel)}</select>
           </label>
           <label class="field">
             <span>${esc(t("learnLanguage"))}</span>
-            <select data-pf="targetLangCode">${langOptions(targetSel)}</select>
+            <select id="lTarget">${langOptions(targetSel)}</select>
           </label>
         </div>
-
         <span class="field-label">${esc(t("levelLabel"))}</span>
         <div class="levels" id="lvlPicker">
           ${C.LEVELS.map(
@@ -657,15 +687,49 @@
             </button>`
           ).join("")}
         </div>
-
         <div class="form-actions">
-          <button class="btn btn-primary" id="saveProfile">${esc(t("saveProfile"))}</button>
+          <button class="btn btn-primary" id="saveLanguages">${esc(t("saveLanguages"))}</button>
           <span class="stat-l" id="saveMsg"></span>
         </div>
       </div>`;
 
-    bindOccupationBox(el, occ, renderProfile);
+    // --- Persony: interakcje ------------------------------------------------
+    el.querySelectorAll("[data-persona]").forEach((b) =>
+      b.addEventListener("click", async () => {
+        await E.setActivePersona(b.dataset.persona);
+        toast(t("personaActivated"));
+        await renderHeader();
+        renderProfile();
+      })
+    );
+    $("addPersona")?.addEventListener("click", async () => {
+      try {
+        await E.addPersona({ label: "" });
+        renderProfile();
+      } catch {
+        toast(t("maxPersonasReached"));
+      }
+    });
+    if (active) {
+      bindOccupationBox(el, active.occupation, active.id, renderProfile);
+      $("savePersona").addEventListener("click", async () => {
+        const patch = { label: $("pLabel").value.trim() };
+        el.querySelectorAll("[data-pcf]").forEach((i) => (patch[i.dataset.pcf] = i.value.trim()));
+        await E.updatePersona(active.id, patch);
+        toast(t("personaSaved"));
+        await renderHeader();
+        $("pMsg").textContent = t("saved");
+        setTimeout(() => ($("pMsg").textContent = ""), 2000);
+      });
+      $("removePersona").addEventListener("click", async () => {
+        if (!confirm(t("confirmRemovePersona"))) return;
+        await E.removePersona(active.id);
+        await renderHeader();
+        renderProfile();
+      });
+    }
 
+    // --- Języki: interakcje -------------------------------------------------
     let level = p.level || "A2";
     el.querySelectorAll("#lvlPicker .lvl").forEach((b) =>
       b.addEventListener("click", () => {
@@ -675,22 +739,17 @@
         );
       })
     );
-
-    $("saveProfile").addEventListener("click", async () => {
-      const next = { ...(settings.profile || {}), level };
-      el.querySelectorAll("[data-pf]").forEach((i) => {
-        next[i.dataset.pf] = i.value.trim();
-      });
-      // Nazwy językowe idą do promptu, kody sterują motywem i filtrami.
+    $("saveLanguages").addEventListener("click", async () => {
+      const prev = settings.profile || {};
+      const next = { ...prev, level };
+      next.nativeLangCode = $("lNative").value;
+      next.targetLangCode = $("lTarget").value;
       next.nativeLang = C.ENGLISH_NAMES[next.nativeLangCode] || "";
       next.targetLang = C.ENGLISH_NAMES[next.targetLangCode] || "";
 
-      const prev = settings.profile || {};
       const langChanged = next.targetLangCode !== prev.targetLangCode;
       settings = { ...settings, profile: next };
       await chrome.storage.sync.set({ [SETTINGS_KEY]: settings });
-
-      // Zmiana języka nauki przestawia też filtry i akcent klastra językowego.
       if (langChanged) {
         vocabLang = currentLang();
         reviewLang = currentLang();

@@ -230,6 +230,9 @@
       skill_uri: s.uri,
       skill_tag: s.title,
       essential: s.essential,
+      // Zawód persony, do której należy lekcja – żeby pokrycie liczyć osobno
+      // dla każdej persony (ta sama umiejętność bywa w wielu zawodach).
+      occupation_uri: occupation?.uri || null,
       source_url: lesson.source_url,
       source_title: lesson.source_title,
       created_at: nowIso,
@@ -374,13 +377,20 @@
     return all.slice(0, limit);
   }
 
-  /** Agregat umiejętności dla „Mojej Kariery": ile razy dotknąłeś każdego tematu. */
-  async function getSkillSummary({ days = null } = {}) {
+  /**
+   * Agregat umiejętności dla „Mojej Kariery": ile razy dotknąłeś każdej.
+   * `occupationUri` zawęża do jednej persony (jej zawodu); starsze zdarzenia
+   * bez pola occupation_uri są przepuszczane, żeby nie znikły po migracji.
+   */
+  async function getSkillSummary({ days = null, occupationUri = null } = {}) {
     const d = await get(K_SKILLS);
     let events = d[K_SKILLS] || [];
     if (days) {
       const cutoff = Date.now() - days * 86400000;
       events = events.filter((e) => new Date(e.created_at).getTime() >= cutoff);
+    }
+    if (occupationUri) {
+      events = events.filter((e) => !e.occupation_uri || e.occupation_uri === occupationUri);
     }
     // Grupujemy po URI, gdy umiejętność pochodzi z klasyfikacji – etykieta może
     // się zmienić między wersjami ESCO, identyfikator nie.
