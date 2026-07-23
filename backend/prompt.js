@@ -340,7 +340,7 @@ export function buildStorySystemPrompt(language, skillOptions) {
   const menu = skillMenuBlock(skillOptions);
   const ln = langName(language);
   const langLine = ln
-    ? `Write EVERYTHING (takeaways, topics, reasons, lesson) in ${ln}, regardless of the language of the content.`
+    ? `Write EVERYTHING (takeaways, topics, reasons, lesson — INCLUDING the not-relevant note) in ${ln}, regardless of the language of the content. Never answer in the content's language when it differs from ${ln}.`
     : "Detect the language of the content and write everything in that language (if unclear, use the profile/native language).";
   return [
     "You are a personal growth & learning coach. The user gives you something they just read",
@@ -360,7 +360,7 @@ export function buildStorySystemPrompt(language, skillOptions) {
     'Only set "relevant" false when the ONLY link to their work would be a metaphor or a stretch —',
     'a cooking recipe, a sports result, celebrity gossip, where connecting it needs "just as X, so',
     'your work Y". Then leave takeaways and read_next EMPTY and put one honest sentence in "lesson"',
-    '(e.g. "This is a dessert recipe, nothing that ties to your work."). When in doubt, lean',
+    `(written in ${ln || "the output language"}, e.g. in Polish "To przepis kulinarny, nic co wiąże się z Twoją pracą."). When in doubt, lean`,
     "towards relevant and extract the transferable idea — only reject the genuinely unrelated.",
     "",
     "For read_next: give a search QUERY (a topic, skill or well-known course subject) the user can",

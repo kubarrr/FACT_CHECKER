@@ -236,38 +236,37 @@
     return t;
   }
 
-  // Opcja B: baza (tło/tekst/karty) zostaje neutralna i stała, a za aktywną
-  // sekcją idzie tylko AKCENT (gradient + primary + glow). Dzięki temu Kariera
-  // nie nosi barw języka, a zakładki językowe zachowują flagowy klimat.
-  function applyAccent(el, code) {
-    const t = themeFor(code);
+  // Opcja B (wersja z pełnym motywem): za aktywną sekcją idzie CAŁY motyw —
+  // tło, karty, tekst, akcent — żeby zakładki językowe miały wyrazisty klimat
+  // flagi, a Kariera własny, zawodowy (nie barwy języka).
+
+  // Pełny motyw zawodowy — wyrazista grafitowo-morska zieleń (dark).
+  const CAREER_THEME = dark({
+    hue: 210, from: "oklch(0.48 0.09 220)", to: "oklch(0.62 0.11 195)",
+    background: "oklch(0.21 0.035 220)", card: "oklch(0.26 0.04 220)",
+    primary: "oklch(0.68 0.12 200)",
+  });
+  // Pełny motyw neutralny — spokojny łupek (light), historia i profil.
+  const NEUTRAL_THEME = light({
+    hue: 260, from: "oklch(0.48 0.10 270)", to: "oklch(0.58 0.11 285)",
+    background: "oklch(0.975 0.008 270)", foreground: "oklch(0.28 0.04 270)",
+    primary: "oklch(0.52 0.12 275)",
+  });
+
+  // Nakłada gotowy pełny motyw (jak applyTheme, ale z obiektu, nie z kodu).
+  function applyThemeObject(el, t) {
+    el.style.setProperty("--k-bg", t.background);
+    el.style.setProperty("--k-fg", t.foreground);
+    el.style.setProperty("--k-card", t.card);
+    el.style.setProperty("--k-muted", t.muted);
+    el.style.setProperty("--k-muted-fg", t.mutedForeground);
+    el.style.setProperty("--k-border", t.border);
     el.style.setProperty("--k-primary", t.primary);
     el.style.setProperty("--k-from", t.from);
     el.style.setProperty("--k-to", t.to);
     el.style.setProperty("--k-glow", t.glow);
+    el.dataset.themeMode = t.mode;
     return t;
-  }
-
-  // Stały akcent zawodowy (grafit → morska zieleń) — niezależny od języka.
-  const CAREER_ACCENT = {
-    primary: "oklch(0.55 0.11 210)",
-    from: "oklch(0.42 0.07 235)",
-    to: "oklch(0.60 0.10 200)",
-    glow: "oklch(0.55 0.11 210 / 0.35)",
-  };
-  // Spokojny akcent neutralny (indygo) — historia i profil.
-  const NEUTRAL_ACCENT = {
-    primary: "oklch(0.52 0.12 275)",
-    from: "oklch(0.46 0.11 275)",
-    to: "oklch(0.58 0.12 285)",
-    glow: "oklch(0.52 0.12 275 / 0.3)",
-  };
-
-  function applyAccentPreset(el, preset) {
-    el.style.setProperty("--k-primary", preset.primary);
-    el.style.setProperty("--k-from", preset.from);
-    el.style.setProperty("--k-to", preset.to);
-    el.style.setProperty("--k-glow", preset.glow);
   }
 
   globalThis.KRYTYKAI_CATALOG = {
@@ -287,9 +286,8 @@
     codeFromLegacyName,
     themeFor,
     applyTheme,
-    applyAccent,
-    applyAccentPreset,
-    CAREER_ACCENT,
-    NEUTRAL_ACCENT,
+    applyThemeObject,
+    CAREER_THEME,
+    NEUTRAL_THEME,
   };
 })();

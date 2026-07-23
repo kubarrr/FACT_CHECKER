@@ -31,19 +31,6 @@
     return p.targetLangCode || C.codeFromLegacyName(p.targetLang) || null;
   }
 
-  // Przełącznik języków – wspólny dla powtórek i słownika.
-  function langChipsHtml(active, langs) {
-    const chips = langs
-      .map((code) => {
-        const l = C.findLanguage(code);
-        return `<button class="chip" data-lang="${esc(code)}" aria-pressed="${active === code}">${
-          l ? l.flag + " " + esc(l.name) : esc(code)
-        }</button>`;
-      })
-      .join("");
-    return `<button class="chip" data-lang="" aria-pressed="${active === null}">${esc(t("all"))}</button>${chips}`;
-  }
-
   // --- Formatowanie ---------------------------------------------------------
   let dtf = new Intl.DateTimeFormat("en", { day: "numeric", month: "long", year: "numeric" });
   let tf = new Intl.DateTimeFormat("en", { hour: "2-digit", minute: "2-digit" });
@@ -120,13 +107,14 @@
   function applySectionTheme(name) {
     const root = document.documentElement;
     if (LANGUAGE_TABS.has(name)) {
-      C.applyAccent(root, currentLang() || "en");
+      // Pełny, wyrazisty motyw flagi (z tłem) — tak jak lubił użytkownik.
+      C.applyTheme(root, currentLang() || "en");
       root.dataset.section = "lang";
     } else if (name === "career") {
-      C.applyAccentPreset(root, C.CAREER_ACCENT);
+      C.applyThemeObject(root, C.CAREER_THEME);
       root.dataset.section = "career";
     } else {
-      C.applyAccentPreset(root, C.NEUTRAL_ACCENT);
+      C.applyThemeObject(root, C.NEUTRAL_THEME);
       root.dataset.section = "neutral";
     }
   }
@@ -172,12 +160,12 @@
     const lang = C.findLanguage(currentLang() || "");
     const lvl = C.getUserAppLevel(st.xp, uiLang);
     $("heroFlag").textContent = lang ? lang.flag : "📚";
-    $("heroLevel").textContent = lvl.name;
-    $("heroSub").textContent = lang
-      ? t("heroLevelAt", lang.name, settings.profile?.level || "A2")
-      : t("heroSubEmpty");
+    // Wielki tytuł = język (tożsamość). Poziom CEFR pod spodem. Nazwa rangi XP
+    // („Liść") ląduje przy pasku XP, bo to ranga za punkty, nie poziom języka.
+    $("heroLevel").textContent = lang ? lang.name : t("heroSubEmpty");
+    $("heroSub").textContent = lang ? t("heroCefr", settings.profile?.level || "A2") : "";
     $("xpFill").style.width = `${lvl.progress}%`;
-    $("xpNow").textContent = `${st.xp} XP`;
+    $("xpNow").textContent = `${st.xp} XP · ${lvl.name}`;
     $("xpNext").textContent = lvl.next > st.xp ? t("xpToNext", lvl.next - st.xp) : t("xpMax");
   }
 
@@ -213,50 +201,31 @@
 
   async function renderReview() {
     const el = $("panel-review");
+    // Powtórki dotyczą TYLKO aktualnie uczonego języka — bez przełącznika,
+    // słówka z innych języków nie mieszają się do sesji.
+    reviewLang = currentLang();
     if (!queue.length) {
       queue = await S.getDueVocab({ limit: 20, language: reviewLang });
       sessionDone = 0;
     }
 
-    // Przełącznik pokazujemy tylko wtedy, gdy naprawdę jest w czym wybierać.
-    const everything = await S.getVocab({});
-    const langs = [...new Set(everything.map((v) => v.target_language).filter(Boolean))];
-    const switcher =
-      langs.length > 1 ? `<div class="toolbar">${langChipsHtml(reviewLang, langs)}</div>` : "";
-    const bindSwitcher = () =>
-      el.querySelectorAll("[data-lang]").forEach((b) =>
-        b.addEventListener("click", async () => {
-          reviewLang = b.dataset.lang || null;
-          queue = [];
-          flipped = false;
-          await renderHeader(); // liczniki muszą pójść za zmianą filtra
-          renderReview();
-        })
-      );
-
     if (!queue.length) {
       const all = await S.getVocab({ language: reviewLang });
       if (!all.length) {
         const lang = C.findLanguage(reviewLang);
-        el.innerHTML =
-          switcher +
-          emptyState(
-            "🌱",
-            lang ? t("emptyVocabLangTitle", lang.name) : t("emptyVocabTitle"),
-            t("emptyVocabBody")
-          );
-        bindSwitcher();
+        el.innerHTML = emptyState(
+          "🌱",
+          lang ? t("emptyVocabLangTitle", lang.name) : t("emptyVocabTitle"),
+          t("emptyVocabBody")
+        );
         return;
       }
       const next = all.slice().sort((a, b) => new Date(a.due_at) - new Date(b.due_at))[0];
-      el.innerHTML =
-        switcher +
-        emptyState(
-          "✅",
-          t("allReviewedTitle"),
-          t("allReviewedBody", all.length, relFuture(next.due_at))
-        );
-      bindSwitcher();
+      el.innerHTML = emptyState(
+        "✅",
+        t("allReviewedTitle"),
+        t("allReviewedBody", all.length, relFuture(next.due_at))
+      );
       return;
     }
 
@@ -273,7 +242,6 @@
       : `<div class="card-hint">${esc(t("flipHint"))}</div>`;
 
     el.innerHTML = `
-      ${switcher}
       <div class="review">
         <div class="review-progress"><i style="width:${total ? (done / total) * 100 : 0}%"></i></div>
         <div class="card" id="flashcard">
@@ -300,7 +268,6 @@
     el.querySelectorAll("[data-grade]").forEach((b) =>
       b.addEventListener("click", () => grade(b.dataset.grade === "1"))
     );
-    bindSwitcher();
   }
 
   async function grade(correct) {
@@ -330,18 +297,18 @@
   // --- Zakładka: słownik ----------------------------------------------------
   async function renderVocab() {
     const el = $("panel-vocab");
-    const all = await S.getVocab({});
-    if (!all.length) {
+    // Słownik pokazuje TYLKO aktualnie uczony język (spójnie z Powtórkami).
+    vocabLang = currentLang();
+    const items = await S.getVocab({ language: vocabLang, sort: vocabSort });
+    if (!items.length) {
+      const lang = C.findLanguage(vocabLang);
       el.innerHTML = emptyState(
         "📖",
-        t("emptyDictTitle"),
+        lang ? t("emptyVocabLangTitle", lang.name) : t("emptyDictTitle"),
         t("emptyDictBody")
       );
       return;
     }
-
-    const langs = [...new Set(all.map((v) => v.target_language).filter(Boolean))];
-    const items = await S.getVocab({ language: vocabLang, sort: vocabSort });
 
     const sortChips = [
       ["recent", t("sortRecent")],
@@ -353,7 +320,6 @@
 
     el.innerHTML = `
       <div class="toolbar">
-        ${langChipsHtml(vocabLang, langs)}
         <span class="spacer"></span>
         ${sortChips}
       </div>
@@ -374,12 +340,6 @@
           .join("")}
       </div>`;
 
-    el.querySelectorAll("[data-lang]").forEach((b) =>
-      b.addEventListener("click", () => {
-        vocabLang = b.dataset.lang || null;
-        renderVocab();
-      })
-    );
     el.querySelectorAll("[data-sort]").forEach((b) =>
       b.addEventListener("click", () => {
         vocabSort = b.dataset.sort;

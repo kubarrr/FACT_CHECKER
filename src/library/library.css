@@ -22,6 +22,10 @@
   --radius: 16px;
   color-scheme: light;
 }
+/* Motywy ciemne (część flag + Kariera) – ustawiane przez data-theme-mode. */
+[data-theme-mode="dark"] {
+  color-scheme: dark;
+}
 
 * {
   box-sizing: border-box;
