@@ -573,15 +573,22 @@ body {
   background: linear-gradient(135deg, var(--k-from), var(--k-to));
   color: #fff;
 }
-/* Umiejętność rdzenna dla zawodu (rzadka gdzie indziej) – wyróżniona gwiazdką. */
+/* Umiejętność rdzenna dla zawodu (wysoki % rdzenności) – wyróżniona obwódką. */
 a.gap-tag.gap-core {
   border: 1.5px solid var(--k-primary);
   color: var(--k-fg);
   font-weight: 700;
 }
-a.gap-tag.gap-core::before {
-  content: "★ ";
-  color: var(--k-primary);
+/* Procent rdzenności obok nazwy. */
+.gap-pct {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--k-primary) 22%, transparent);
+  color: var(--k-fg);
+  font-size: 11px;
+  font-weight: 800;
+  vertical-align: baseline;
 }
 
 /* --- Wybór zawodu (ESCO) -------------------------------------------------- */

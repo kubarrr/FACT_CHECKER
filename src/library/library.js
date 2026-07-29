@@ -480,11 +480,22 @@
     renderInsights(occ, touchedUris, gaps);
   }
 
-  // Gap → link wyszukiwania (kurs w języku interfejsu).
-  function gapChip(title, extra = "") {
-    return `<a class="gap-tag gap-link${extra}" target="_blank" rel="noopener"
+  // Rdzenność w % z sygnału IDF: N = w ilu zawodach umiejętność jest kluczowa,
+  // TOTAL ≈ liczba zawodów ESCO. Rzadka (małe N) → wysoki %. Bez wagi → null.
+  const ESCO_OCCUPATIONS = 2942;
+  function corePct(n) {
+    if (!n || n <= 0) return null;
+    const pct = Math.round((Math.log(ESCO_OCCUPATIONS / n) / Math.log(ESCO_OCCUPATIONS)) * 100);
+    return Math.max(1, Math.min(100, pct));
+  }
+
+  // Gap → link wyszukiwania (kurs w języku interfejsu), z opcjonalnym % rdzenności.
+  function gapChip(title, pct = null) {
+    const core = pct != null && pct >= 70 ? " gap-core" : "";
+    const badge = pct != null ? `<span class="gap-pct" title="${esc(t("corePctHint"))}">${pct}%</span>` : "";
+    return `<a class="gap-tag gap-link${core}" target="_blank" rel="noopener"
                href="https://www.google.com/search?q=${encodeURIComponent(title + (uiLang === "pl" ? " kurs" : " course"))}"
-               title="${esc(t("gapSearch", title))}">${esc(title)}</a>`;
+               title="${esc(t("gapSearch", title))}">${esc(title)}${badge}</a>`;
   }
 
   // Sekcja główna Kariery: NAJWAŻNIEJSZE BRAKI dla Twojego zawodu, uszeregowane
@@ -508,7 +519,6 @@
     const weighted = gaps
       .map((g) => ({ ...g, w: weights[g.uri] ?? Infinity }))
       .sort((a, b) => a.w - b.w);
-    const CORE_MAX = 6;
     const CAP = 10;
 
     const gapsHtml = gaps.length
@@ -516,11 +526,11 @@
          <div class="gap-tags">
            ${weighted
              .slice(0, CAP)
-             .map((g) => gapChip(g.title, g.w <= CORE_MAX ? " gap-core" : ""))
+             .map((g) => gapChip(g.title, corePct(weights[g.uri])))
              .join("")}
            ${gaps.length > CAP ? `<span class="gap-tag">+${gaps.length - CAP}</span>` : ""}
          </div>
-         <div class="stat-l" style="margin-top:6px">${esc(t("coreHint"))}</div>`
+         <div class="stat-l" style="margin-top:6px">${esc(t("corePctHint"))}</div>`
       : `<div class="gapbox">${esc(t("gapsNone"))}</div>`;
 
     const titleByUri = new Map((occ.essential || []).map((s) => [s.uri, s.title]));
