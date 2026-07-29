@@ -573,6 +573,16 @@ body {
   background: linear-gradient(135deg, var(--k-from), var(--k-to));
   color: #fff;
 }
+/* Umiejętność rdzenna dla zawodu (rzadka gdzie indziej) – wyróżniona gwiazdką. */
+a.gap-tag.gap-core {
+  border: 1.5px solid var(--k-primary);
+  color: var(--k-fg);
+  font-weight: 700;
+}
+a.gap-tag.gap-core::before {
+  content: "★ ";
+  color: var(--k-primary);
+}
 
 /* --- Wybór zawodu (ESCO) -------------------------------------------------- */
 .occ-search {

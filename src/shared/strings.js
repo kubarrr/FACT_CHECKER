@@ -70,7 +70,9 @@
       // Kariera
       coverageLabel: "coverage of essential skills",
       ladderTitle: "You're close to",
-      ladderLoading: "Finding adjacent roles…",
+      insightsLoading: "Ranking the skills that matter most…",
+      gapsPriorityTitle: (n) => `Most important gaps for your job (${n})`,
+      coreHint: "★ marks skills that are core to this occupation — required by few other jobs.",
       rungMeta: (shared, covered) => `${shared} shared skills · you have ${covered}`,
       coverageOptional: (a, b) => `Plus ${a} of ${b} optional skills.`,
       gapsTitle: (n) => `Gaps — not touched yet (${n})`,
@@ -211,7 +213,9 @@
 
       coverageLabel: "pokrycie umiejętności kluczowych",
       ladderTitle: "Blisko Ci do",
-      ladderLoading: "Szukam sąsiednich zawodów…",
+      insightsLoading: "Porządkuję najważniejsze umiejętności…",
+      gapsPriorityTitle: (n) => `Najważniejsze braki dla Twojej pracy (${n})`,
+      coreHint: "★ oznacza umiejętności rdzenne dla tego zawodu — wymagane przez mało innych.",
       rungMeta: (shared, covered) => `${shared} wspólnych umiejętności · masz ${covered}`,
       coverageOptional: (a, b) => `Dodatkowo ${a} z ${b} umiejętności opcjonalnych.`,
       gapsTitle: (n) => `Luki — czego jeszcze nie tknąłeś (${n})`,

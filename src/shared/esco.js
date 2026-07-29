@@ -64,7 +64,7 @@
   // — sugestia kierunku, nie zwalidowana ścieżka. Wynik cache'ujemy, bo to
   // kilka–kilkanaście wywołań sieci na zawód.
 
-  const ADJACENT_KEY = "krytykai_adjacent";
+  const ADJACENT_KEY = "krytykai_insights";
   const ADJACENT_TTL = 30 * 86400000; // 30 dni
 
   async function fetchSkillOccupations(skillUri, language) {
@@ -77,46 +77,67 @@
       .filter((o) => o.uri && o.title);
   }
 
+  // Uruchamia zadania równolegle, ale nie więcej niż `n` naraz (ESCO nie lubi
+  // 25 żądań na raz, a sekwencyjnie byłoby zbyt wolno przy pierwszym wejściu).
+  async function mapLimit(items, n, fn) {
+    const out = new Array(items.length);
+    let i = 0;
+    async function worker() {
+      while (i < items.length) {
+        const idx = i++;
+        out[idx] = await fn(items[idx], idx);
+      }
+    }
+    await Promise.all(Array.from({ length: Math.min(n, items.length) }, worker));
+    return out;
+  }
+
   /**
-   * Zwraca do `limit` zawodów najbliższych danemu (wg wspólnych kluczowych
-   * umiejętności), każdy z listą URI wspólnych umiejętności. Cache w storage.
+   * Jedno pobranie z ESCO daje dwie rzeczy naraz (cache 30 dni):
+   *  - weights: Map(skillUri → w ilu zawodach jest kluczowa) — sygnał IDF:
+   *    mała liczba = umiejętność RDZENNA/wyróżniająca dla tego zawodu.
+   *  - adjacent: sąsiednie zawody (drabina), wg wspólnych umiejętności.
    */
-  async function getAdjacentOccupations(occupation, language = "pl", { limit = 3, sample = 12 } = {}) {
-    if (!occupation?.uri || !(occupation.essential || []).length) return [];
+  async function getOccupationInsights(occupation, language = "pl", { limit = 3, sample = 30 } = {}) {
+    const empty = { weights: {}, adjacent: [] };
+    if (!occupation?.uri || !(occupation.essential || []).length) return empty;
 
     const cacheAll = (await chrome.storage.local.get(ADJACENT_KEY))[ADJACENT_KEY] || {};
     const cached = cacheAll[occupation.uri];
     if (cached && cached.language === language && Date.now() - cached.ts < ADJACENT_TTL) {
-      return cached.items;
+      return { weights: cached.weights, adjacent: cached.adjacent };
     }
 
     const skills = (occupation.essential || []).slice(0, sample);
-    const tally = new Map(); // uri -> {uri, title, shared:Set}
-    for (const sk of skills) {
+    const weights = {};
+    const tally = new Map(); // occUri -> {uri, title, shared:Set}
+
+    await mapLimit(skills, 6, async (sk) => {
       let occs = [];
       try {
         occs = await fetchSkillOccupations(sk.uri, language);
       } catch {
-        continue; // pojedynczy błąd sieci nie psuje całości
+        return; // pojedynczy błąd sieci nie psuje całości
       }
+      weights[sk.uri] = occs.length; // IDF: w ilu zawodach ta umiejętność jest kluczowa
       for (const o of occs) {
-        if (o.uri === occupation.uri) continue; // pomijamy siebie
+        if (o.uri === occupation.uri) continue;
         const cur = tally.get(o.uri) || { uri: o.uri, title: o.title, shared: new Set() };
         cur.shared.add(sk.uri);
         tally.set(o.uri, cur);
       }
-    }
+    });
 
     // Sensowny szczebel dzieli co najmniej 2 umiejętności — inaczej to szum.
-    const items = [...tally.values()]
+    const adjacent = [...tally.values()]
       .map((x) => ({ uri: x.uri, title: x.title, sharedUris: [...x.shared] }))
       .filter((x) => x.sharedUris.length >= 2)
       .sort((a, b) => b.sharedUris.length - a.sharedUris.length)
       .slice(0, limit);
 
-    cacheAll[occupation.uri] = { ts: Date.now(), language, items };
+    cacheAll[occupation.uri] = { ts: Date.now(), language, weights, adjacent };
     await chrome.storage.local.set({ [ADJACENT_KEY]: cacheAll });
-    return items;
+    return { weights, adjacent };
   }
 
   // --- Persony (wirtualne profile kariery) ----------------------------------
@@ -287,7 +308,7 @@
     MAX_PERSONAS,
     searchOccupations,
     fetchOccupation,
-    getAdjacentOccupations,
+    getOccupationInsights,
     getSavedOccupation,
     allSkills,
     skillOptions,

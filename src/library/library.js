@@ -424,24 +424,6 @@
         <div class="stat-l" style="margin-top:8px">${esc(t("coverageOptional", covOpt, opt.length))}</div>
       </div>`;
 
-    // Luki w obrębie zawodu — przycięte, jako cele czytania (linki wyszukiwania).
-    const GAP_CAP = 8;
-    const gapsHtml = gaps.length
-      ? `<div class="day-h">${esc(t("gapsTitle", gaps.length))}</div>
-         <div class="gap-tags">
-           ${gaps
-             .slice(0, GAP_CAP)
-             .map(
-               (g) =>
-                 `<a class="gap-tag gap-link" target="_blank" rel="noopener"
-                     href="https://www.google.com/search?q=${encodeURIComponent(g.title + (uiLang === "pl" ? " kurs" : " course"))}"
-                     title="${esc(t("gapSearch", g.title))}">${esc(g.title)}</a>`
-             )
-             .join("")}
-           ${gaps.length > GAP_CAP ? `<span class="gap-tag">+${gaps.length - GAP_CAP}</span>` : ""}
-         </div>`
-      : `<div class="gapbox">${esc(t("gapsNone"))}</div>`;
-
     // „Dotknięte" — tylko umiejętności zawodu, najczęstsze, przycięte.
     const TOP_SKILLS = 6;
     const max = onTopic[0]?.count || 1;
@@ -487,61 +469,86 @@
 
     el.innerHTML = `
       ${trunkHtml}
-      <div class="ladder" id="ladder"><div class="stat-l">${esc(t("ladderLoading"))}</div></div>
-      ${gapsHtml}
+      <div id="insights"><div class="stat-l">${esc(t("insightsLoading"))}</div></div>
       ${skillsHtml}
       <div class="day-h">${esc(t("recentLessons"))}</div>
       ${recent}
       <p class="attrib">${esc(t("escoAttribution"))}</p>`;
 
-    // Drabina rozwoju — sąsiednie zawody z ESCO. Sieciowe i cache'owane, więc
-    // dociągamy je po pierwszym rysowaniu, żeby zakładka pojawiła się od razu.
-    renderLadder(occ, touchedUris);
+    // Braki (rankowane po rdzenności) i drabina — jedno pobranie z ESCO.
+    // Cache'owane, więc dociągamy po pierwszym rysowaniu.
+    renderInsights(occ, touchedUris, gaps);
   }
 
-  // Szczeble w górę: zawody dzielące umiejętności z Twoim. „Wspólne" mapujemy
-  // na tytuły z zawodu, a brakujące (nietknięte) pokazujemy jako cele czytania.
-  async function renderLadder(occ, touchedUris) {
-    const box = $("ladder");
+  // Gap → link wyszukiwania (kurs w języku interfejsu).
+  function gapChip(title, extra = "") {
+    return `<a class="gap-tag gap-link${extra}" target="_blank" rel="noopener"
+               href="https://www.google.com/search?q=${encodeURIComponent(title + (uiLang === "pl" ? " kurs" : " course"))}"
+               title="${esc(t("gapSearch", title))}">${esc(title)}</a>`;
+  }
+
+  // Sekcja główna Kariery: NAJWAŻNIEJSZE BRAKI dla Twojego zawodu, uszeregowane
+  // wg rdzenności (IDF: im w mniej zawodach umiejętność jest kluczowa, tym
+  // bardziej definiuje ten fach). Pod spodem drabina — sąsiednie zawody.
+  async function renderInsights(occ, touchedUris, gaps) {
+    const box = $("insights");
     if (!box) return;
+    let weights = {};
     let adjacent = [];
     try {
-      adjacent = await E.getAdjacentOccupations(occ, uiLang);
+      const ins = await E.getOccupationInsights(occ, uiLang);
+      weights = ins.weights || {};
+      adjacent = ins.adjacent || [];
     } catch {
-      box.innerHTML = "";
-      return;
+      /* brak sieci – pokażemy braki bez rankingu */
     }
-    if (!adjacent.length) {
-      box.innerHTML = "";
-      return;
-    }
+
+    // Ranking braków: rzadsze (mniejsza liczba zawodów) = bardziej rdzenne =
+    // wyżej. Bez wagi (nie pobrano) na końcu. Próg „rdzenna": ≤ 6 zawodów.
+    const weighted = gaps
+      .map((g) => ({ ...g, w: weights[g.uri] ?? Infinity }))
+      .sort((a, b) => a.w - b.w);
+    const CORE_MAX = 6;
+    const CAP = 10;
+
+    const gapsHtml = gaps.length
+      ? `<div class="day-h">${esc(t("gapsPriorityTitle", gaps.length))}</div>
+         <div class="gap-tags">
+           ${weighted
+             .slice(0, CAP)
+             .map((g) => gapChip(g.title, g.w <= CORE_MAX ? " gap-core" : ""))
+             .join("")}
+           ${gaps.length > CAP ? `<span class="gap-tag">+${gaps.length - CAP}</span>` : ""}
+         </div>
+         <div class="stat-l" style="margin-top:6px">${esc(t("coreHint"))}</div>`
+      : `<div class="gapbox">${esc(t("gapsNone"))}</div>`;
+
     const titleByUri = new Map((occ.essential || []).map((s) => [s.uri, s.title]));
-    box.innerHTML =
-      `<div class="day-h">${esc(t("ladderTitle"))}</div>` +
-      adjacent
-        .map((a) => {
-          const covered = a.sharedUris.filter((u) => touchedUris.has(u)).length;
-          const gapUris = a.sharedUris.filter((u) => !touchedUris.has(u));
-          const gapChips = gapUris
-            .slice(0, 6)
-            .map((u) => {
-              const title = titleByUri.get(u) || "";
-              if (!title) return "";
-              return `<a class="gap-tag gap-link" target="_blank" rel="noopener"
-                         href="https://www.google.com/search?q=${encodeURIComponent(title + (uiLang === "pl" ? " kurs" : " course"))}"
-                         title="${esc(t("gapSearch", title))}">${esc(title)}</a>`;
-            })
-            .join("");
-          return `
-          <div class="rung">
-            <div class="rung-head">
-              <span class="rung-title">▸ ${esc(a.title)}</span>
-              <span class="rung-meta">${esc(t("rungMeta", a.sharedUris.length, covered))}</span>
-            </div>
-            ${gapUris.length ? `<div class="gap-tags">${gapChips}</div>` : ""}
-          </div>`;
-        })
-        .join("");
+    const ladderHtml = adjacent.length
+      ? `<div class="day-h">${esc(t("ladderTitle"))}</div>` +
+        adjacent
+          .map((a) => {
+            const covered = a.sharedUris.filter((u) => touchedUris.has(u)).length;
+            const gapUris = a.sharedUris.filter((u) => !touchedUris.has(u));
+            const chips = gapUris
+              .slice(0, 6)
+              .map((u) => titleByUri.get(u))
+              .filter(Boolean)
+              .map((title) => gapChip(title))
+              .join("");
+            return `
+            <div class="rung">
+              <div class="rung-head">
+                <span class="rung-title">▸ ${esc(a.title)}</span>
+                <span class="rung-meta">${esc(t("rungMeta", a.sharedUris.length, covered))}</span>
+              </div>
+              ${gapUris.length ? `<div class="gap-tags">${chips}</div>` : ""}
+            </div>`;
+          })
+          .join("")
+      : "";
+
+    box.innerHTML = gapsHtml + ladderHtml;
   }
 
   // --- Zakładka: historia ---------------------------------------------------
