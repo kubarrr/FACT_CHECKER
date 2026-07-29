@@ -644,6 +644,150 @@ a.gap-tag.gap-core {
   background: color-mix(in oklch, var(--k-primary) 8%, var(--k-bg));
 }
 
+/* --- Interaktywne drzewo rozwoju ------------------------------------------ */
+.ct-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.ct-reset {
+  border: 1px solid var(--k-border);
+  background: var(--k-card);
+  color: var(--k-muted-fg);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ct-reset:hover { color: var(--k-fg); }
+
+.ctree { margin-top: 10px; }
+
+/* Trunk – odhaczone kroki + aktywny stan, połączone pionową linią. */
+.ct-trunk { position: relative; }
+.ct-node {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 6px 0;
+}
+.ct-node:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 21px;
+  top: 46px;
+  bottom: -6px;
+  width: 3px;
+  background: linear-gradient(var(--k-primary), transparent);
+  opacity: 0.5;
+}
+.ct-dot {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  color: #fff;
+}
+.ct-node.done .ct-dot {
+  background: oklch(0.58 0.16 150);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.15);
+}
+.ct-node.active .ct-dot {
+  color: var(--k-primary);
+  background:
+    radial-gradient(closest-side, var(--k-card) 62%, transparent 63%),
+    conic-gradient(var(--k-primary) var(--done, 0%), var(--k-muted) 0);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--k-primary) 25%, transparent);
+  animation: ctpulse 2s ease-in-out infinite;
+}
+@keyframes ctpulse {
+  50% { box-shadow: 0 0 0 7px color-mix(in oklch, var(--k-primary) 8%, transparent); }
+}
+.ct-node-title { font-weight: 800; font-size: 15px; }
+.ct-node.active .ct-node-title { color: var(--k-primary); }
+.ct-node-meta { font-size: 12px; color: var(--k-muted-fg); margin-top: 1px; }
+
+/* Wachlarz gałęzi pod aktywnym stanem. */
+.ct-fan {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 10px;
+  margin: 12px 0 0 8px;
+  padding-left: 16px;
+  border-left: 3px dashed color-mix(in oklch, var(--k-primary) 35%, transparent);
+}
+.ct-branch {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  text-align: left;
+  padding: 11px 13px;
+  border: 1px solid var(--k-border);
+  border-radius: 14px;
+  background: var(--k-card);
+  color: var(--k-fg);
+  font: inherit;
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.ct-branch:hover {
+  transform: translateY(-2px);
+  border-color: var(--k-primary);
+  box-shadow: 0 8px 20px -12px var(--k-glow);
+}
+.ct-branch-icon {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  background: color-mix(in oklch, var(--k-primary) 16%, var(--k-card));
+  color: var(--k-primary);
+}
+.ct-bundle .ct-branch-icon { background: color-mix(in oklch, var(--k-to) 22%, var(--k-card)); }
+.ct-pivot .ct-branch-icon {
+  background: color-mix(in oklch, oklch(0.7 0.17 90) 26%, var(--k-card));
+  color: oklch(0.55 0.16 80);
+}
+.ct-branch-body { min-width: 0; flex: 1; }
+.ct-branch-title { display: block; font-weight: 700; font-size: 14px; line-height: 1.25; }
+.ct-branch-meta {
+  display: block;
+  font-size: 11.5px;
+  color: var(--k-muted-fg);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ct-delta {
+  flex: none;
+  font-size: 13px;
+  font-weight: 800;
+  color: oklch(0.58 0.16 150);
+}
+.ct-bundle { border-style: dashed; }
+.ct-done {
+  margin-top: 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: color-mix(in oklch, var(--k-primary) 12%, var(--k-card));
+  border: 1px solid var(--k-border);
+  font-weight: 700;
+}
+
 /* --- Ścieżka rozwoju w stylu Duolingo ------------------------------------- */
 /* Pionowa trasa: jesteś na dole, role do zdobycia to węzły w górę. */
 .path {

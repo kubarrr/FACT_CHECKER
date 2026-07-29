@@ -514,10 +514,20 @@
                title="${esc(t("gapSearch", title))}">${esc(title)}${badge}</a>`;
   }
 
-  // Sekcja główna Kariery: NAJWAŻNIEJSZE BRAKI dla Twojego zawodu, uszeregowane
-  // wg rdzenności (IDF: im w mniej zawodach umiejętność jest kluczowa, tym
-  // bardziej definiuje ten fach). Pod spodem drabina — sąsiednie zawody.
-  async function renderInsights(occ, touchedUris, gaps) {
+  // ——— Interaktywne drzewo rozwoju ————————————————————————————————————————
+  // Planer „co jeśli": stan (zawód + umiejętności, które masz) → gałęzie (skille,
+  // pakiety, pivoty do pokrewnych ról). Klik symuluje naukę: dopasowanie rośnie,
+  // trunk dorasta o kolejny krok. Symulacja jest sesyjna (nie zmienia danych).
+  let treeSim = null;
+
+  function treeMatch(occ, touched) {
+    const ess = (occ.essential || []).filter((s) => s.title);
+    const cov = ess.filter((s) => touched.has(s.uri)).length;
+    const total = ess.length || 1;
+    return { cov, total, pct: Math.round((cov / total) * 100), ess };
+  }
+
+  async function renderInsights(occ, touchedUris) {
     const box = $("insights");
     if (!box) return;
     let weights = {};
@@ -527,91 +537,155 @@
       weights = ins.weights || {};
       adjacent = ins.adjacent || [];
     } catch {
-      /* brak sieci – pokażemy braki bez rankingu */
+      /* brak sieci – drzewo pokaże się bez pivotów/rankingu */
     }
 
-    // Ranking braków: rzadsze (mniejsza liczba zawodów) = bardziej rdzenne =
-    // wyżej. Bez wagi (nie pobrano) na końcu. Próg „rdzenna": ≤ 6 zawodów.
-    const shareMap = buildShareMap(occ, weights);
-    // Sort malejąco po udziale (rdzenne wyżej); bez udziału na końcu.
-    const weighted = gaps
-      .map((g) => ({ ...g, share: shareMap[g.uri] ?? -1 }))
+    // Inicjujemy symulację, gdy zmienił się zawód bazowy (lub pierwszy raz).
+    if (!treeSim || treeSim.baseUri !== occ.uri) {
+      const m0 = treeMatch(occ, touchedUris);
+      treeSim = {
+        baseUri: occ.uri,
+        baseOcc: occ,
+        occ, // aktualny cel (zmienia pivot)
+        weights,
+        adjacent,
+        real: [...touchedUris], // realny stan – do „od nowa"
+        sim: new Set(touchedUris),
+        trunk: [{ label: occ.title, kind: "start", pct: m0.pct }],
+        box,
+      };
+    } else {
+      treeSim.box = box;
+      treeSim.weights = weights;
+      treeSim.adjacent = adjacent;
+    }
+    drawTree();
+  }
+
+  function drawTree() {
+    const T = treeSim;
+    const box = T.box;
+    const { pct, cov, total, ess } = treeMatch(T.occ, T.sim);
+    const shareMap = T.occ.uri === T.baseUri ? buildShareMap(T.baseOcc, T.weights) : {};
+    const delta1 = Math.max(1, Math.round(100 / total));
+
+    // Brakujące kluczowe umiejętności, najrdzenniejsze pierwsze.
+    const missing = ess
+      .filter((s) => !T.sim.has(s.uri))
+      .map((s) => ({ ...s, share: shareMap[s.uri] ?? -1 }))
       .sort((a, b) => b.share - a.share);
-    const CAP = 10;
 
-    const gapsHtml = gaps.length
-      ? `<div class="day-h">${esc(t("gapsPriorityTitle", gaps.length))}</div>
-         <div class="gap-tags">
-           ${weighted
-             .slice(0, CAP)
-             .map((g, i) => gapChip(g.title, g.share >= 0 ? g.share : null, i < 3 && g.share > 0))
-             .join("")}
-           ${gaps.length > CAP ? `<span class="gap-tag">+${gaps.length - CAP}</span>` : ""}
-         </div>
-         <div class="stat-l" style="margin-top:6px">${esc(t("corePctHint"))}</div>`
-      : `<div class="gapbox">${esc(t("gapsNone"))}</div>`;
+    // Gałęzie-skille (3 pojedyncze) + pakiet (kolejne 3) + pivoty (2 role).
+    const singles = missing.slice(0, 3);
+    const bundle = missing.slice(3, 6);
+    const pivots = (T.adjacent || [])
+      .filter((a) => a.uri !== T.occ.uri && (a.essential || []).some((s) => s.title))
+      .slice(0, 2)
+      .map((a) => {
+        const m = treeMatch({ essential: a.essential }, T.sim);
+        return { uri: a.uri, title: a.title, essential: a.essential, pct: m.pct };
+      });
 
-    // Ścieżka rozwoju (styl Duolingo): jesteś na DOLE, role do zdobycia w górę.
-    // Każda gałąź pokazuje Twoje DOPASOWANIE do tej roli (ile z jej kluczowych
-    // umiejętności masz) i o ile urośnie po nauczeniu się każdej brakującej.
-    let ladderHtml = "";
-    if (adjacent.length) {
-      const nodes = adjacent
-        .map((a, i) => {
-          const ess = (a.essential || []).filter((s) => s.title);
-          const count = ess.length || a.sharedUris.length || 1;
-          const covered = ess.filter((s) => touchedUris.has(s.uri)).length;
-          const match = Math.round((covered / count) * 100);
-          const delta = Math.max(1, Math.round(100 / count)); // +% za jedną umiejętność
-          const missing = ess.filter((s) => !touchedUris.has(s.uri));
+    const skillBranch = (s, i) => `
+      <button class="ct-branch ct-skill" data-add="${esc(s.uri)}" data-label="${esc(s.title)}">
+        <span class="ct-branch-icon">✦</span>
+        <span class="ct-branch-body">
+          <span class="ct-branch-title">${esc(s.title)}</span>
+          <span class="ct-branch-meta">${s.share >= 0 ? fmtShare(s.share) + " · " : ""}${esc(t("matchGrow", pct, Math.min(100, pct + delta1)))}</span>
+        </span>
+        <span class="ct-delta">+${delta1}%</span>
+      </button>`;
 
-          // Każdy brakujący skill = krok z „+Δ%". Pakiet = wszystkie do 100%.
-          const steps = missing
-            .slice(0, 8)
-            .map(
-              (s) =>
-                `${gapChip(s.title)}<span class="step-delta" title="${esc(t("deltaHint"))}">+${delta}%</span>`
-            )
-            .join("");
-          const pkg =
-            missing.length && match < 100
-              ? `<div class="node-pkg">${esc(t("packageAll", missing.length, 100 - match))}</div>`
-              : "";
+    const bundleDelta = Math.min(100 - pct, bundle.length * delta1);
+    const bundleBranch = bundle.length
+      ? `<button class="ct-branch ct-bundle" data-bundle="${bundle.map((s) => esc(s.uri)).join(",")}" data-label="${esc(t("bundleLabel"))}">
+           <span class="ct-branch-icon">❖</span>
+           <span class="ct-branch-body">
+             <span class="ct-branch-title">${esc(t("bundleLabel"))} · ${bundle.length}</span>
+             <span class="ct-branch-meta">${bundle.map((s) => esc(s.title)).join(", ")}</span>
+           </span>
+           <span class="ct-delta">+${bundleDelta}%</span>
+         </button>`
+      : "";
 
-          return `
-          <div class="path-node reachable ${i % 2 ? "right" : "left"}">
-            <button class="node-dot" data-node="${i}" style="--done:${match}%">${match}%</button>
-            <div class="node-body">
-              <div class="node-title">${esc(a.title)}</div>
-              <div class="node-meta">${esc(t("matchMeta", match, missing.length))}</div>
-              <div class="node-gaps" id="node-gaps-${i}" hidden>${steps}${pkg}</div>
-            </div>
-          </div>`;
-        })
-        .join("");
-      ladderHtml = `
-        <div class="day-h">${esc(t("ladderTitle"))}</div>
-        <div class="path">
-          ${nodes}
-          <div class="path-node current left">
-            <span class="node-dot node-here">🧭</span>
-            <div class="node-body">
-              <div class="node-title">${esc(occ.title)}</div>
-              <div class="node-meta">${esc(t("youAreHere"))}</div>
-            </div>
+    const pivotBranches = pivots
+      .map(
+        (p, i) => `
+      <button class="ct-branch ct-pivot" data-pivot="${i}">
+        <span class="ct-branch-icon">➟</span>
+        <span class="ct-branch-body">
+          <span class="ct-branch-title">${esc(p.title)}</span>
+          <span class="ct-branch-meta">${esc(t("pivotMeta", p.pct))}</span>
+        </span>
+      </button>`
+      )
+      .join("");
+
+    // Trunk: odhaczone kroki + aktywny stan; potem wachlarz gałęzi.
+    const trunkHtml = T.trunk
+      .map((n, i) => {
+        const active = i === T.trunk.length - 1;
+        return `
+        <div class="ct-node ${active ? "active" : "done"}">
+          <span class="ct-dot" style="--done:${n.pct}%">${active ? pct + "%" : "✓"}</span>
+          <div class="ct-node-body">
+            <div class="ct-node-title">${esc(n.label)}</div>
+            <div class="ct-node-meta">${active ? esc(t("matchNow", pct, cov, total)) : esc(n.pct + "%")}</div>
           </div>
         </div>`;
-    }
+      })
+      .join("");
 
-    box.innerHTML = gapsHtml + ladderHtml;
+    const branchesHtml =
+      pct >= 100
+        ? `<div class="ct-done">🎉 ${esc(t("treeComplete"))}</div>`
+        : `<div class="ct-fan">
+             ${singles.map(skillBranch).join("")}
+             ${bundleBranch}
+             ${pivotBranches}
+           </div>`;
 
-    // Klik w węzeł rozwija/zwija kroki (brakujące umiejętności) tej roli.
-    box.querySelectorAll("[data-node]").forEach((b) =>
+    box.innerHTML = `
+      <div class="ct-head">
+        <div class="day-h" style="margin:0">${esc(t("treeTitle"))}</div>
+        ${T.trunk.length > 1 ? `<button class="ct-reset" id="ctReset">↺ ${esc(t("treeReset"))}</button>` : ""}
+      </div>
+      <div class="ctree">
+        <div class="ct-trunk">${trunkHtml}</div>
+        ${branchesHtml}
+      </div>
+      <p class="attrib" style="margin-top:10px">${esc(t("treeHint"))}</p>`;
+
+    // Interakcje: klik gałęzi → symulacja nauki → drzewo dorasta.
+    box.querySelectorAll("[data-add]").forEach((b) =>
+      b.addEventListener("click", () => grow([b.dataset.add], b.dataset.label, "skill"))
+    );
+    box.querySelectorAll("[data-bundle]").forEach((b) =>
+      b.addEventListener("click", () => grow(b.dataset.bundle.split(","), b.dataset.label, "bundle"))
+    );
+    box.querySelectorAll("[data-pivot]").forEach((b) =>
       b.addEventListener("click", () => {
-        const g = $(`node-gaps-${b.dataset.node}`);
-        if (g) g.hidden = !g.hidden;
+        const p = pivots[Number(b.dataset.pivot)];
+        if (!p) return;
+        T.occ = { uri: p.uri, title: p.title, essential: p.essential, optional: [] };
+        T.trunk.push({ label: "➟ " + p.title, kind: "pivot", pct: treeMatch(T.occ, T.sim).pct });
+        drawTree();
       })
     );
+    $("ctReset")?.addEventListener("click", () => {
+      // „Od nowa": wracamy do realnego stanu (bez symulowanych skilli i pivotów).
+      T.occ = T.baseOcc;
+      T.sim = new Set(T.real);
+      T.trunk = [{ label: T.baseOcc.title, kind: "start", pct: treeMatch(T.baseOcc, T.sim).pct }];
+      drawTree();
+    });
+  }
+
+  function grow(uris, label, kind) {
+    for (const u of uris) treeSim.sim.add(u);
+    const m = treeMatch(treeSim.occ, treeSim.sim);
+    treeSim.trunk.push({ label, kind, pct: m.pct });
+    drawTree();
   }
 
   // --- Zakładka: historia ---------------------------------------------------
