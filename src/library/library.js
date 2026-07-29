@@ -25,7 +25,6 @@
   let vocabLang;
   let reviewLang;
   let vocabSort = "recent";
-  let vocabProOnly = false; // filtr słownictwa zawodowego (most kariera↔słownik)
 
   function currentLang() {
     const p = settings.profile || {};
@@ -96,7 +95,7 @@
   // Baza (tło/karty/tekst) jest neutralna i stała; zmienia się tylko akcent,
   // żeby Kariera nie nosiła barw języka. „career" i „profile→career" dostają
   // akcent zawodowy, zakładki językowe flagę, reszta neutralny indygo.
-  const LANGUAGE_TABS = new Set(["review", "vocab"]);
+  const LANGUAGE_TABS = new Set(["review", "vocab", "pro"]);
 
   // Stały akcent klastra językowego (podpowiedź na zakładkach) – ustawiany raz,
   // niezależnie od tego, która sekcja jest aktywna.
@@ -146,11 +145,6 @@
     ]
       .map((s) => `<div class="stat${s.due ? " is-due" : ""}"><div class="stat-n">${s.n}</div><div class="stat-l">${esc(s.l)}</div></div>`)
       .join("");
-
-    $("badges").innerHTML = C.BADGES.map((b) => {
-      const got = st.badges.includes(b.id);
-      return `<span class="badge${got ? "" : " locked"}" title="${esc(C.pick(b.description, uiLang))}"><em>${b.icon}</em>${esc(C.pick(b.name, uiLang))}</span>`;
-    }).join("");
 
     const pill = $("duePill");
     pill.textContent = st.due_count;
@@ -295,22 +289,16 @@
     }
   });
 
-  // --- Zakładka: słownik ----------------------------------------------------
-  async function renderVocab() {
-    const el = $("panel-vocab");
-    // Słownik pokazuje TYLKO aktualnie uczony język (spójnie z Powtórkami).
+  // --- Zakładki: słownik (tematyczny) i zawodowy ----------------------------
+  // Wspólny renderer siatki słówek. `pro` rozdziela: Słownik = tematyczne,
+  // zakładka 💼 Zawodowe = fachowe (z mostu kariera↔słownik).
+  async function renderVocabGrid(el, { pro, rerender, empty }) {
     vocabLang = currentLang();
-    const items = await S.getVocab({ language: vocabLang, sort: vocabSort });
+    const items = await S.getVocab({ language: vocabLang, sort: vocabSort, pro });
     if (!items.length) {
-      const lang = C.findLanguage(vocabLang);
-      el.innerHTML = emptyState(
-        "📖",
-        lang ? t("emptyVocabLangTitle", lang.name) : t("emptyDictTitle"),
-        t("emptyDictBody")
-      );
+      el.innerHTML = empty();
       return;
     }
-
     const sortChips = [
       ["recent", t("sortRecent")],
       ["alpha", t("sortAlpha")],
@@ -319,21 +307,10 @@
       .map(([k, label]) => `<button class="chip" data-sort="${k}" aria-pressed="${vocabSort === k}">${label}</button>`)
       .join("");
 
-    // Filtr „zawodowe" (most kariera↔słownik) – tylko gdy takie słówka są.
-    const hasPro = items.some((v) => v.pro);
-    const shown = vocabProOnly ? items.filter((v) => v.pro) : items;
-    const proChip = hasPro
-      ? `<button class="chip${vocabProOnly ? "" : ""}" data-pro aria-pressed="${vocabProOnly}">💼 ${esc(t("proVocab"))}</button>`
-      : "";
-
     el.innerHTML = `
-      <div class="toolbar">
-        ${proChip}
-        <span class="spacer"></span>
-        ${sortChips}
-      </div>
+      <div class="toolbar"><span class="spacer"></span>${sortChips}</div>
       <div class="grid">
-        ${shown
+        ${items
           .map(
             (v) => `
           <div class="vcard${v.pro ? " vcard-pro" : ""}">
@@ -350,23 +327,37 @@
           .join("")}
       </div>`;
 
-    el.querySelector("[data-pro]")?.addEventListener("click", () => {
-      vocabProOnly = !vocabProOnly;
-      renderVocab();
-    });
     el.querySelectorAll("[data-sort]").forEach((b) =>
       b.addEventListener("click", () => {
         vocabSort = b.dataset.sort;
-        renderVocab();
+        rerender();
       })
     );
     el.querySelectorAll("[data-del]").forEach((b) =>
       b.addEventListener("click", async () => {
         await S.deleteVocab(b.dataset.del);
         await renderHeader();
-        renderVocab();
+        rerender();
       })
     );
+  }
+
+  function renderVocab() {
+    const lang = C.findLanguage(currentLang());
+    return renderVocabGrid($("panel-vocab"), {
+      pro: false,
+      rerender: renderVocab,
+      empty: () =>
+        emptyState("📖", lang ? t("emptyVocabLangTitle", lang.name) : t("emptyDictTitle"), t("emptyDictBody")),
+    });
+  }
+
+  function renderPro() {
+    return renderVocabGrid($("panel-pro"), {
+      pro: true,
+      rerender: renderPro,
+      empty: () => emptyState("💼", t("proEmptyTitle"), t("proEmptyBody")),
+    });
   }
 
   // --- Zakładka: kariera ----------------------------------------------------
@@ -386,84 +377,85 @@
       return;
     }
 
-    // Pokrycie względem oficjalnych umiejętności zawodu. To jedyna metryka tutaj,
-    // która mierzy coś poza samą częstotliwością czytania: ile z tego, czego
-    // zawód naprawdę wymaga, w ogóle dotknąłeś.
-    const touchedUris = new Set(skills.map((s) => s.uri).filter(Boolean));
-
-    let coverageHtml = "";
-    if (occ) {
-      const ess = occ.essential || [];
-      const opt = occ.optional || [];
-      const covEss = ess.filter((s) => touchedUris.has(s.uri)).length;
-      const covOpt = opt.filter((s) => touchedUris.has(s.uri)).length;
-      const pct = ess.length ? Math.round((covEss / ess.length) * 100) : 0;
-      const gaps = ess.filter((s) => !touchedUris.has(s.uri));
-
-      coverageHtml = `
-        <div class="cov">
-          <div class="cov-head">
-            <div>
-              <div class="cov-occ">${esc(occ.title)}</div>
-              <div class="stat-l">${esc(t("coverageLabel"))}</div>
-            </div>
-            <div class="cov-num">${covEss}<span>/${ess.length}</span></div>
-          </div>
-          <div class="skill-bar"><i style="width:${pct}%"></i></div>
-          <div class="stat-l" style="margin-top:8px">
-            ${esc(t("coverageOptional", covOpt, opt.length))}
-          </div>
-        </div>
-
-        ${
-          gaps.length
-            ? `<div class="day-h">${esc(t("gapsTitle", gaps.length))}</div>
-               <div class="gap-tags">
-                 ${gaps
-                   .slice(0, 24)
-                   .map(
-                     (g) =>
-                       `<a class="gap-tag gap-link" target="_blank" rel="noopener"
-                           href="https://www.google.com/search?q=${encodeURIComponent(g.title + (uiLang === "pl" ? " kurs" : " course"))}"
-                           title="${esc(t("gapSearch", g.title))}">${esc(g.title)}</a>`
-                   )
-                   .join("")}
-               </div>`
-            : `<div class="gapbox">${esc(t("gapsNone"))}</div>`
-        }`;
-    } else {
-      coverageHtml = `
+    // Bez zawodu: prośba o wybór persony i nic więcej (reszta nie ma sensu).
+    if (!occ) {
+      el.innerHTML = `
         <div class="gapbox">
           <h3>${esc(t("noOccupationTitle"))}</h3>
           <p class="stat-l" style="margin:0 0 10px">${esc(t("noOccupationBody"))}</p>
           <button class="btn btn-primary" id="goProfile">${esc(t("pickOccupation"))}</button>
         </div>`;
+      $("goProfile")?.addEventListener("click", () => selectTab("profile"));
+      return;
     }
 
-    const max = skills[0]?.count || 1;
-    const skillsHtml = skills
-      .map(
-        (s) => `
-      <div class="skill">
-        <div class="skill-head">
-          <span class="skill-tag">${s.essential ? "★ " : ""}${esc(s.tag)}</span>
-          <span class="skill-count">${esc(t("lessonsCount", s.count))}</span>
+    // Tylko umiejętności NALEŻĄCE do tego zawodu liczą się do pokrycia i listy
+    // „dotknięte" — tekstowe tagi z innych kontekstów (uri null) nie zaśmiecają.
+    const ess = occ.essential || [];
+    const opt = occ.optional || [];
+    const occSkillUris = new Set([...ess, ...opt].map((s) => s.uri));
+    const onTopic = skills.filter((s) => s.uri && occSkillUris.has(s.uri));
+    const touchedUris = new Set(onTopic.map((s) => s.uri));
+
+    const covEss = ess.filter((s) => touchedUris.has(s.uri)).length;
+    const covOpt = opt.filter((s) => touchedUris.has(s.uri)).length;
+    const pct = ess.length ? Math.round((covEss / ess.length) * 100) : 0;
+    const gaps = ess.filter((s) => !touchedUris.has(s.uri));
+
+    // Pień drabiny: Twój zawód i pokrycie.
+    const trunkHtml = `
+      <div class="cov">
+        <div class="cov-head">
+          <div>
+            <div class="cov-occ">${esc(occ.title)}</div>
+            <div class="stat-l">${esc(t("coverageLabel"))}</div>
+          </div>
+          <div class="cov-num">${covEss}<span>/${ess.length}</span></div>
         </div>
-        <div class="skill-bar"><i style="width:${(s.count / max) * 100}%"></i></div>
-        <div class="skill-srcs">
-          ${s.sources
-            .map(
-              (src) =>
-                `<a class="srclink" href="${esc(src.url)}" target="_blank" rel="noopener">${esc(src.title || hostOf(src.url))}</a>`
-            )
-            .join("")}
-        </div>
-      </div>`
-      )
-      .join("");
+        <div class="skill-bar"><i style="width:${pct}%"></i></div>
+        <div class="stat-l" style="margin-top:8px">${esc(t("coverageOptional", covOpt, opt.length))}</div>
+      </div>`;
+
+    // Luki w obrębie zawodu — przycięte, jako cele czytania (linki wyszukiwania).
+    const GAP_CAP = 8;
+    const gapsHtml = gaps.length
+      ? `<div class="day-h">${esc(t("gapsTitle", gaps.length))}</div>
+         <div class="gap-tags">
+           ${gaps
+             .slice(0, GAP_CAP)
+             .map(
+               (g) =>
+                 `<a class="gap-tag gap-link" target="_blank" rel="noopener"
+                     href="https://www.google.com/search?q=${encodeURIComponent(g.title + (uiLang === "pl" ? " kurs" : " course"))}"
+                     title="${esc(t("gapSearch", g.title))}">${esc(g.title)}</a>`
+             )
+             .join("")}
+           ${gaps.length > GAP_CAP ? `<span class="gap-tag">+${gaps.length - GAP_CAP}</span>` : ""}
+         </div>`
+      : `<div class="gapbox">${esc(t("gapsNone"))}</div>`;
+
+    // „Dotknięte" — tylko umiejętności zawodu, najczęstsze, przycięte.
+    const TOP_SKILLS = 6;
+    const max = onTopic[0]?.count || 1;
+    const skillsHtml = onTopic.length
+      ? `<div class="day-h">${esc(t("touched"))}</div>` +
+        onTopic
+          .slice(0, TOP_SKILLS)
+          .map(
+            (s) => `
+        <div class="skill">
+          <div class="skill-head">
+            <span class="skill-tag">${s.essential ? "★ " : ""}${esc(s.tag)}</span>
+            <span class="skill-count">${esc(t("lessonsCount", s.count))}</span>
+          </div>
+          <div class="skill-bar"><i style="width:${(s.count / max) * 100}%"></i></div>
+        </div>`
+          )
+          .join("")
+      : "";
 
     const recent = lessons
-      .slice(0, 8)
+      .slice(0, 5)
       .map((l) => {
         const takeaways = (l.payload?.takeaways || []).slice(0, 2);
         return `
@@ -486,13 +478,62 @@
       .join("");
 
     el.innerHTML = `
-      ${coverageHtml}
-      ${skills.length ? `<div class="day-h">${esc(t("touched"))}</div>${skillsHtml}` : ""}
+      ${trunkHtml}
+      <div class="ladder" id="ladder"><div class="stat-l">${esc(t("ladderLoading"))}</div></div>
+      ${gapsHtml}
+      ${skillsHtml}
       <div class="day-h">${esc(t("recentLessons"))}</div>
       ${recent}
-      ${occ ? `<p class="attrib">${esc(t("escoAttribution"))}</p>` : ""}`;
+      <p class="attrib">${esc(t("escoAttribution"))}</p>`;
 
-    $("goProfile")?.addEventListener("click", () => selectTab("profile"));
+    // Drabina rozwoju — sąsiednie zawody z ESCO. Sieciowe i cache'owane, więc
+    // dociągamy je po pierwszym rysowaniu, żeby zakładka pojawiła się od razu.
+    renderLadder(occ, touchedUris);
+  }
+
+  // Szczeble w górę: zawody dzielące umiejętności z Twoim. „Wspólne" mapujemy
+  // na tytuły z zawodu, a brakujące (nietknięte) pokazujemy jako cele czytania.
+  async function renderLadder(occ, touchedUris) {
+    const box = $("ladder");
+    if (!box) return;
+    let adjacent = [];
+    try {
+      adjacent = await E.getAdjacentOccupations(occ, uiLang);
+    } catch {
+      box.innerHTML = "";
+      return;
+    }
+    if (!adjacent.length) {
+      box.innerHTML = "";
+      return;
+    }
+    const titleByUri = new Map((occ.essential || []).map((s) => [s.uri, s.title]));
+    box.innerHTML =
+      `<div class="day-h">${esc(t("ladderTitle"))}</div>` +
+      adjacent
+        .map((a) => {
+          const covered = a.sharedUris.filter((u) => touchedUris.has(u)).length;
+          const gapUris = a.sharedUris.filter((u) => !touchedUris.has(u));
+          const gapChips = gapUris
+            .slice(0, 6)
+            .map((u) => {
+              const title = titleByUri.get(u) || "";
+              if (!title) return "";
+              return `<a class="gap-tag gap-link" target="_blank" rel="noopener"
+                         href="https://www.google.com/search?q=${encodeURIComponent(title + (uiLang === "pl" ? " kurs" : " course"))}"
+                         title="${esc(t("gapSearch", title))}">${esc(title)}</a>`;
+            })
+            .join("");
+          return `
+          <div class="rung">
+            <div class="rung-head">
+              <span class="rung-title">▸ ${esc(a.title)}</span>
+              <span class="rung-meta">${esc(t("rungMeta", a.sharedUris.length, covered))}</span>
+            </div>
+            ${gapUris.length ? `<div class="gap-tags">${gapChips}</div>` : ""}
+          </div>`;
+        })
+        .join("");
   }
 
   // --- Zakładka: historia ---------------------------------------------------
@@ -781,6 +822,7 @@
   const RENDERERS = {
     review: renderReview,
     vocab: renderVocab,
+    pro: renderPro,
     career: renderCareer,
     history: renderHistory,
     profile: renderProfile,
@@ -805,7 +847,7 @@
   // Napisy osadzone w HTML (zakładki, stopka) – ustawiane raz przy starcie.
   function applyStaticLabels() {
     const map = {
-      review: "tabReview", vocab: "tabVocab", career: "tabCareer",
+      review: "tabReview", vocab: "tabVocab", pro: "tabPro", career: "tabCareer",
       history: "tabHistory", profile: "tabProfile",
     };
     document.querySelectorAll(".tab").forEach((el) => {

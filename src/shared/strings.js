@@ -58,6 +58,10 @@
       sortBox: "Best known",
       proVocab: "Professional",
       proVocabHint: "Term from your occupation, in the language you are learning",
+      tabPro: "💼 Professional",
+      proEmptyTitle: "No professional vocabulary yet",
+      proEmptyBody:
+        "With a career persona active, read something about your field in the language you're learning and click 🗣️ Linglerno — the terms your job needs land here, in that language.",
       deleteWord: "Delete",
       boxStage: (b, max) => `Review stage: ${b} of ${max}`,
       emptyDictTitle: "No words",
@@ -65,6 +69,9 @@
 
       // Kariera
       coverageLabel: "coverage of essential skills",
+      ladderTitle: "You're close to",
+      ladderLoading: "Finding adjacent roles…",
+      rungMeta: (shared, covered) => `${shared} shared skills · you have ${covered}`,
       coverageOptional: (a, b) => `Plus ${a} of ${b} optional skills.`,
       gapsTitle: (n) => `Gaps — not touched yet (${n})`,
       gapSearch: (s) => `Look for materials: ${s}`,
@@ -193,12 +200,19 @@
       sortBox: "Najlepiej znane",
       proVocab: "Zawodowe",
       proVocabHint: "Termin z Twojego zawodu, w języku, którego się uczysz",
+      tabPro: "💼 Zawodowe",
+      proEmptyTitle: "Brak słownictwa zawodowego",
+      proEmptyBody:
+        "Przy aktywnej personie kariery przeczytaj coś ze swojej dziedziny w języku, którego się uczysz, i kliknij 🗣️ Linglerno — terminy Twojego fachu wylądują tutaj, w tym języku.",
       deleteWord: "Usuń",
       boxStage: (b, max) => `Etap powtórek: ${b} z ${max}`,
       emptyDictTitle: "Brak słówek",
       emptyDictBody: "Każda lekcja Linglerno dokłada tu słownictwo i zwroty — bez ręcznego przepisywania.",
 
       coverageLabel: "pokrycie umiejętności kluczowych",
+      ladderTitle: "Blisko Ci do",
+      ladderLoading: "Szukam sąsiednich zawodów…",
+      rungMeta: (shared, covered) => `${shared} wspólnych umiejętności · masz ${covered}`,
       coverageOptional: (a, b) => `Dodatkowo ${a} z ${b} umiejętności opcjonalnych.`,
       gapsTitle: (n) => `Luki — czego jeszcze nie tknąłeś (${n})`,
       gapSearch: (s) => `Poszukaj materiałów: ${s}`,

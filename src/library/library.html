@@ -25,7 +25,6 @@
       </header>
 
       <div class="stats" id="stats"></div>
-      <div class="badges" id="badges"></div>
 
       <!-- Zakładki w dwóch klastrach (język / kariera) + wspólne.
            Etykiety wstawia applyStaticLabels() wg języka aplikacji. -->
@@ -37,6 +36,7 @@
               <span class="pill" id="duePill" hidden>0</span>
             </button>
             <button class="tab" role="tab" data-tab="vocab" aria-selected="false"></button>
+            <button class="tab" role="tab" data-tab="pro" aria-selected="false"></button>
           </div>
         </div>
         <div class="tab-group" data-group="career">
@@ -56,6 +56,7 @@
 
       <section class="panel" id="panel-review" role="tabpanel"></section>
       <section class="panel" id="panel-vocab" role="tabpanel" hidden></section>
+      <section class="panel" id="panel-pro" role="tabpanel" hidden></section>
       <section class="panel" id="panel-career" role="tabpanel" hidden></section>
       <section class="panel" id="panel-history" role="tabpanel" hidden></section>
       <section class="panel" id="panel-profile" role="tabpanel" hidden></section>

@@ -789,11 +789,15 @@
               : ""
           }</div>`
         : "";
+    // Słówka zawodowe (most kariera↔słownik) dostają teczkę już tutaj, żeby
+    // było widać od razu przy lekcji, a nie dopiero w Bibliotece.
+    const hasPro = (r.vocab || []).some((v) => v.pro);
     const vocab = listBlock(
-      tr("vocab"),
+      hasPro ? `${tr("vocab")} 💼` : tr("vocab"),
       (r.vocab || []).map((v) => {
         const ex = v.example ? `<div class="krytykai-why">${escapeHtml(v.example)}</div>` : "";
-        return `<b>${escapeHtml(v.term || "")}</b> — ${escapeHtml(v.translation || "")}${ex}`;
+        const tag = v.pro ? `<span class="krytykai-pro" title="${escapeHtml(tr("proVocabHint"))}">💼</span> ` : "";
+        return `${tag}<b>${escapeHtml(v.term || "")}</b> — ${escapeHtml(v.translation || "")}${ex}`;
       })
     );
     const phrases = listBlock(

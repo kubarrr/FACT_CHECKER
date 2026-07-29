@@ -57,6 +57,68 @@
     };
   }
 
+  // --- Sąsiednie zawody (drabina rozwoju) -----------------------------------
+  // ESCO to klasyfikacja umiejętności, nie graf karier. „Sąsiedni zawód"
+  // wyliczamy z NAKŁADANIA umiejętności: bierzemy kluczowe umiejętności zawodu,
+  // pytamy ESCO które zawody też ich wymagają, i liczymy wspólne. To HEURYSTYKA
+  // — sugestia kierunku, nie zwalidowana ścieżka. Wynik cache'ujemy, bo to
+  // kilka–kilkanaście wywołań sieci na zawód.
+
+  const ADJACENT_KEY = "krytykai_adjacent";
+  const ADJACENT_TTL = 30 * 86400000; // 30 dni
+
+  async function fetchSkillOccupations(skillUri, language) {
+    const url = `${API}/resource/skill?uri=${encodeURIComponent(skillUri)}&language=${encodeURIComponent(language)}`;
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    const d = await res.json();
+    return (d?._links?.isEssentialForOccupation || [])
+      .map((o) => ({ uri: o.uri, title: o.title }))
+      .filter((o) => o.uri && o.title);
+  }
+
+  /**
+   * Zwraca do `limit` zawodów najbliższych danemu (wg wspólnych kluczowych
+   * umiejętności), każdy z listą URI wspólnych umiejętności. Cache w storage.
+   */
+  async function getAdjacentOccupations(occupation, language = "pl", { limit = 3, sample = 12 } = {}) {
+    if (!occupation?.uri || !(occupation.essential || []).length) return [];
+
+    const cacheAll = (await chrome.storage.local.get(ADJACENT_KEY))[ADJACENT_KEY] || {};
+    const cached = cacheAll[occupation.uri];
+    if (cached && cached.language === language && Date.now() - cached.ts < ADJACENT_TTL) {
+      return cached.items;
+    }
+
+    const skills = (occupation.essential || []).slice(0, sample);
+    const tally = new Map(); // uri -> {uri, title, shared:Set}
+    for (const sk of skills) {
+      let occs = [];
+      try {
+        occs = await fetchSkillOccupations(sk.uri, language);
+      } catch {
+        continue; // pojedynczy błąd sieci nie psuje całości
+      }
+      for (const o of occs) {
+        if (o.uri === occupation.uri) continue; // pomijamy siebie
+        const cur = tally.get(o.uri) || { uri: o.uri, title: o.title, shared: new Set() };
+        cur.shared.add(sk.uri);
+        tally.set(o.uri, cur);
+      }
+    }
+
+    // Sensowny szczebel dzieli co najmniej 2 umiejętności — inaczej to szum.
+    const items = [...tally.values()]
+      .map((x) => ({ uri: x.uri, title: x.title, sharedUris: [...x.shared] }))
+      .filter((x) => x.sharedUris.length >= 2)
+      .sort((a, b) => b.sharedUris.length - a.sharedUris.length)
+      .slice(0, limit);
+
+    cacheAll[occupation.uri] = { ts: Date.now(), language, items };
+    await chrome.storage.local.set({ [ADJACENT_KEY]: cacheAll });
+    return items;
+  }
+
   // --- Persony (wirtualne profile kariery) ----------------------------------
   // Kariera rozbija się na kilka person: każda to inny zawód + własne pola
   // (rola, branża, cele). Jedna jest aktywna i steruje pokryciem oraz
@@ -225,6 +287,7 @@
     MAX_PERSONAS,
     searchOccupations,
     fetchOccupation,
+    getAdjacentOccupations,
     getSavedOccupation,
     allSkills,
     skillOptions,

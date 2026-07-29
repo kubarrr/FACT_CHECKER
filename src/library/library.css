@@ -627,6 +627,38 @@ body {
   background: color-mix(in oklch, var(--k-primary) 8%, var(--k-bg));
 }
 
+/* --- Drabina rozwoju (sąsiednie zawody) ----------------------------------- */
+.ladder {
+  margin: 4px 0 4px;
+}
+.rung {
+  position: relative;
+  margin: 8px 0 8px 10px;
+  padding: 12px 14px 12px 18px;
+  background: var(--k-card);
+  border: 1px solid var(--k-border);
+  border-left: 3px solid var(--k-primary);
+  border-radius: 12px;
+}
+.rung-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.rung-title {
+  font-weight: 800;
+  font-size: 15px;
+}
+.rung-meta {
+  font-size: 12px;
+  color: var(--k-muted-fg);
+  white-space: nowrap;
+}
+.rung .gap-tags {
+  margin-top: 9px;
+}
+
 /* --- Persony (wirtualne profile kariery) ---------------------------------- */
 .persona-chips {
   display: flex;

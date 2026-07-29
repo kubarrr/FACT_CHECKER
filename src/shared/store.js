@@ -358,10 +358,13 @@
 
   // --- Odczyty dla biblioteki ----------------------------------------------
 
-  async function getVocab({ language = null, sort = "recent" } = {}) {
+  // `pro`: null = wszystkie, true = tylko zawodowe, false = tylko tematyczne.
+  async function getVocab({ language = null, sort = "recent", pro = null } = {}) {
     const d = await get(K_VOCAB);
     let all = d[K_VOCAB] || [];
     if (language) all = all.filter((v) => v.target_language === language);
+    if (pro === true) all = all.filter((v) => v.pro);
+    else if (pro === false) all = all.filter((v) => !v.pro);
     if (sort === "alpha") {
       all = all.slice().sort((a, b) => a.term.localeCompare(b.term));
     } else if (sort === "box") {
