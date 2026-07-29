@@ -25,6 +25,7 @@
   let vocabLang;
   let reviewLang;
   let vocabSort = "recent";
+  let vocabProOnly = false; // filtr słownictwa zawodowego (most kariera↔słownik)
 
   function currentLang() {
     const p = settings.profile || {};
@@ -318,17 +319,26 @@
       .map(([k, label]) => `<button class="chip" data-sort="${k}" aria-pressed="${vocabSort === k}">${label}</button>`)
       .join("");
 
+    // Filtr „zawodowe" (most kariera↔słownik) – tylko gdy takie słówka są.
+    const hasPro = items.some((v) => v.pro);
+    const shown = vocabProOnly ? items.filter((v) => v.pro) : items;
+    const proChip = hasPro
+      ? `<button class="chip${vocabProOnly ? "" : ""}" data-pro aria-pressed="${vocabProOnly}">💼 ${esc(t("proVocab"))}</button>`
+      : "";
+
     el.innerHTML = `
       <div class="toolbar">
+        ${proChip}
         <span class="spacer"></span>
         ${sortChips}
       </div>
       <div class="grid">
-        ${items
+        ${shown
           .map(
             (v) => `
-          <div class="vcard">
+          <div class="vcard${v.pro ? " vcard-pro" : ""}">
             <button class="vcard-del" data-del="${esc(v.id)}" title="${esc(t("deleteWord"))}">×</button>
+            ${v.pro ? `<span class="vcard-pro-tag" title="${esc(t("proVocabHint"))}">💼</span>` : ""}
             <div class="vcard-term">${esc(v.term)}</div>
             <div class="vcard-tr">${esc(v.translation)}</div>
             ${v.example ? `<div class="vcard-ex">${esc(v.example)}</div>` : ""}
@@ -340,6 +350,10 @@
           .join("")}
       </div>`;
 
+    el.querySelector("[data-pro]")?.addEventListener("click", () => {
+      vocabProOnly = !vocabProOnly;
+      renderVocab();
+    });
     el.querySelectorAll("[data-sort]").forEach((b) =>
       b.addEventListener("click", () => {
         vocabSort = b.dataset.sort;

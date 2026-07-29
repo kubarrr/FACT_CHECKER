@@ -110,11 +110,12 @@
     const items = [];
     for (const v of r.vocab || []) {
       if (!v?.term) continue;
-      items.push({ term: String(v.term).trim(), translation: String(v.translation || "").trim(), example: String(v.example || "").trim(), kind: "word" });
+      // `pro` = słówko zawodowe z mostu kariera↔słownik.
+      items.push({ term: String(v.term).trim(), translation: String(v.translation || "").trim(), example: String(v.example || "").trim(), kind: "word", pro: !!v.pro });
     }
     for (const p of r.phrases || []) {
       if (!p?.phrase) continue;
-      items.push({ term: String(p.phrase).trim(), translation: String(p.translation || "").trim(), example: "", kind: "phrase" });
+      items.push({ term: String(p.phrase).trim(), translation: String(p.translation || "").trim(), example: "", kind: "phrase", pro: !!p.pro });
     }
     return items;
   }
@@ -211,6 +212,7 @@
           translation: item.translation,
           example: item.example,
           kind: item.kind,
+          pro: !!item.pro,
           target_language: lesson.target_language,
           native_language: lesson.native_language,
           source_url: lesson.source_url,

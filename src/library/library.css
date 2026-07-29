@@ -454,6 +454,16 @@ body {
 .boxdots i.on {
   background: linear-gradient(90deg, var(--k-from), var(--k-to));
 }
+.vcard-pro {
+  border-color: color-mix(in oklch, var(--k-primary) 45%, var(--k-border));
+}
+.vcard-pro-tag {
+  position: absolute;
+  top: 10px;
+  right: 34px;
+  font-size: 13px;
+  opacity: 0.85;
+}
 .vcard-del {
   position: absolute;
   top: 8px;

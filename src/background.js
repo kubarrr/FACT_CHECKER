@@ -414,7 +414,7 @@ async function analyzeLearn(mode, payload) {
   // persony. Dla trybu My Career scalamy jedno z drugim.
   const profile = { ...(settings.profile || {}) };
 
-  if (mode === "story") {
+  if (mode === "story" || mode === "lingo") {
     const store = await chrome.storage.local.get([
       "krytykai_personas",
       "krytykai_active_persona",
@@ -423,16 +423,23 @@ async function analyzeLearn(mode, payload) {
     const personas = store.krytykai_personas || [];
     const active =
       personas.find((p) => p.id === store.krytykai_active_persona) || personas[0] || null;
-    if (active) {
-      // Pola karierowe z persony nadpisują (puste) globalne.
-      for (const k of ["role", "industry", "goals", "skills", "interests"]) {
-        if (active[k]) profile[k] = active[k];
-      }
-    }
     const occ = active?.occupation || store.krytykai_occupation;
-    if (occ?.options?.length) {
+
+    if (mode === "story") {
+      if (active) {
+        // Pola karierowe z persony nadpisują (puste) globalne.
+        for (const k of ["role", "industry", "goals", "skills", "interests"]) {
+          if (active[k]) profile[k] = active[k];
+        }
+      }
+      if (occ?.options?.length) {
+        profile.occupation = occ.title;
+        profile.skillOptions = occ.options.map((o) => ({ id: o.id, title: o.title, essential: o.essential }));
+      }
+    } else if (mode === "lingo" && occ?.title) {
+      // Most kariera↔słownik: sam tytuł zawodu wystarczy, by model wyciągnął
+      // słownictwo zawodowe, gdy treść dotyczy tej dziedziny.
       profile.occupation = occ.title;
-      profile.skillOptions = occ.options.map((o) => ({ id: o.id, title: o.title, essential: o.essential }));
     }
   }
 

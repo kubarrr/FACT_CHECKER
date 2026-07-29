@@ -424,6 +424,20 @@ export function buildLingoSystemPrompt(profile, language) {
   const native = p.nativeLang || langName(language) || "the user's language";
   const target = p.targetLang || "English";
   const level = p.level || "A2";
+  // Most kariera↔słownik: gdy aktywna persona ma zawód, a treść dotyczy jego
+  // dziedziny, uczymy słownictwa ZAWODOWEGO w języku docelowym. To pull — nic
+  // się nie narzuca, gdy tekst z zawodem nie ma nic wspólnego.
+  const occ = p.occupation ? String(p.occupation).slice(0, 120) : "";
+  const proBlock = occ
+    ? [
+        `PROFESSIONAL BRIDGE: the learner works as "${occ}". IF (and only if) this content genuinely`,
+        `relates to that field, PREFER vocabulary and phrases a ${occ} actually needs in ${target} —`,
+        "real domain terms, not generic ones — and set \"pro\": true on those items. If the content is",
+        "unrelated to their work (cooking, travel, sport…), ignore this entirely: pick normal topical",
+        "vocab with no pro flag. NEVER force professional terms onto unrelated content.",
+        "",
+      ]
+    : [];
   return [
     "You are a friendly language tutor. The user gives you something they just read. Build a",
     `short personalized lesson to learn ${target} (their level: ${level}). Their native language is ${native}.`,
@@ -431,6 +445,7 @@ export function buildLingoSystemPrompt(profile, language) {
     `Keep ${target} appropriate to level ${level} (simple for A1/A2, richer for B2+).`,
     `IMPORTANT: vocab terms, examples and summary_target MUST be in ${target} ONLY (never mix in ${native} words).`,
     "",
+    ...proBlock,
     `In "summary_target", mark 4-6 key words/short phrases by wrapping them in [[double square brackets]].`,
     `In "summary_native", wrap the ${native} EQUIVALENTS of those same words in [[double square brackets]]`,
     "so they line up. Do NOT use asterisks or any other markdown anywhere.",
@@ -439,7 +454,7 @@ export function buildLingoSystemPrompt(profile, language) {
     "{",
     `  "summary_target": "a 2-4 sentence retelling of the topic in ${target} (level ${level}) with [[key words]] marked",`,
     `  "summary_native": "the same summary in ${native} with the [[equivalents]] marked",`,
-    `  "vocab": [{"term": "word/expression in ${target}", "translation": "in ${native}", "example": "short example sentence fully in ${target}"}],`,
+    `  "vocab": [{"term": "word/expression in ${target}", "translation": "in ${native}", "example": "short example sentence fully in ${target}"${occ ? ', "pro": false' : ""}}],`,
     `  "phrases": [{"phrase": "useful phrase in ${target}", "translation": "in ${native}"}],`,
     `  "culture": "an interesting LANGUAGE/CULTURE curiosity about a country where ${target} is spoken, related to this topic, written in ${native} (the user's language)"`,
     "}",
