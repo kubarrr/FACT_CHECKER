@@ -129,11 +129,24 @@
     });
 
     // Sensowny szczebel dzieli co najmniej 2 umiejętności — inaczej to szum.
-    const adjacent = [...tally.values()]
+    const top = [...tally.values()]
       .map((x) => ({ uri: x.uri, title: x.title, sharedUris: [...x.shared] }))
       .filter((x) => x.sharedUris.length >= 2)
       .sort((a, b) => b.sharedUris.length - a.sharedUris.length)
       .slice(0, limit);
+
+    // Dociągamy PEŁNĄ listę kluczowych umiejętności każdej roli docelowej — bez
+    // niej nie policzymy prawdziwego dopasowania (ile z JEJ wymagań masz).
+    const adjacent = await mapLimit(top, 3, async (a) => {
+      let essential = [];
+      try {
+        const occ = await fetchOccupation(a.uri, language);
+        essential = (occ.essential || []).map((s) => ({ uri: s.uri, title: s.title }));
+      } catch {
+        essential = a.sharedUris.map((u) => ({ uri: u, title: "" })); // fallback: chociaż wspólne
+      }
+      return { uri: a.uri, title: a.title, sharedUris: a.sharedUris, essential };
+    });
 
     cacheAll[occupation.uri] = { ts: Date.now(), language, weights, adjacent };
     await chrome.storage.local.set({ [ADJACENT_KEY]: cacheAll });

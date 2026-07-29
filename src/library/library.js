@@ -480,20 +480,36 @@
     renderInsights(occ, touchedUris, gaps);
   }
 
-  // Rdzenność w % z sygnału IDF: N = w ilu zawodach umiejętność jest kluczowa,
-  // TOTAL ≈ liczba zawodów ESCO. Rzadka (małe N) → wysoki %. Bez wagi → null.
+  // Waga TF-IDF jako UDZIAŁ w zawodzie: IDF(skill) = log(TOTAL/N), a % to udział
+  // tej umiejętności w sumie IDF wszystkich kluczowych umiejętności zawodu.
+  // Suma po całym zawodzie = 100%, więc pojedyncza umiejętność nie dobija 100%.
   const ESCO_OCCUPATIONS = 2942;
-  function corePct(n) {
-    if (!n || n <= 0) return null;
-    const pct = Math.round((Math.log(ESCO_OCCUPATIONS / n) / Math.log(ESCO_OCCUPATIONS)) * 100);
-    return Math.max(1, Math.min(100, pct));
+  const idf = (n) => (n && n > 0 ? Math.log(ESCO_OCCUPATIONS / n) : 0);
+
+  /** Mapa uri→% udziału, licząca mianownik po WSZYSTKICH kluczowych umiej. zawodu. */
+  function buildShareMap(occupation, weights) {
+    const ess = occupation.essential || [];
+    let total = 0;
+    for (const s of ess) total += idf(weights[s.uri]);
+    const map = {};
+    if (total <= 0) return map;
+    for (const s of ess) {
+      const v = idf(weights[s.uri]);
+      if (v > 0) map[s.uri] = v / total; // ułamek 0..1
+    }
+    return map;
   }
 
-  // Gap → link wyszukiwania (kurs w języku interfejsu), z opcjonalnym % rdzenności.
-  function gapChip(title, pct = null) {
-    const core = pct != null && pct >= 70 ? " gap-core" : "";
-    const badge = pct != null ? `<span class="gap-pct" title="${esc(t("corePctHint"))}">${pct}%</span>` : "";
-    return `<a class="gap-tag gap-link${core}" target="_blank" rel="noopener"
+  function fmtShare(frac) {
+    if (frac == null) return null;
+    const pct = frac * 100;
+    return pct < 1 ? "<1%" : `${Math.round(pct)}%`;
+  }
+
+  // Gap → link wyszukiwania (kurs w języku interfejsu), z opcjonalnym udziałem %.
+  function gapChip(title, frac = null, core = false) {
+    const badge = frac != null ? `<span class="gap-pct" title="${esc(t("corePctHint"))}">${fmtShare(frac)}</span>` : "";
+    return `<a class="gap-tag gap-link${core ? " gap-core" : ""}" target="_blank" rel="noopener"
                href="https://www.google.com/search?q=${encodeURIComponent(title + (uiLang === "pl" ? " kurs" : " course"))}"
                title="${esc(t("gapSearch", title))}">${esc(title)}${badge}</a>`;
   }
@@ -516,9 +532,11 @@
 
     // Ranking braków: rzadsze (mniejsza liczba zawodów) = bardziej rdzenne =
     // wyżej. Bez wagi (nie pobrano) na końcu. Próg „rdzenna": ≤ 6 zawodów.
+    const shareMap = buildShareMap(occ, weights);
+    // Sort malejąco po udziale (rdzenne wyżej); bez udziału na końcu.
     const weighted = gaps
-      .map((g) => ({ ...g, w: weights[g.uri] ?? Infinity }))
-      .sort((a, b) => a.w - b.w);
+      .map((g) => ({ ...g, share: shareMap[g.uri] ?? -1 }))
+      .sort((a, b) => b.share - a.share);
     const CAP = 10;
 
     const gapsHtml = gaps.length
@@ -526,39 +544,74 @@
          <div class="gap-tags">
            ${weighted
              .slice(0, CAP)
-             .map((g) => gapChip(g.title, corePct(weights[g.uri])))
+             .map((g, i) => gapChip(g.title, g.share >= 0 ? g.share : null, i < 3 && g.share > 0))
              .join("")}
            ${gaps.length > CAP ? `<span class="gap-tag">+${gaps.length - CAP}</span>` : ""}
          </div>
          <div class="stat-l" style="margin-top:6px">${esc(t("corePctHint"))}</div>`
       : `<div class="gapbox">${esc(t("gapsNone"))}</div>`;
 
-    const titleByUri = new Map((occ.essential || []).map((s) => [s.uri, s.title]));
-    const ladderHtml = adjacent.length
-      ? `<div class="day-h">${esc(t("ladderTitle"))}</div>` +
-        adjacent
-          .map((a) => {
-            const covered = a.sharedUris.filter((u) => touchedUris.has(u)).length;
-            const gapUris = a.sharedUris.filter((u) => !touchedUris.has(u));
-            const chips = gapUris
-              .slice(0, 6)
-              .map((u) => titleByUri.get(u))
-              .filter(Boolean)
-              .map((title) => gapChip(title))
-              .join("");
-            return `
-            <div class="rung">
-              <div class="rung-head">
-                <span class="rung-title">▸ ${esc(a.title)}</span>
-                <span class="rung-meta">${esc(t("rungMeta", a.sharedUris.length, covered))}</span>
-              </div>
-              ${gapUris.length ? `<div class="gap-tags">${chips}</div>` : ""}
-            </div>`;
-          })
-          .join("")
-      : "";
+    // Ścieżka rozwoju (styl Duolingo): jesteś na DOLE, role do zdobycia w górę.
+    // Każda gałąź pokazuje Twoje DOPASOWANIE do tej roli (ile z jej kluczowych
+    // umiejętności masz) i o ile urośnie po nauczeniu się każdej brakującej.
+    let ladderHtml = "";
+    if (adjacent.length) {
+      const nodes = adjacent
+        .map((a, i) => {
+          const ess = (a.essential || []).filter((s) => s.title);
+          const count = ess.length || a.sharedUris.length || 1;
+          const covered = ess.filter((s) => touchedUris.has(s.uri)).length;
+          const match = Math.round((covered / count) * 100);
+          const delta = Math.max(1, Math.round(100 / count)); // +% za jedną umiejętność
+          const missing = ess.filter((s) => !touchedUris.has(s.uri));
+
+          // Każdy brakujący skill = krok z „+Δ%". Pakiet = wszystkie do 100%.
+          const steps = missing
+            .slice(0, 8)
+            .map(
+              (s) =>
+                `${gapChip(s.title)}<span class="step-delta" title="${esc(t("deltaHint"))}">+${delta}%</span>`
+            )
+            .join("");
+          const pkg =
+            missing.length && match < 100
+              ? `<div class="node-pkg">${esc(t("packageAll", missing.length, 100 - match))}</div>`
+              : "";
+
+          return `
+          <div class="path-node reachable ${i % 2 ? "right" : "left"}">
+            <button class="node-dot" data-node="${i}" style="--done:${match}%">${match}%</button>
+            <div class="node-body">
+              <div class="node-title">${esc(a.title)}</div>
+              <div class="node-meta">${esc(t("matchMeta", match, missing.length))}</div>
+              <div class="node-gaps" id="node-gaps-${i}" hidden>${steps}${pkg}</div>
+            </div>
+          </div>`;
+        })
+        .join("");
+      ladderHtml = `
+        <div class="day-h">${esc(t("ladderTitle"))}</div>
+        <div class="path">
+          ${nodes}
+          <div class="path-node current left">
+            <span class="node-dot node-here">🧭</span>
+            <div class="node-body">
+              <div class="node-title">${esc(occ.title)}</div>
+              <div class="node-meta">${esc(t("youAreHere"))}</div>
+            </div>
+          </div>
+        </div>`;
+    }
 
     box.innerHTML = gapsHtml + ladderHtml;
+
+    // Klik w węzeł rozwija/zwija kroki (brakujące umiejętności) tej roli.
+    box.querySelectorAll("[data-node]").forEach((b) =>
+      b.addEventListener("click", () => {
+        const g = $(`node-gaps-${b.dataset.node}`);
+        if (g) g.hidden = !g.hidden;
+      })
+    );
   }
 
   // --- Zakładka: historia ---------------------------------------------------

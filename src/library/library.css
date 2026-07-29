@@ -644,36 +644,108 @@ a.gap-tag.gap-core {
   background: color-mix(in oklch, var(--k-primary) 8%, var(--k-bg));
 }
 
-/* --- Drabina rozwoju (sąsiednie zawody) ----------------------------------- */
-.ladder {
-  margin: 4px 0 4px;
-}
-.rung {
+/* --- Ścieżka rozwoju w stylu Duolingo ------------------------------------- */
+/* Pionowa trasa: jesteś na dole, role do zdobycia to węzły w górę. */
+.path {
   position: relative;
-  margin: 8px 0 8px 10px;
-  padding: 12px 14px 12px 18px;
-  background: var(--k-card);
-  border: 1px solid var(--k-border);
-  border-left: 3px solid var(--k-primary);
-  border-radius: 12px;
+  padding: 6px 0 6px;
 }
-.rung-head {
+/* Pionowy „tor" biegnący przez środek kółek. */
+.path::before {
+  content: "";
+  position: absolute;
+  top: 20px;
+  bottom: 20px;
+  left: 27px;
+  width: 4px;
+  border-radius: 2px;
+  background: repeating-linear-gradient(var(--k-border) 0 8px, transparent 8px 14px);
+}
+.path-node {
+  position: relative;
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 8px 0;
 }
-.rung-title {
+.node-dot {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  width: 50px;
+  height: 50px;
+  border: none;
+  border-radius: 50%;
+  font: inherit;
+  font-size: 20px;
+  cursor: pointer;
+  color: #fff;
+  background: var(--k-muted);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.18);
+  transition: transform 0.12s ease;
+}
+.reachable .node-dot {
+  /* Pierścień postępu: ile wspólnych umiejętności już masz. */
+  background:
+    radial-gradient(closest-side, var(--k-card) 66%, transparent 67%),
+    conic-gradient(var(--k-primary) var(--done, 0%), var(--k-muted) 0);
+  color: var(--k-primary);
+}
+.node-dot:hover {
+  transform: translateY(-2px);
+}
+.node-here {
+  background: linear-gradient(135deg, var(--k-from), var(--k-to));
+  cursor: default;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.node-body {
+  padding-top: 4px;
+  min-width: 0;
+}
+.node-title {
   font-weight: 800;
   font-size: 15px;
+  line-height: 1.25;
 }
-.rung-meta {
+.current .node-title {
+  color: var(--k-primary);
+}
+.node-meta {
   font-size: 12px;
   color: var(--k-muted-fg);
-  white-space: nowrap;
+  margin-top: 2px;
 }
-.rung .gap-tags {
-  margin-top: 9px;
+.node-gaps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+/* Atrybut hidden musi wygrać z display:flex (inaczej zwijanie nie działa). */
+.node-gaps[hidden] {
+  display: none;
+}
+/* „+X%" przy kroku: o ile urośnie dopasowanie po nauczeniu się umiejętności. */
+.step-delta {
+  margin: 0 8px 0 -2px;
+  font-size: 11px;
+  font-weight: 800;
+  color: oklch(0.6 0.16 150);
+}
+.node-pkg {
+  width: 100%;
+  margin-top: 6px;
+  padding: 7px 11px;
+  border-radius: 10px;
+  background: color-mix(in oklch, var(--k-primary) 12%, var(--k-card));
+  border: 1px solid var(--k-border);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--k-fg);
 }
 
 /* --- Persony (wirtualne profile kariery) ---------------------------------- */
