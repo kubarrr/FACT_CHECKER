@@ -373,6 +373,35 @@ test("eksport zwraca kształt gotowy do wysłania na backend", async () => {
   assert.ok(dump.vocab[0].due_at);
 });
 
+test("słownictwo zawodowe przypięte do zawodu persony i filtrowane po nim", async () => {
+  const S = globalThis.KRYTYKAI_STORE;
+  const occA = { uri: "esco/occ/A", title: "analityk" };
+  const occB = { uri: "esco/occ/B", title: "muzyk" };
+
+  // Lekcja przy personie A: słówko zawodowe + zwykłe.
+  await S.saveLesson({
+    mode: "lingo", sourceUrl: "https://a.pl", occupation: occA,
+    profile: { targetLangCode: "es" },
+    result: { vocab: [{ term: "conjunto de datos", translation: "zbiór danych", pro: true }, { term: "ciudad", translation: "miasto" }], phrases: [] },
+  });
+  // Lekcja przy personie B: inne słówko zawodowe.
+  await S.saveLesson({
+    mode: "lingo", sourceUrl: "https://b.pl", occupation: occB,
+    profile: { targetLangCode: "es" },
+    result: { vocab: [{ term: "partitura", translation: "partytura", pro: true }], phrases: [] },
+  });
+
+  // Zawodowe A widzi tylko słówka A; B tylko B.
+  const proA = await S.getVocab({ pro: true, occupationUri: occA.uri });
+  const proB = await S.getVocab({ pro: true, occupationUri: occB.uri });
+  assert.deepEqual(proA.map((v) => v.term), ["conjunto de datos"]);
+  assert.deepEqual(proB.map((v) => v.term), ["partitura"]);
+
+  // Zwykły słownik (pro:false) nie zawiera słownictwa zawodowego.
+  const plain = await S.getVocab({ pro: false });
+  assert.deepEqual(plain.map((v) => v.term), ["ciudad"]);
+});
+
 test("getDashboardStats: liczniki idą za wybranym językiem", async () => {
   const S = globalThis.KRYTYKAI_STORE;
   await S.saveLesson({ mode: "lingo", sourceUrl: "https://a.pl", result: LINGO_RESULT, profile: PROFILE });

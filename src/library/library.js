@@ -292,9 +292,9 @@
   // --- Zakładki: słownik (tematyczny) i zawodowy ----------------------------
   // Wspólny renderer siatki słówek. `pro` rozdziela: Słownik = tematyczne,
   // zakładka 💼 Zawodowe = fachowe (z mostu kariera↔słownik).
-  async function renderVocabGrid(el, { pro, rerender, empty }) {
+  async function renderVocabGrid(el, { pro, rerender, empty, occupationUri = null }) {
     vocabLang = currentLang();
-    const items = await S.getVocab({ language: vocabLang, sort: vocabSort, pro });
+    const items = await S.getVocab({ language: vocabLang, sort: vocabSort, pro, occupationUri });
     if (!items.length) {
       el.innerHTML = empty();
       return;
@@ -352,9 +352,17 @@
     });
   }
 
-  function renderPro() {
+  async function renderPro() {
+    // Słownictwo zawodowe zależy od AKTYWNEJ persony (jej zawodu) — nie od tej,
+    // która już nie istnieje. Bez zawodu nie ma kontekstu, więc pusto.
+    const occ = await E.getSavedOccupation();
+    if (!occ?.uri) {
+      $("panel-pro").innerHTML = emptyState("💼", t("proEmptyTitle"), t("proEmptyBody"));
+      return;
+    }
     return renderVocabGrid($("panel-pro"), {
       pro: true,
+      occupationUri: occ.uri,
       rerender: renderPro,
       empty: () => emptyState("💼", t("proEmptyTitle"), t("proEmptyBody")),
     });

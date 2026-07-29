@@ -934,12 +934,11 @@
     const store = globalThis.KRYTYKAI_STORE;
     if (!store) return; // brak magazynu (np. stara wersja w karcie) – pomiń cicho
     try {
-      // Zawód potrzebny tylko trybowi kariery – to on odwzorowuje identyfikatory
-      // zwrócone przez model na konkretne umiejętności z klasyfikacji.
+      // Zawód aktywnej persony potrzebny w OBU trybach: w karierze do mapowania
+      // umiejętności, w Linglerno do przypięcia słownictwa zawodowego (most),
+      // żeby po zmianie/usunięciu persony nie zostawało cudze słownictwo.
       const occupation =
-        mode === "lingo"
-          ? null
-          : (await chrome.storage.local.get("krytykai_occupation")).krytykai_occupation || null;
+        (await chrome.storage.local.get("krytykai_occupation")).krytykai_occupation || null;
 
       const res = await store.saveLesson({
         mode: mode === "lingo" ? "lingo" : "career",

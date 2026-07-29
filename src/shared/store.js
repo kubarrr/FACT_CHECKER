@@ -213,6 +213,9 @@
           example: item.example,
           kind: item.kind,
           pro: !!item.pro,
+          // Słownictwo zawodowe należy do zawodu persony, przy której powstało —
+          // po jej zmianie/usunięciu nie pokazuje się przy innej.
+          occupation_uri: item.pro ? occupation?.uri || null : null,
           target_language: lesson.target_language,
           native_language: lesson.native_language,
           source_url: lesson.source_url,
@@ -359,12 +362,16 @@
   // --- Odczyty dla biblioteki ----------------------------------------------
 
   // `pro`: null = wszystkie, true = tylko zawodowe, false = tylko tematyczne.
-  async function getVocab({ language = null, sort = "recent", pro = null } = {}) {
+  // `occupationUri`: przy pro=true zawęża do słownictwa danego zawodu (persony).
+  async function getVocab({ language = null, sort = "recent", pro = null, occupationUri = null } = {}) {
     const d = await get(K_VOCAB);
     let all = d[K_VOCAB] || [];
     if (language) all = all.filter((v) => v.target_language === language);
-    if (pro === true) all = all.filter((v) => v.pro);
-    else if (pro === false) all = all.filter((v) => !v.pro);
+    if (pro === true) {
+      all = all.filter((v) => v.pro && (!occupationUri || v.occupation_uri === occupationUri));
+    } else if (pro === false) {
+      all = all.filter((v) => !v.pro);
+    }
     if (sort === "alpha") {
       all = all.slice().sort((a, b) => a.term.localeCompare(b.term));
     } else if (sort === "box") {
