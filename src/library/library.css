@@ -665,16 +665,30 @@ a.gap-tag.gap-core {
   align-items: center;
   justify-content: center;
   gap: 2px;
+  border: none;
   border-radius: 50%;
   color: #fff;
+  font: inherit;
   background: radial-gradient(circle at 32% 28%,
     oklch(0.72 0.15 var(--bhue)),
     oklch(0.55 0.17 var(--bhue)));
   box-shadow: 0 10px 26px -10px oklch(0.55 0.17 var(--bhue) / 0.6),
     inset 0 -6px 14px oklch(0.4 0.12 var(--bhue) / 0.5);
   animation: bubble-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.35) both;
-  cursor: default;
+  cursor: pointer;
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
 }
+.bubble:hover { transform: translateY(-3px) scale(1.03); }
+.bubble.selected {
+  box-shadow: 0 0 0 4px oklch(0.6 0.17 var(--bhue) / 0.4),
+    0 10px 26px -10px oklch(0.55 0.17 var(--bhue) / 0.6);
+}
+.bubble-detail {
+  margin: 2px 0 18px;
+  padding: 4px 2px;
+  animation: bubble-in 0.3s ease both;
+}
+.bubble-detail[hidden] { display: none; }
 @keyframes bubble-in {
   from { transform: scale(0.3); opacity: 0; }
 }
@@ -703,6 +717,12 @@ a.gap-tag.gap-core {
   background: var(--k-muted);
   border: 1px dashed color-mix(in oklch, oklch(0.6 0.14 var(--bhue)) 45%, var(--k-border));
   opacity: 0.75;
+  text-decoration: none;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+a.blind-chip:hover {
+  opacity: 1;
+  color: oklch(0.55 0.16 var(--bhue));
 }
 
 /* --- Interaktywne drzewo rozwoju ------------------------------------------ */

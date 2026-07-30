@@ -41,7 +41,8 @@
       bubblesLead: (n, top, pct) => `From ${n} things you read, your biggest bubble is ${top} — ${pct}% of everything.`,
       bubblesUnknown: (n) => `${n} readings didn't fit a clear topic.`,
       blindSpotsTitle: "Barely on your radar",
-      blindSpotsHint: "Topics you almost never read. A one-sided diet isn't wrong — but worth seeing.",
+      blindSpotsHint: "Topics you almost never read. A one-sided diet isn't wrong — but worth seeing. Tap one to go read something about it.",
+      blindExplore: (name) => `Read some news about ${name}`,
       noBlindSpots: "You touch every topic — a remarkably balanced diet.",
       bubblesDisclaimer: "Built locally from what you read, by keyword. A rough mirror, not a verdict — nothing leaves your device.",
 
@@ -210,7 +211,8 @@
       bubblesLead: (n, top, pct) => `Z ${n} przeczytanych rzeczy Twoja największa bańka to ${top} — ${pct}% wszystkiego.`,
       bubblesUnknown: (n) => `${n} treści bez wyraźnego tematu.`,
       blindSpotsTitle: "Ledwo na Twoim radarze",
-      blindSpotsHint: "Tematy, których prawie nie czytasz. Jednostronna dieta to nie grzech — ale warto ją zobaczyć.",
+      blindSpotsHint: "Tematy, których prawie nie czytasz. Jednostronna dieta to nie grzech — ale warto ją zobaczyć. Kliknij, by poczytać coś na dany temat.",
+      blindExplore: (name) => `Poczytaj wiadomości o: ${name}`,
       noBlindSpots: "Dotykasz każdego tematu — wyjątkowo zrównoważona dieta.",
       bubblesDisclaimer: "Zbudowane lokalnie z tego, co czytasz, po słowach kluczowych. Zgrubne lustro, nie wyrok — nic nie wychodzi z urządzenia.",
 

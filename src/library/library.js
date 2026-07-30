@@ -700,13 +700,25 @@
       return;
     }
 
-    // Tekst do klasyfikacji: temat + tytuł + adres + streszczenie (co jest).
-    const texts = lessons.map((l) =>
-      [l.topic, l.source_title, l.source_url, l.payload?.summary_native, (l.payload?.takeaways || []).join(" ")]
+    // Klasyfikujemy KAŻDĄ lekcję i grupujemy — żeby klik w bańkę pokazał, co
+    // konkretnie ją zbudowało (realne przeczytane treści).
+    const byTopic = new Map();
+    for (const l of lessons) {
+      const text = [l.topic, l.source_title, l.source_url, l.payload?.summary_native, (l.payload?.takeaways || []).join(" ")]
         .filter(Boolean)
-        .join(" ")
+        .join(" ");
+      const hit = TOP.classify(text);
+      if (!hit) continue;
+      if (!byTopic.has(hit.id)) byTopic.set(hit.id, []);
+      byTopic.get(hit.id).push(l);
+    }
+    const { bubbles, blind, unknown, total } = TOP.aggregate(
+      lessons.map((l) =>
+        [l.topic, l.source_title, l.source_url, l.payload?.summary_native, (l.payload?.takeaways || []).join(" ")]
+          .filter(Boolean)
+          .join(" ")
+      )
     );
-    const { bubbles, blind, unknown, total } = TOP.aggregate(texts);
 
     if (!total) {
       el.innerHTML = emptyState("🫧", t("bubblesNoneTitle"), t("bubblesNoneBody"));
@@ -722,12 +734,12 @@
       .map((b) => {
         const s = sizeFor(b.count);
         return `
-        <div class="bubble" style="width:${s}px;height:${s}px;--bhue:${b.hue}"
-             title="${esc(TOP.label(b, uiLang))}: ${Math.round(b.share * 100)}%">
+        <button class="bubble" data-topic="${esc(b.id)}" style="width:${s}px;height:${s}px;--bhue:${b.hue}"
+             title="${esc(TOP.label(b, uiLang))}: ${Math.round(b.share * 100)}% · ${b.count}">
           <span class="bubble-emoji">${b.emoji}</span>
           <span class="bubble-pct">${Math.round(b.share * 100)}%</span>
           <span class="bubble-name">${esc(TOP.label(b, uiLang))}</span>
-        </div>`;
+        </button>`;
       })
       .join("");
 
@@ -735,7 +747,12 @@
       ? `<div class="day-h">${esc(t("blindSpotsTitle"))}</div>
          <div class="blind-row">
            ${blind
-             .map((b) => `<span class="blind-chip" style="--bhue:${b.hue}">${b.emoji} ${esc(TOP.label(b, uiLang))}</span>`)
+             .map(
+               (b) =>
+                 `<a class="blind-chip" data-blind="${esc(b.id)}" target="_blank" rel="noopener"
+                     href="https://www.google.com/search?q=${encodeURIComponent(TOP.label(b, uiLang))}&tbm=nws"
+                     title="${esc(t("blindExplore", TOP.label(b, uiLang)))}" style="--bhue:${b.hue}">${b.emoji} ${esc(TOP.label(b, uiLang))}</a>`
+             )
              .join("")}
          </div>
          <div class="stat-l" style="margin-top:6px">${esc(t("blindSpotsHint"))}</div>`
@@ -744,9 +761,49 @@
     el.innerHTML = `
       <div class="bubbles-lead">${esc(t("bubblesLead", total, TOP.label(dom, uiLang), Math.round(dom.share * 100)))}</div>
       <div class="bubble-cloud">${cloud}</div>
+      <div id="bubbleDetail" class="bubble-detail" hidden></div>
       ${unknown ? `<div class="stat-l">${esc(t("bubblesUnknown", unknown))}</div>` : ""}
       ${blindHtml}
       <p class="attrib" style="margin-top:12px">${esc(t("bubblesDisclaimer"))}</p>`;
+
+    // Klik w bańkę → co konkretnie ją zbudowało (rozwijany panel pod chmurą).
+    el.querySelectorAll("[data-topic]").forEach((btn) =>
+      btn.addEventListener("click", () => {
+        const id = btn.dataset.topic;
+        const already = btn.classList.contains("selected");
+        el.querySelectorAll(".bubble").forEach((b) => b.classList.remove("selected"));
+        const detail = $("bubbleDetail");
+        if (already) {
+          detail.hidden = true;
+          return;
+        }
+        btn.classList.add("selected");
+        const topic = TOP.TOPICS.find((x) => x.id === id);
+        const items = byTopic.get(id) || [];
+        detail.innerHTML = `
+          <div class="day-h">${topic.emoji} ${esc(TOP.label(topic, uiLang))} · ${items.length}</div>
+          ${items
+            .slice(0, 30)
+            .map(
+              (l) => `
+            <div class="lesson">
+              <div class="lesson-head">
+                <span class="lesson-mode">${l.mode === "lingo" ? "🗣️" : "📖"}</span>
+                <span class="lesson-topic">${esc(l.topic || l.source_title || "—")}</span>
+                <span class="lesson-time">${dayLabel(S.dayKey(new Date(l.created_at)))}</span>
+              </div>
+              ${
+                l.source_url
+                  ? `<a class="lesson-src" href="${esc(l.source_url)}" target="_blank" rel="noopener">${esc(l.source_title || l.source_url)}</a>`
+                  : ""
+              }
+            </div>`
+            )
+            .join("")}`;
+        detail.hidden = false;
+        detail.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      })
+    );
   }
 
   // --- Zakładka: historia ---------------------------------------------------
