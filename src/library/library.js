@@ -7,6 +7,7 @@
   const C = globalThis.KRYTYKAI_CATALOG;
   const S = globalThis.KRYTYKAI_STORE;
   const E = globalThis.KRYTYKAI_ESCO;
+  const TOP = globalThis.KRYTYKAI_TOPICS;
   const STR = globalThis.KRYTYKAI_STRINGS;
   const SETTINGS_KEY = "krytykai_settings";
 
@@ -688,6 +689,66 @@
     drawTree();
   }
 
+  // --- Zakładka: bańki informacyjne -----------------------------------------
+  // Lustro diety informacyjnej: z tego, co przeczytałeś, budujemy rosnące
+  // bańki tematów i pokazujemy martwe pola — czego w ogóle nie tykasz.
+  async function renderBubbles() {
+    const el = $("panel-bubbles");
+    const lessons = await S.getLessons({ limit: 500 });
+    if (!lessons.length) {
+      el.innerHTML = emptyState("🫧", t("bubblesEmptyTitle"), t("bubblesEmptyBody"));
+      return;
+    }
+
+    // Tekst do klasyfikacji: temat + tytuł + adres + streszczenie (co jest).
+    const texts = lessons.map((l) =>
+      [l.topic, l.source_title, l.source_url, l.payload?.summary_native, (l.payload?.takeaways || []).join(" ")]
+        .filter(Boolean)
+        .join(" ")
+    );
+    const { bubbles, blind, unknown, total } = TOP.aggregate(texts);
+
+    if (!total) {
+      el.innerHTML = emptyState("🫧", t("bubblesNoneTitle"), t("bubblesNoneBody"));
+      return;
+    }
+
+    // Rozmiar bańki ∝ √udziału (percepcyjnie uczciwe dla pól kół).
+    const maxCount = bubbles[0].count;
+    const sizeFor = (c) => Math.round(70 + 120 * Math.sqrt(c / maxCount));
+    const dom = bubbles[0];
+
+    const cloud = bubbles
+      .map((b) => {
+        const s = sizeFor(b.count);
+        return `
+        <div class="bubble" style="width:${s}px;height:${s}px;--bhue:${b.hue}"
+             title="${esc(TOP.label(b, uiLang))}: ${Math.round(b.share * 100)}%">
+          <span class="bubble-emoji">${b.emoji}</span>
+          <span class="bubble-pct">${Math.round(b.share * 100)}%</span>
+          <span class="bubble-name">${esc(TOP.label(b, uiLang))}</span>
+        </div>`;
+      })
+      .join("");
+
+    const blindHtml = blind.length
+      ? `<div class="day-h">${esc(t("blindSpotsTitle"))}</div>
+         <div class="blind-row">
+           ${blind
+             .map((b) => `<span class="blind-chip" style="--bhue:${b.hue}">${b.emoji} ${esc(TOP.label(b, uiLang))}</span>`)
+             .join("")}
+         </div>
+         <div class="stat-l" style="margin-top:6px">${esc(t("blindSpotsHint"))}</div>`
+      : `<div class="gapbox">${esc(t("noBlindSpots"))}</div>`;
+
+    el.innerHTML = `
+      <div class="bubbles-lead">${esc(t("bubblesLead", total, TOP.label(dom, uiLang), Math.round(dom.share * 100)))}</div>
+      <div class="bubble-cloud">${cloud}</div>
+      ${unknown ? `<div class="stat-l">${esc(t("bubblesUnknown", unknown))}</div>` : ""}
+      ${blindHtml}
+      <p class="attrib" style="margin-top:12px">${esc(t("bubblesDisclaimer"))}</p>`;
+  }
+
   // --- Zakładka: historia ---------------------------------------------------
   async function renderHistory() {
     const el = $("panel-history");
@@ -976,6 +1037,7 @@
     vocab: renderVocab,
     pro: renderPro,
     career: renderCareer,
+    bubbles: renderBubbles,
     history: renderHistory,
     profile: renderProfile,
   };
@@ -1000,7 +1062,7 @@
   function applyStaticLabels() {
     const map = {
       review: "tabReview", vocab: "tabVocab", pro: "tabPro", career: "tabCareer",
-      history: "tabHistory", profile: "tabProfile",
+      bubbles: "tabBubbles", history: "tabHistory", profile: "tabProfile",
     };
     document.querySelectorAll(".tab").forEach((el) => {
       const key = map[el.dataset.tab];

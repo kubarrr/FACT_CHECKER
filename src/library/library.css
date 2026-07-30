@@ -644,6 +644,67 @@ a.gap-tag.gap-core {
   background: color-mix(in oklch, var(--k-primary) 8%, var(--k-bg));
 }
 
+/* --- Bańki informacyjne --------------------------------------------------- */
+.bubbles-lead {
+  font-size: 16px;
+  line-height: 1.5;
+  margin: 4px 0 16px;
+}
+.bubble-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 10px 0 16px;
+}
+.bubble {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border-radius: 50%;
+  color: #fff;
+  background: radial-gradient(circle at 32% 28%,
+    oklch(0.72 0.15 var(--bhue)),
+    oklch(0.55 0.17 var(--bhue)));
+  box-shadow: 0 10px 26px -10px oklch(0.55 0.17 var(--bhue) / 0.6),
+    inset 0 -6px 14px oklch(0.4 0.12 var(--bhue) / 0.5);
+  animation: bubble-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.35) both;
+  cursor: default;
+}
+@keyframes bubble-in {
+  from { transform: scale(0.3); opacity: 0; }
+}
+.bubble-emoji { font-size: 26px; line-height: 1; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3)); }
+.bubble-pct { font-size: 18px; font-weight: 800; letter-spacing: -0.02em; }
+.bubble-name {
+  font-size: 11.5px;
+  font-weight: 700;
+  opacity: 0.92;
+  max-width: 90%;
+  text-align: center;
+  line-height: 1.15;
+}
+
+.blind-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.blind-chip {
+  padding: 6px 13px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--k-muted-fg);
+  background: var(--k-muted);
+  border: 1px dashed color-mix(in oklch, oklch(0.6 0.14 var(--bhue)) 45%, var(--k-border));
+  opacity: 0.75;
+}
+
 /* --- Interaktywne drzewo rozwoju ------------------------------------------ */
 .ct-head {
   display: flex;
