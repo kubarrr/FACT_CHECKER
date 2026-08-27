@@ -1,5 +1,5 @@
 // Minimalny service worker – umożliwia instalację PWA i działanie offline (powłoka aplikacji).
-const CACHE = "factchecker-v7";
+const CACHE = "factchecker-v10";
 const ASSETS = [
   "./",
   "./index.html",

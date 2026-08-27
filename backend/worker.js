@@ -16,6 +16,8 @@ import {
   buildLingoUserPrompt,
   buildCommentsSystemPrompt,
   buildCommentsUserPrompt,
+  buildAskSystemPrompt,
+  buildAskUserPrompt,
 } from "./prompt.js";
 
 const MAX_INPUT_CHARS = 8000;
@@ -24,6 +26,8 @@ const MAX_COMMENTS = 40;
 const MAX_COMMENT_CHARS = 600;
 const MAX_OUTPUT_TOKENS = 700;
 const LEARN_OUTPUT_TOKENS = 1100;
+// Odpowiedź na pytanie ma być krótka – 2-4 zdania, nie wykład.
+const ASK_OUTPUT_TOKENS = 500;
 const DEFAULT_MODEL = "gemini-3.1-flash-lite";
 
 // Limity (ochrona Twojego klucza). Wymaga bindingu KV o nazwie RATE_LIMIT (opcjonalnie).
@@ -158,6 +162,16 @@ export default {
       system = buildLingoSystemPrompt(profile, language);
       user = buildLingoUserPrompt(profile, answerText);
       maxTokens = LEARN_OUTPUT_TOKENS;
+      loose = true;
+    } else if (mode === "ask") {
+      // Pytanie przychodzi osobnym polem; answerText niesie tekst, którego dotyczy.
+      const question = String(payload.question || "").slice(0, 500);
+      if (!question.trim()) {
+        return json({ error: "ask mode expects a non-empty 'question'" }, 400, origin);
+      }
+      system = buildAskSystemPrompt(language);
+      user = buildAskUserPrompt({ question, content: answerText });
+      maxTokens = ASK_OUTPUT_TOKENS;
       loose = true;
     } else if (mode === "comments") {
       // Komentarze przychodzą własnym polem, a nie w answerText: ten drugi jest

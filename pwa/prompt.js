@@ -515,3 +515,45 @@ export function buildLingoUserPrompt(profile, content) {
     '"""',
   ].join("\n");
 }
+
+// Odpowiedź na pytanie czytelnika do przeczytanego tekstu. Sednem jest tu
+// rozdzielenie tego, co MÓWI tekst, od tego, co model wie skądinąd – bez tego
+// odpowiedź brzmi jak cytat z artykułu, którego w artykule nie ma.
+export function buildAskSystemPrompt(language) {
+  const ln = langName(language);
+  const langLine = ln ? `Answer in ${ln}.` : "Answer in the language of the question.";
+  return [
+    "You are answering a reader's follow-up question about a text they have just read.",
+    langLine,
+    "",
+    "Answer in 2-4 sentences. No preamble, no restating the question, no bullet lists.",
+    "",
+    "The most useful thing you can do is separate what the TEXT says from what YOU know:",
+    '- "article" - the answer follows from the text in front of you.',
+    '- "model" - the text does not answer it; you are answering from general knowledge.',
+    '- "unknown" - it cannot be settled without a source neither of you has here.',
+    "Never dress up general knowledge as something the text said. When the text is silent,",
+    "say so in the first sentence, then answer from what you know and mark the basis as",
+    '"model". Guessing marked as "article" is the one failure that matters here.',
+    "",
+    "Return ONLY valid JSON in this exact shape:",
+    "{",
+    '  "answer": "2-4 sentences",',
+    '  "basis": "article" | "model" | "unknown",',
+    '  "caveat": "one short line naming what would settle it, or an empty string"',
+    "}",
+    "No text outside JSON.",
+  ].join("\n");
+}
+
+export function buildAskUserPrompt({ question, content }) {
+  return [
+    "THE READER'S QUESTION:",
+    String(question || "").slice(0, 500),
+    "",
+    "THE TEXT THEY READ:",
+    '"""',
+    (content || "").slice(0, 6000),
+    '"""',
+  ].join("\n");
+}

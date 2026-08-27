@@ -13,6 +13,8 @@ import {
   parseLooseJson,
   buildCommentsUserPrompt,
   buildCommentsSystemPrompt,
+  buildAskSystemPrompt,
+  buildAskUserPrompt,
 } from "../src/shared/prompt.js";
 
 test("langName maps codes and falls back to null", () => {
@@ -145,4 +147,31 @@ test("buildLingoSystemPrompt: culture note follows the target language, no count
 test("buildSystemPrompt: flags carry a kind for on-page colouring", () => {
   const p = buildSystemPrompt(4, "pl");
   assert.match(p, /"kind": "verify"\|"explore"/);
+});
+
+test("buildAskSystemPrompt: wymusza język i rozdziela treść artykułu od wiedzy modelu", () => {
+  const p = buildAskSystemPrompt("pl");
+  assert.match(p, /Answer in Polish/);
+  // Trzy podstawy odpowiedzi — bez nich UI nie ma czego oznaczyć.
+  assert.match(p, /"article"/);
+  assert.match(p, /"model"/);
+  assert.match(p, /"unknown"/);
+  // Sedno: zgadywanie podane jako treść artykułu to jedyny błąd, który boli.
+  assert.match(p, /Never dress up general knowledge/i);
+});
+
+test("buildAskUserPrompt: niesie pytanie i tekst, oba przycięte", () => {
+  const p = buildAskUserPrompt({ question: "Kto to policzył?", content: "Artykuł o podatku." });
+  assert.match(p, /Kto to policzył\?/);
+  assert.match(p, /Artykuł o podatku\./);
+
+  const long = buildAskUserPrompt({ question: "q".repeat(900), content: "c".repeat(9000) });
+  assert.equal((long.match(/q/g) || []).length, 500);
+  assert.equal((long.match(/c/g) || []).length, 6000);
+});
+
+test("buildAskUserPrompt: brak pytania i treści nie wywala budowania", () => {
+  const p = buildAskUserPrompt({});
+  assert.match(p, /THE READER'S QUESTION:/);
+  assert.match(p, /THE TEXT THEY READ:/);
 });
