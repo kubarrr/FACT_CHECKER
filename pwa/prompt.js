@@ -1,7 +1,7 @@
 // Budowanie promptu dla LLM oraz heurystyczny tryb awaryjny (bez klucza API).
 
 // Nazwy języków dla wymuszenia języka odpowiedzi (język aplikacji wybrany przez użytkownika).
-const LANG_NAMES = { pl: "Polish", en: "English", es: "Spanish", de: "German", fr: "French" };
+const LANG_NAMES = { pl: "Polish", en: "English", es: "Spanish", de: "German", fr: "French", it: "Italian", pt: "Portuguese", uk: "Ukrainian", cs: "Czech", ru: "Russian" };
 export function langName(code) {
   return LANG_NAMES[String(code || "").toLowerCase().slice(0, 2)] || null;
 }
@@ -36,13 +36,14 @@ export function buildSystemPrompt(numQuestions, language) {
     "     verifiable facts (e.g. sports results, data, dates, events, neutral tone).",
     `   - "note": one sentence justifying the assessment, written in ${outLang}.`,
     "",
-    `2) QUESTIONS — ALWAYS give ${numQuestions} questions total. Match their CHARACTER to the assessment:`,
-    '   - If risk = "high" or type = "clickbait"/"opinion": make them mostly sharp VERIFICATION',
-    '     questions (kind: "verify") that help check truthfulness and expose manipulation.',
-    '   - If risk = "low" and type = "fact": make them deeper CURIOSITY/EXPLORATION questions',
-    '     (kind: "explore") to learn more about the topic (e.g. for a sports result –',
-    "     more about the athlete's achievements, records, historical context).",
-    '   - Otherwise ("medium"): mix verification and exploration questions.',
+    `2) QUESTIONS — ALWAYS give ${numQuestions} questions total.`,
+    '   - LEAD with sharp VERIFICATION questions (kind: "verify") that check truthfulness and',
+    '     expose manipulation. For high risk / "clickbait" / "opinion", most or all should be verify.',
+    '   - A single CURIOSITY question (kind: "explore") to learn more about the topic is OPTIONAL',
+    "     and may appear at ANY risk level — but ONLY if there is genuinely something interesting to",
+    "     learn, and use it SPARINGLY (skip it when the content is not interesting enough). At most",
+    "     ONE explore question, and when present it MUST be the LAST question. Verification always",
+    "     comes first; never let explore crowd out a needed verification question.",
     `   Always return exactly ${numQuestions} questions.`,
     "",
     "BALANCE FOR POLITICAL / CONTESTED / OPINION-LADEN topics (politicians, elections, polls,",
@@ -55,13 +56,14 @@ export function buildSystemPrompt(numQuestions, language) {
     '   - for POLLS/STATISTICS/SURVEYS: at least ONE question about METHODOLOGY (who commissioned',
     "     it, sample size, method, margin of error, question wording, a single snapshot vs a trend).",
     "",
-    "3) FLAGS — fragments worth marking on the page. Return \"flags\": an array (0 to 4 items) of",
+    "3) FLAGS — fragments worth marking on the page. Return \"flags\": an array (0 to 7 items) of",
     '   objects {"quote": "...", "why": "...", "kind": "verify"|"explore"} where "quote" is VERBATIM',
-    "   a single sentence or short phrase) from the analyzed content. Use kind \"verify\" for a claim",
-    "   that is manipulative, unsupported or needs checking; use kind \"explore\" for a genuinely",
-    "   interesting or noteworthy fact worth a closer look. Copy the quote EXACTLY as written in",
+    "   a single sentence or short phrase) from the analyzed content. Be GENEROUS: mark EVERY claim",
+    "   that is dubious, manipulative, unsupported, cherry-picked or needs checking (kind \"verify\"),",
+    "   and also genuinely interesting/noteworthy facts (kind \"explore\"). Aim for several flags when",
+    "   the content warrants it — do not under-mark. Copy each quote EXACTLY as written in",
     `   the ORIGINAL language of the content (do NOT translate the quote). Write "why" in ${outLang}.`,
-    "   If nothing stands out (e.g. low risk / plain fact and nothing notable), return an empty array.",
+    "   Only return an empty array when the content is a plain, low-risk fact with nothing to mark.",
     "",
     `Each question (in ${outLang}): {"q": "...", "why": "one sentence why", "kind": "verify"|"explore"|"perspective"}.`,
     "Return ONLY valid JSON in this exact shape:",

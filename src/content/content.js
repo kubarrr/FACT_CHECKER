@@ -384,14 +384,10 @@
       ? `<div class="krytykai-summary">${escapeHtml(result.summary)}</div>`
       : "";
 
-    // Kolejność: „druga strona" (perspective) zawsze na górze (balans), potem wg
-    // ryzyka: niskie → ciekawostki (explore), średnie/wysokie → weryfikacja. Sort stabilny.
-    const riskStr = String(result.assessment?.risk || "").toLowerCase();
-    const isLowRisk = riskStr.includes("low") || riskStr.includes("nis");
-    const order = isLowRisk
-      ? { perspective: 0, explore: 1, verify: 2 }
-      : { perspective: 0, verify: 1, explore: 2 };
-    const rank = (k) => order[k] ?? 3;
+    // Kolejność: druga strona (perspective) i weryfikacja na górze, a ciekawostka
+    // (explore) ZAWSZE na końcu — niezależnie od ryzyka. Sort stabilny.
+    const order = { perspective: 0, verify: 1, explore: 3 };
+    const rank = (k) => order[k] ?? 2;
     const ordered = (result.questions || [])
       .slice()
       .sort((a, b) => rank(a.kind) - rank(b.kind));
