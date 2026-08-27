@@ -49,9 +49,16 @@
       <section id="work" class="hidden">
         <button id="backBtn" class="back-btn">← <span data-i18n="back">Back</span></button>
 
-        <section class="card">
+        <!-- Po analizie karta wejścia zwija się w jedną linijkę, żeby werdykt
+             był widoczny bez przewijania. Dotknięcie chipa wraca do edycji. -->
+        <button id="sourceChip" class="source-chip hidden" type="button">
+          <span class="chip-text" id="sourceChipText"></span>
+          <span class="chip-edit" data-i18n="edit">Edit</span>
+        </button>
+
+        <section class="card" id="inputCard">
           <label for="content" id="inputLabel">Paste or share content:</label>
-          <textarea id="content" rows="7" placeholder="Paste content here…"></textarea>
+          <textarea id="content" rows="4" placeholder="Paste content here…"></textarea>
           <div class="row">
             <button id="runBtn" class="primary">Run</button>
             <button id="clearBtn" class="ghost" data-i18n="clear">Clear</button>

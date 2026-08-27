@@ -2,11 +2,18 @@
 // Uwaga: to darmowy wariant „przynieś własny klucz". W wersji płatnej ten plik
 // zostanie zastąpiony wywołaniem Twojego backendu (bez klucza po stronie klienta).
 
-import { buildSystemPrompt, buildUserPrompt, parseModelJson } from "./prompt.js";
+import {
+  buildSystemPrompt,
+  buildUserPrompt,
+  parseModelJson,
+  buildAskSystemPrompt,
+  buildAskUserPrompt,
+} from "./prompt.js";
 
 const MAX_INPUT_CHARS = 8000;
 const MAX_OUTPUT_TOKENS = 700;
 const LEARN_OUTPUT_TOKENS = 1100;
+const ASK_OUTPUT_TOKENS = 500;
 
 // Generyczne wywołanie Gemini zwracające sparsowany JSON (dla trybów uczących).
 export async function runGeminiJSON({ apiKey, model, system, user, maxTokens }) {
@@ -86,4 +93,15 @@ export async function analyzeWithGemini({ apiKey, model, userQuestion, answerTex
   const data = await res.json();
   const text = data?.candidates?.[0]?.content?.parts?.map((p) => p.text).join("") || "";
   return parseModelJson(text);
+}
+
+// Odpowiedź na pytanie do sprawdzanego tekstu (ścieżka z własnym kluczem).
+export async function askWithGemini({ apiKey, model, question, answerText, language }) {
+  return runGeminiJSON({
+    apiKey,
+    model,
+    system: buildAskSystemPrompt(language),
+    user: buildAskUserPrompt({ question, content: answerText }),
+    maxTokens: ASK_OUTPUT_TOKENS,
+  });
 }
