@@ -1,4 +1,13 @@
-name = "fact-checker"
+# UWAGA: ten worker NIE jest juz produkcja.
+#
+# Do sierpnia 2026 stala tu nazwa identyczna jak w repozytorium VerifAI, ktore
+# ma nowsza wersje (812 linii wobec 264 tutaj: trasa /feed oraz tryby "story"
+# i "lingo"). Oba wdrazaly sie pod ten sam adres fact-checker.criticai.workers.dev,
+# wiec `wrangler deploy` odpalony w TYM folderze nadpisywal produkcje i kladl
+# naraz VerfAI PWA oraz cale Linglerno.
+#
+# Nazwa jest inna, zeby to bylo niemozliwe. Produkcje utrzymuj w VerifAI.
+name = "fact-checker-legacy"
 main = "worker.js"
 compatibility_date = "2024-11-01"
 
